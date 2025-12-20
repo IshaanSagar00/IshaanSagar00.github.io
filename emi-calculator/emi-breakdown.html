@@ -139,11 +139,13 @@
   </div>
 
   <button onclick="generateBreakdown()">Generate Monthly Breakdown</button>
-  <button id="downloadCsvBtn"
-        onclick="downloadCSV()"
-        style="display:none; margin-top:10px; background:#16a34a; color:#fff; padding:10px 14px; border:none; border-radius:6px; cursor:pointer;">
-     ⬇ Download Monthly EMI Breakdown (CSV)
-  </button>
+
+  <div id="downloadActions" style="display:none; margin:16px 0;">
+   <button onclick="downloadCSV()">⬇ Download CSV</button>
+   <button onclick="downloadExcel()">⬇ Download Excel</button>
+  </div>
+
+
 
 
   <div id="table"></div>
@@ -185,6 +187,8 @@ document.getElementById("loan").addEventListener("input", function (e) {
 });
 
 function generateBreakdown() {
+  window.breakdownData = [];
+
   const P = Number(
   document.getElementById("loan").value.replace(/,/g, "")
 );
@@ -204,7 +208,7 @@ function generateBreakdown() {
 
   const EMI = (P * R * Math.pow(1 + R, N)) / (Math.pow(1 + R, N) - 1);
 
-  window.breakdownData = [];
+  
 
 
   let balance = P;
@@ -260,7 +264,33 @@ function generateBreakdown() {
 
   html += "</table>";
   document.getElementById("table").innerHTML = html;
+  // ✅ SHOW DOWNLOAD BUTTONS
+  document.getElementById("downloadActions").style.display = "block";
+
 }
+function downloadCSV() {
+  if (!window.breakdownData || !breakdownData.length) {
+    alert("Please generate the breakdown first.");
+    return;
+  }
+
+  let csv = "Month,EMI,Interest,Principal,Balance\n";
+
+  breakdownData.forEach(row => {
+    csv += `${row.month},${Math.round(row.emi)},${Math.round(row.interest)},${Math.round(row.principal)},${Math.round(row.balance)}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "emi-breakdown.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 </script>
 
 </body>
