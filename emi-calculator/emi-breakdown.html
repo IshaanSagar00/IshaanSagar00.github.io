@@ -162,8 +162,8 @@
   <button onclick="generateBreakdown()">Generate Monthly Breakdown</button>
 
   <div id="downloadActions" class="download-actions">
-  <button onclick="downloadCSV()">⬇ Download CSV</button>
-  <button onclick="downloadExcel()">⬇ Download Excel</button>
+  <button onclick="downloadCSV()">⬇ Download EMI Breakdown (CSV) </button>
+  
   </div>
 
 
@@ -312,28 +312,7 @@ function downloadCSV() {
   a.click();
   document.body.removeChild(a);
 }
-function downloadExcel() {
-  if (!window.breakdownData || !breakdownData.length) {
-    alert("Please generate the breakdown first.");
-    return;
-  }
 
-  let csv = "Month,EMI,Interest,Principal,Balance\n";
-
-  breakdownData.forEach(row => {
-    csv += `${row.month},${Math.round(row.emi)},${Math.round(row.interest)},${Math.round(row.principal)},${Math.round(row.balance)}\n`;
-  });
-
-  const blob = new Blob([csv], { type: "application/vnd.ms-excel" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "emi-breakdown.xlsx"; // 👈 Excel filename
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
 
 </script>
 
