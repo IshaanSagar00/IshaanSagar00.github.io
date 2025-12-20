@@ -108,7 +108,14 @@
     <h1>EMI Calculator</h1>
 
     <label>Loan Amount (₹)</label>
-    <input type="number" id="loan" placeholder="e.g. 500000" />
+    <input
+  type="text"
+  id="loan"
+  placeholder="e.g. 5,00,000"
+  inputmode="numeric"
+  pattern="[0-9,]*"
+/>
+
 
     <label>Interest Rate (% per year)</label>
     <input type="number" id="rate" placeholder="e.g. 9" />
@@ -160,8 +167,29 @@
 
 
   <script>
+   
+      function formatIndianInput(value) {
+         value = value.replace(/,/g, "").replace(/\D/g, "");
+         if (!value) return "";
+
+          let lastThree = value.slice(-3);
+          let otherNumbers = value.slice(0, -3);
+
+          if (otherNumbers !== "") {
+          lastThree = "," + lastThree;
+       }
+
+      return otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+      }
+
+// LIVE formatting while typing
+   document.getElementById("loan").addEventListener("input", function (e) {
+     const raw = e.target.value.replace(/,/g, "");
+     e.target.value = formatIndianInput(raw);
+});
     function calculateEMI() {
-      let P = document.getElementById("loan").value;
+      let P = Number(document.getElementById("loan").value.replace(/,/g, ""));
+
       let R = document.getElementById("rate").value / 12 / 100;
       let N = document.getElementById("time").value * 12;
 
@@ -175,9 +203,14 @@
       let interest = totalPayable - P;
 
       document.getElementById("result").innerHTML = `
-        <strong>Monthly EMI:</strong> ₹${EMI.toFixed(0)}<br><br>
-        <strong>Total Interest:</strong> ₹${interest.toFixed(0)}<br>
-        <strong>Total Payable:</strong> ₹${totalPayable.toFixed(0)}
+        <strong>Monthly EMI:</strong> ₹${new Intl.NumberFormat("en-IN").format(Math.round(EMI))}
+<br><br>
+        <strong>Total Interest:</strong>
+₹${new Intl.NumberFormat("en-IN").format(Math.round(interest))}
+
+<strong>Total Amount:</strong>
+₹${new Intl.NumberFormat("en-IN").format(Math.round(totalPayable))}
+
       `;
     }
   </script>
