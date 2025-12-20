@@ -157,9 +157,32 @@
 function formatINR(num) {
   return new Intl.NumberFormat("en-IN").format(Math.round(num));
 }
+function formatIndianInput(value) {
+  value = value.replace(/,/g, "").replace(/\D/g, "");
+  if (!value) return "";
+
+  let lastThree = value.slice(-3);
+  let otherNumbers = value.slice(0, -3);
+
+  if (otherNumbers !== "") {
+    lastThree = "," + lastThree;
+  }
+
+  return (
+    otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree
+  );
+}
+
+document.getElementById("loan").addEventListener("input", function (e) {
+  const raw = e.target.value.replace(/,/g, "");
+  e.target.value = formatIndianInput(raw);
+});
 
 function generateBreakdown() {
-  const P = Number(document.getElementById("loan").value);
+  const P = Number(
+  document.getElementById("loan").value.replace(/,/g, "")
+);
+
   const annualRate = Number(document.getElementById("rate").value);
   const tenureValue = Number(document.getElementById("tenure").value);
   const tenureType = document.getElementById("tenureType").value;
