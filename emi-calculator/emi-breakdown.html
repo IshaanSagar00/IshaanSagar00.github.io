@@ -139,6 +139,12 @@
   </div>
 
   <button onclick="generateBreakdown()">Generate Monthly Breakdown</button>
+  <button id="downloadCsvBtn"
+        onclick="downloadCSV()"
+        style="display:none; margin-top:10px; background:#16a34a; color:#fff; padding:10px 14px; border:none; border-radius:6px; cursor:pointer;">
+     ⬇ Download Monthly EMI Breakdown (CSV)
+  </button>
+
 
   <div id="table"></div>
 
@@ -198,6 +204,9 @@ function generateBreakdown() {
 
   const EMI = (P * R * Math.pow(1 + R, N)) / (Math.pow(1 + R, N) - 1);
 
+  window.breakdownData = [];
+
+
   let balance = P;
   let currentDate = new Date(start + "-01");
   const today = new Date();
@@ -226,6 +235,15 @@ function generateBreakdown() {
     const isCurrent =
       currentDate.getMonth() === today.getMonth() &&
       currentDate.getFullYear() === today.getFullYear();
+
+    breakdownData.push({
+     month: label,
+     emi: EMI,
+     interest: interest,
+     principal: principal,
+     balance: Math.max(balance, 0)
+    });
+
 
     html += `
       <tr class="${isCurrent ? 'current' : ''}">
