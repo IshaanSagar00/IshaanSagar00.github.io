@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EMI Monthly Breakdown Calculator | CalcWorld</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index, follow" />
+  <meta name="description" content="Calculate month-wise EMI breakup including principal, interest and remaining balance." />
+  <link rel="canonical" href="https://calcworld.in/emi-calculator/emi-breakdown.html" />
+</head>
+
+<body style="font-family:Arial,sans-serif;background:#f6f7f9;margin:0;padding:0;">
+
+  <main style="max-width:900px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;">
+    <h1>EMI Monthly Breakdown</h1>
+    <p>For users whose EMI is already running.</p>
+
+    <label>Loan Amount (₹)</label><br>
+    <input type="number" id="loan" placeholder="e.g. 500000"><br><br>
+
+    <label>Interest Rate (% per year)</label><br>
+    <input type="number" id="rate" placeholder="e.g. 9"><br><br>
+
+    <label>Total Loan Tenure</label><br>
+    <input type="number" id="tenure" placeholder="e.g. 20">
+    <select id="tenureType">
+      <option value="years">Years</option>
+      <option value="months">Months</option>
+    </select><br><br>
+
+    <label>EMI Start Month</label><br>
+    <input type="month" id="startMonth"><br><br>
+
+    <button onclick="generateTable()" style="padding:10px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;">
+      Generate Monthly Breakdown
+    </button>
+
+    <div id="table" style="margin-top:30px;"></div>
+  </main>
+
+  <footer style="text-align:center;padding:20px;color:#666;">
+    <a href="/emi-calculator/">EMI Calculator</a> |
+    <a href="/privacy-policy.html">Privacy Policy</a> |
+    <a href="/terms.html">Terms & Conditions</a>
+  </footer>
+
+<script>
+function generateTable() {
+  const P = Number(document.getElementById("loan").value);
+  const rate = Number(document.getElementById("rate").value) / 12 / 100;
+  let N = Number(document.getElementById("tenure").value);
+
+  if (document.getElementById("tenureType").value === "years") {
+    N = N * 12;
+  }
+
+  if (!P || !rate || !N) {
+    document.getElementById("table").innerHTML = "Please enter all values.";
+    return;
+  }
+
+  const EMI = (P * rate * Math.pow(1 + rate, N)) / (Math.pow(1 + rate, N) - 1);
+  let balance = P;
+
+  let html = `
+    <table border="1" cellpadding="8" cellspacing="0" width="100%">
+      <tr>
+        <th>Month</th>
+        <th>EMI</th>
+        <th>Interest</th>
+        <th>Principal</th>
+        <th>Balance</th>
+      </tr>
+  `;
+
+  for (let i = 1; i <= N; i++) {
+    const interest = balance * rate;
+    const principal = EMI - interest;
+    balance -= principal;
+
+    html += `
+      <tr>
+        <td>${i}</td>
+        <td>₹${EMI.toFixed(0)}</td>
+        <td>₹${interest.toFixed(0)}</td>
+        <td>₹${principal.toFixed(0)}</td>
+        <td>₹${Math.max(balance,0).toFixed(0)}</td>
+      </tr>
+    `;
+  }
+
+  html += "</table>";
+  document.getElementById("table").innerHTML = html;
+}
+</script>
+
+</body>
+</html>
