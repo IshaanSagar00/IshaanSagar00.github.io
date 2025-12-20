@@ -2,68 +2,184 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>EMI Monthly Breakdown Calculator | CalcWorld</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="index, follow" />
-  <meta name="description" content="Calculate month-wise EMI breakup including principal, interest and remaining balance." />
-  <link rel="canonical" href="https://calcworld.in/emi-calculator/emi-breakdown.html" />
+  <title>Monthly EMI Breakdown | CalcWorld</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="View month-wise EMI breakdown with interest, principal and remaining balance. Designed for running EMIs." />
+  <link rel="canonical" href="https://calcworld.in/emi-calculator/breakdown.html" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f7fb;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .card {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 12px;
+      font-size: 16px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1e4fd8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: right;
+    }
+
+    th {
+      background: #f1f5f9;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    tr.current {
+      background: #e0f2fe;
+      font-weight: bold;
+    }
+
+    .note {
+      margin-top: 15px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    footer {
+      margin-top: 25px;
+      text-align: center;
+      font-size: 13px;
+    }
+  </style>
 </head>
 
-<body style="font-family:Arial,sans-serif;background:#f6f7f9;margin:0;padding:0;">
+<body>
 
-  <main style="max-width:900px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;">
-    <h1>EMI Monthly Breakdown</h1>
-    <p>For users whose EMI is already running.</p>
+<div class="card">
+  <h1>Monthly EMI Breakdown</h1>
 
-    <label>Loan Amount (₹)</label><br>
-    <input type="number" id="loan" placeholder="e.g. 500000"><br><br>
+  <div class="grid">
+    <div>
+      <label>Loan Amount (₹)</label>
+      <input type="number" id="loan" placeholder="e.g. 2000000">
+    </div>
 
-    <label>Interest Rate (% per year)</label><br>
-    <input type="number" id="rate" placeholder="e.g. 9"><br><br>
+    <div>
+      <label>Interest Rate (% per year)</label>
+      <input type="number" id="rate" placeholder="e.g. 10.4">
+    </div>
 
-    <label>Total Loan Tenure</label><br>
-    <input type="number" id="tenure" placeholder="e.g. 20">
-    <select id="tenureType">
-      <option value="years">Years</option>
-      <option value="months">Months</option>
-    </select><br><br>
+    <div>
+      <label>Total Loan Tenure</label>
+      <div style="display:flex; gap:8px;">
+        <input type="number" id="tenure" placeholder="e.g. 3">
+        <select id="tenureType">
+          <option value="years">Years</option>
+          <option value="months">Months</option>
+        </select>
+      </div>
+    </div>
 
-    <label>EMI Start Month</label><br>
-    <input type="month" id="startMonth"><br><br>
+    <div>
+      <label>EMI Start Month</label>
+      <input type="month" id="startMonth">
+    </div>
+  </div>
 
-    <button onclick="generateTable()" style="padding:10px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;">
-      Generate Monthly Breakdown
-    </button>
+  <button onclick="generateBreakdown()">Generate Monthly Breakdown</button>
 
-    <div id="table" style="margin-top:30px;"></div>
-  </main>
+  <div id="table"></div>
 
-  <footer style="text-align:center;padding:20px;color:#666;">
-    <a href="/emi-calculator/">EMI Calculator</a> |
+  <div class="note">
+    💡 Tip: Scroll to the highlighted row to see your current month and remaining balance.
+  </div>
+
+  <footer>
+    <a href="/emi-calculator/">Back to EMI Calculator</a> |
     <a href="/privacy-policy.html">Privacy Policy</a> |
     <a href="/terms.html">Terms & Conditions</a>
   </footer>
+</div>
 
 <script>
-function generateTable() {
+function formatINR(num) {
+  return new Intl.NumberFormat("en-IN").format(Math.round(num));
+}
+
+function generateBreakdown() {
   const P = Number(document.getElementById("loan").value);
-  const rate = Number(document.getElementById("rate").value) / 12 / 100;
-  let N = Number(document.getElementById("tenure").value);
+  const annualRate = Number(document.getElementById("rate").value);
+  const tenureValue = Number(document.getElementById("tenure").value);
+  const tenureType = document.getElementById("tenureType").value;
+  const start = document.getElementById("startMonth").value;
 
-  if (document.getElementById("tenureType").value === "years") {
-    N = N * 12;
-  }
-
-  if (!P || !rate || !N) {
-    document.getElementById("table").innerHTML = "Please enter all values.";
+  if (!P || !annualRate || !tenureValue || !start) {
+    document.getElementById("table").innerHTML = "Please fill all fields.";
     return;
   }
 
-  const EMI = (P * rate * Math.pow(1 + rate, N)) / (Math.pow(1 + rate, N) - 1);
+  const N = tenureType === "years" ? tenureValue * 12 : tenureValue;
+  const R = annualRate / 12 / 100;
+
+  const EMI = (P * R * Math.pow(1 + R, N)) / (Math.pow(1 + R, N) - 1);
+
   let balance = P;
+  let currentDate = new Date(start + "-01");
+  const today = new Date();
 
   let html = `
-    <table border="1" cellpadding="8" cellspacing="0" width="100%">
+    <table>
       <tr>
         <th>Month</th>
         <th>EMI</th>
@@ -74,19 +190,30 @@ function generateTable() {
   `;
 
   for (let i = 1; i <= N; i++) {
-    const interest = balance * rate;
+    const interest = balance * R;
     const principal = EMI - interest;
     balance -= principal;
 
+    const label = currentDate.toLocaleString("en-IN", {
+      month: "short",
+      year: "numeric"
+    });
+
+    const isCurrent =
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getFullYear() === today.getFullYear();
+
     html += `
-      <tr>
-        <td>${i}</td>
-        <td>₹${EMI.toFixed(0)}</td>
-        <td>₹${interest.toFixed(0)}</td>
-        <td>₹${principal.toFixed(0)}</td>
-        <td>₹${Math.max(balance,0).toFixed(0)}</td>
+      <tr class="${isCurrent ? 'current' : ''}">
+        <td>${label}</td>
+        <td>₹${formatINR(EMI)}</td>
+        <td>₹${formatINR(interest)}</td>
+        <td>₹${formatINR(principal)}</td>
+        <td>₹${formatINR(Math.max(balance, 0))}</td>
       </tr>
     `;
+
+    currentDate.setMonth(currentDate.getMonth() + 1);
   }
 
   html += "</table>";
