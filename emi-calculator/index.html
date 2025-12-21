@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>EMI Calculator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body { font-family: Arial, sans-serif; background:#f4f6f8; }
 .container {
@@ -69,34 +70,45 @@ th { background:#f0f0f0; }
 <div class="small" onclick="toggleAdvanced()">▶ Advanced Prepayment Options</div>
 
 <div id="advancedBox" class="box" style="display:none;">
+
   <b>Choose Strategy</b>
 
-  <div class="strategy active" onclick="setMode('lump')" id="lumpBox">
+  <div class="strategy active" id="lumpBox" onclick="setMode('lump')">
     Lump Sum Prepayment
   </div>
 
-  <div class="strategy" onclick="setMode('emi')" id="emiBox">
+  <div class="strategy" id="emiBox" onclick="setMode('emi')">
     EMI Increase Strategy
   </div>
 
+  <!-- LUMP SUM -->
   <div id="lumpFields">
     <label>Lump Sum Amount (₹)</label>
     <input type="number" id="lumpAmount" placeholder="e.g. 50000">
 
     <label>Frequency</label>
     <select id="lumpFreq">
+      <option value="1">One-time only</option>
       <option value="3">Every 3 months</option>
       <option value="6">Every 6 months</option>
       <option value="12">Every 12 months</option>
     </select>
   </div>
 
+  <!-- EMI INCREASE -->
   <div id="emiFields" style="display:none;">
-    <label>Increase %</label>
-    <input type="number" id="emiPercent" placeholder="e.g. 10">
+    <label>Increase Type</label>
+    <select id="emiType">
+      <option value="percent">Percentage (%)</option>
+      <option value="amount">Fixed Amount (₹)</option>
+    </select>
+
+    <label>Increase Value</label>
+    <input type="number" id="emiValue" placeholder="e.g. 10 or 5000">
 
     <label>Frequency</label>
     <select id="emiFreq">
+      <option value="1">One-time only</option>
       <option value="3">Every 3 months</option>
       <option value="6">Every 6 months</option>
       <option value="12">Every 12 months</option>
@@ -108,10 +120,32 @@ th { background:#f0f0f0; }
       <option value="1">After 1 Frequency</option>
     </select>
   </div>
+
+  <!-- EDUCATION -->
+  <div id="eduBox" class="result">
+    <b>How It Works</b><br><br>
+    Extra EMI → Principal reduces faster → Less interest accrues → Tenure decreases
+    <br><br>
+
+    <b>6 Core Advantages</b>
+    <ol>
+      <li>Dramatic interest savings (especially when started early)</li>
+      <li>Accelerated debt freedom (months earlier payoff)</li>
+      <li>Compounding benefit (each payment amplifies the next)</li>
+      <li>Flexible approach options (lump sums or progressive increases)</li>
+      <li>Interest rate advantage (you outpace the interest charge)</li>
+      <li>Psychological win (visible financial discipline)</li>
+    </ol>
+
+    <b>Core Principle:</b><br>
+    More principal today = Less interest tomorrow = Earlier freedom
+  </div>
+
 </div>
 
 <button onclick="calculate()">Calculate</button>
 <div id="output"></div>
+
 </div>
 
 <script>
@@ -121,6 +155,7 @@ function toggleAdvanced(){
   advanced=!advanced;
   advancedBox.style.display=advanced?"block":"none";
 }
+
 function setMode(m){
   mode=m;
   lumpBox.classList.toggle("active",m==="lump");
@@ -128,6 +163,7 @@ function setMode(m){
   lumpFields.style.display=m==="lump"?"block":"none";
   emiFields.style.display=m==="emi"?"block":"none";
 }
+
 function fmt(n){ return n.toLocaleString("en-IN"); }
 
 loan.addEventListener("input",e=>{
@@ -139,16 +175,17 @@ function calculate(){
   const P=+loan.value.replace(/,/g,'');
   const r=+rate.value/12/100;
   const N=+years.value*12;
-  if(!P||!r||!N){ alert("Fill all fields"); return; }
+
+  if(!P||!r||!N){ alert("Fill all values"); return; }
 
   const EMI=Math.round(P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1));
 
-  // BASE LOAN
+  // BASE
   let bal=P, baseInterest=0;
-  for(let m=1;m<=N;m++){
-    let i=bal*r;
-    baseInterest+=i;
-    bal-=EMI-i;
+  for(let i=1;i<=N;i++){
+    let interest=bal*r;
+    baseInterest+=interest;
+    bal-=EMI-interest;
   }
 
   if(!advanced){
@@ -161,43 +198,56 @@ function calculate(){
     return;
   }
 
-  // ADVANCED
-  let bal2=P, interest2=0, m=0;
-  let curEMI=EMI;
+  // ADVANCED SIMULATION
+  let bal2=P, interest2=0, m=0, curEMI=EMI;
+  let lumpDone=false, emiDone=false;
 
   const lumpAmt=+lumpAmount.value||0;
   const lumpF=+lumpFreq.value;
-  const emiPct=(+emiPercent.value||0)/100;
+
+  const type=emiType.value;
+  const val=+emiValue.value||0;
   const emiF=+emiFreq.value;
   const start=+emiStart.value;
 
   while(bal2>0 && m<600){
     m++;
 
-    if(mode==="lump" && m%lumpF===0){
-      bal2=Math.max(0,bal2-lumpAmt);
-    }
-
-    if(mode==="emi"){
-      let startMonth=start===0?1:emiF+1;
-      if(m>=startMonth && (m-startMonth)%emiF===0){
-        curEMI=Math.round(curEMI*(1+emiPct));
+    // LUMP SUM
+    if(mode==="lump" && lumpAmt>0){
+      if(lumpF===1 && !lumpDone){
+        bal2-=lumpAmt; lumpDone=true;
+      }
+      else if(lumpF>1 && m%lumpF===0){
+        bal2-=lumpAmt;
       }
     }
 
-    let i=bal2*r;
-    let p=Math.min(curEMI-i,bal2);
-    interest2+=i;
-    bal2-=p;
-  }
+    // EMI INCREASE
+    if(mode==="emi" && val>0){
+      let startMonth = start===0 ? 1 : emiF+1;
+      if(m>=startMonth){
+        if(emiF===1 && !emiDone){
+          curEMI += type==="percent" ? curEMI*(val/100) : val;
+          emiDone=true;
+        }
+        else if(emiF>1 && (m-startMonth)%emiF===0){
+          curEMI += type==="percent" ? curEMI*(val/100) : val;
+        }
+      }
+    }
 
-  const saved=Math.round(baseInterest-interest2);
+    let interest=bal2*r;
+    let principal=Math.min(curEMI-interest,bal2);
+    interest2+=interest;
+    bal2-=principal;
+  }
 
   output.innerHTML=`
   <div class="result">
     <b>Original EMI:</b> ₹${fmt(EMI)}<br>
     <b>New Tenure:</b> ${m} months<br>
-    <b>Interest Saved:</b> ₹${fmt(saved)}
+    <b>Interest Saved:</b> ₹${fmt(Math.round(baseInterest-interest2))}
   </div>
 
   <table>
