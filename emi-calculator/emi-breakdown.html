@@ -147,6 +147,7 @@ tr.current{
     <option value="custom">From Custom Month</option>
   </select>
 
+  <!-- HIDDEN BY DEFAULT -->
   <div id="emiCustomDate" class="hidden" style="display:flex;gap:6px;">
     <select id="emiStartMonth"></select>
     <select id="emiStartYear"></select>
@@ -192,6 +193,7 @@ function fillMonthYear(m,y){
   y.innerHTML="";
   for(let i=cy;i<=cy+30;i++) y.innerHTML+=`<option>${i}</option>`;
 }
+
 fillMonthYear(startMonth,startYear);
 fillMonthYear(emiStartMonth,emiStartYear);
 
@@ -204,9 +206,14 @@ emiStartType.onchange=()=>{
   emiCustomDate.classList.toggle("hidden",emiStartType.value!=="custom");
 };
 
+// ENSURE HIDDEN ON LOAD
+document.addEventListener("DOMContentLoaded",()=>{
+  emiCustomDate.classList.add("hidden");
+});
+
 loan.oninput=e=>{
   let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
-  if(!v)return e.target.value="";
+  if(!v){e.target.value="";return;}
   let r=v.slice(-3),l=v.slice(0,-3);
   e.target.value=l.replace(/\B(?=(\d{2})+(?!\d))/g,",")+(l?","+r:r);
 };
@@ -218,7 +225,8 @@ function generate(){
   let r=+rate.value/12/100;
   let t=+tenure.value;
   let N=tenureType.value==="years"?t*12:t;
-  if(!P||!r||!N){alert("Fill all fields");return}
+
+  if(!P||!r||!N){alert("Fill all fields");return;}
 
   let EMI=P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
   let bal=P,balA=P,baseI=0,advI=0;
@@ -242,7 +250,6 @@ function generate(){
     let key=date.getFullYear()*12+date.getMonth();
 
     let i=bal*r;baseI+=i;bal-=EMI-i;
-
     let extra=0;
 
     if(strategy.value==="emi"&&emiValue.value&&key>=emiStartKey){
@@ -252,7 +259,7 @@ function generate(){
       ){
         curEMI=emiType.value==="percent"
           ?curEMI*(1+emiValue.value/100)
-          :curEMI+ +emiValue.value;
+          :curEMI+Number(emiValue.value);
       }
     }
 
