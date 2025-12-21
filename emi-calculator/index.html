@@ -2,100 +2,60 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Advanced EMI Calculator</title>
+<title>EMI Calculator (Clean)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background:#f4f6f8;
-}
+body { font-family: Arial, sans-serif; background:#f4f6f8; }
 .container {
-  max-width:420px;
-  margin:40px auto;
-  background:#fff;
-  padding:22px;
-  border-radius:10px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  max-width:420px; margin:40px auto; background:#fff;
+  padding:22px; border-radius:10px;
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
 }
-h1 {
-  text-align:center;
-  margin-bottom:20px;
-}
-label {
-  font-weight:bold;
-  margin-top:14px;
-  display:block;
-}
+h1 { text-align:center; }
+label { font-weight:bold; margin-top:14px; display:block; }
 input, select {
-  width:100%;
-  padding:10px;
-  margin-top:6px;
-  border-radius:6px;
-  border:1px solid #ccc;
+  width:100%; padding:10px; margin-top:6px;
+  border-radius:6px; border:1px solid #ccc;
 }
 button {
-  width:100%;
-  margin-top:20px;
-  padding:12px;
-  background:#2563eb;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  font-size:16px;
-  cursor:pointer;
+  width:100%; margin-top:18px; padding:12px;
+  background:#2563eb; color:#fff; border:none;
+  border-radius:6px; font-size:16px; cursor:pointer;
 }
 .small-link {
-  font-size:13px;
-  color:#2563eb;
-  cursor:pointer;
-  margin-top:12px;
-  display:inline-block;
+  font-size:13px; color:#2563eb; cursor:pointer;
+  margin-top:12px; display:inline-block;
 }
 .box {
-  margin-top:14px;
-  padding:14px;
-  border:1px solid #ddd;
-  border-radius:6px;
+  margin-top:14px; padding:14px;
+  border:1px solid #ddd; border-radius:6px;
 }
 .strategy {
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:6px;
-  margin-bottom:10px;
+  padding:10px; border:1px solid #ccc;
+  border-radius:6px; margin-bottom:10px;
   cursor:pointer;
 }
 .strategy.active {
-  border-color:#2563eb;
-  background:#f1f5ff;
+  border-color:#2563eb; background:#f1f5ff;
 }
 .result {
-  margin-top:18px;
-  background:#f1f5ff;
-  padding:14px;
-  border-radius:6px;
+  margin-top:18px; background:#f1f5ff;
+  padding:14px; border-radius:6px;
 }
 .dark-box {
-  background:#111;
-  color:#fff;
-  padding:16px;
-  border-radius:8px;
+  background:#111; color:#fff;
+  padding:16px; border-radius:8px;
   margin-top:16px;
 }
 table {
-  width:100%;
-  border-collapse:collapse;
-  margin-top:12px;
+  width:100%; border-collapse:collapse; margin-top:12px;
 }
 th, td {
-  border:1px solid #ccc;
-  padding:8px;
-  font-size:14px;
-  text-align:center;
+  border:1px solid #ccc; padding:8px;
+  font-size:14px; text-align:center;
 }
-th {
-  background:#f0f0f0;
-}
+th { background:#f0f0f0; }
 </style>
 </head>
 
@@ -104,7 +64,7 @@ th {
 <h1>EMI Calculator</h1>
 
 <label>Loan Amount (₹)</label>
-<input type="text" id="loan" placeholder="e.g. 17,50,000">
+<input type="text" id="loan" placeholder="17,50,000">
 
 <label>Interest Rate (% per year)</label>
 <input type="number" id="rate" value="10">
@@ -112,146 +72,168 @@ th {
 <label>Loan Tenure (years)</label>
 <input type="number" id="years" value="3">
 
-<div class="small-link" onclick="toggleAdvanced()">▶ Advanced Prepayment Options (optional)</div>
+<div class="small-link" onclick="toggleAdvanced()">
+▶ Advanced Prepayment Options (optional)
+</div>
 
+<!-- ADVANCED -->
 <div id="advancedBox" class="box" style="display:none;">
   <b>Choose Strategy</b>
 
-  <div class="strategy active" id="emiInc" onclick="selectStrategy('emi')">
-    <b>Permanent EMI Increase</b><br>
-    Increase EMI by % at fixed intervals
+  <div class="strategy active" onclick="setMode('lump')" id="lumpBox">
+    <b>Lump Sum Prepayment</b><br>
+    Extra fixed payment at intervals. EMI unchanged.
   </div>
 
-  <label>Increase %</label>
-  <input type="number" id="incPercent" value="10">
+  <div class="strategy" onclick="setMode('emi')" id="emiBox">
+    <b>Permanent EMI Increase</b><br>
+    EMI increases stepwise by %.
+  </div>
 
-  <label>Frequency</label>
-  <select id="frequency">
-    <option value="3">Every 3 months</option>
-    <option value="6" selected>Every 6 months</option>
-    <option value="12">Every 12 months</option>
-  </select>
+  <div id="lumpFields">
+    <label>Extra Amount (₹)</label>
+    <input type="number" id="lumpAmount" value="50000">
 
-  <label>Start Increasing EMI</label>
-  <select id="startMode">
-    <option value="0">From Month 1</option>
-    <option value="1">After 1 Frequency</option>
-  </select>
+    <label>Frequency</label>
+    <select id="lumpFreq">
+      <option value="3">Every 3 months</option>
+      <option value="6" selected>Every 6 months</option>
+      <option value="12">Every 12 months</option>
+    </select>
+  </div>
+
+  <div id="emiFields" style="display:none;">
+    <label>Increase %</label>
+    <input type="number" id="emiPercent" value="10">
+
+    <label>Frequency</label>
+    <select id="emiFreq">
+      <option value="3">Every 3 months</option>
+      <option value="6" selected>Every 6 months</option>
+      <option value="12">Every 12 months</option>
+    </select>
+
+    <label>Start Increase</label>
+    <select id="emiStart">
+      <option value="0">From Month 1</option>
+      <option value="1">After 1 Frequency</option>
+    </select>
+  </div>
 </div>
 
 <button onclick="calculate()">Calculate EMI</button>
-
 <div id="output"></div>
 </div>
 
 <script>
-function formatINR(n){
-  return n.toLocaleString("en-IN");
-}
-
-document.getElementById("loan").addEventListener("input", function(e){
-  let v = e.target.value.replace(/,/g,'').replace(/\D/g,'');
-  if(!v) return;
-  e.target.value = formatINR(Number(v));
-});
+let mode = "normal";
 
 function toggleAdvanced(){
-  let b = document.getElementById("advancedBox");
-  b.style.display = b.style.display === "none" ? "block" : "none";
+  const box = document.getElementById("advancedBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
+  mode = box.style.display === "block" ? "lump" : "normal";
 }
 
-function calculate(){
-  let P = Number(document.getElementById("loan").value.replace(/,/g,''));
-  let r = Number(document.getElementById("rate").value)/12/100;
-  let N = Number(document.getElementById("years").value)*12;
+function setMode(m){
+  mode = m;
+  document.getElementById("lumpBox").classList.toggle("active", m==="lump");
+  document.getElementById("emiBox").classList.toggle("active", m==="emi");
+  document.getElementById("lumpFields").style.display = m==="lump"?"block":"none";
+  document.getElementById("emiFields").style.display = m==="emi"?"block":"none";
+}
 
-  if(!P || !r || !N){
-    alert("Fill all values");
+function format(n){ return n.toLocaleString("en-IN"); }
+
+document.getElementById("loan").addEventListener("input", e=>{
+  let v=e.target.value.replace(/,/g,'').replace(/\D/g,'');
+  if(v) e.target.value=format(Number(v));
+});
+
+function calculate(){
+  const P = Number(loan.value.replace(/,/g,''));
+  const r = rate.value/12/100;
+  const N = years.value*12;
+  if(!P||!r||!N) return alert("Fill all values");
+
+  // BASE EMI
+  const EMI = Math.round(P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1));
+
+  let bal=P, baseInterest=0;
+  for(let m=1;m<=N;m++){
+    let i=bal*r, p=EMI-i;
+    baseInterest+=i; bal-=p;
+  }
+
+  if(mode==="normal"){
+    output.innerHTML=`
+    <div class="result">
+      <b>Monthly EMI:</b> ₹${format(EMI)}<br>
+      <b>Tenure:</b> ${N} months<br>
+      <b>Total Interest:</b> ₹${format(Math.round(baseInterest))}<br>
+      <b>Total Payable:</b> ₹${format(Math.round(P+baseInterest))}
+    </div>`;
     return;
   }
 
-  let EMI = (P*r*Math.pow(1+r,N))/(Math.pow(1+r,N)-1);
-  EMI = Math.round(EMI);
+  // ADVANCED SIMULATION
+  let bal2=P, interest2=0, m=0, curEMI=EMI;
+  const lumpAmt=Number(lumpAmount?.value||0);
+  const lumpFreq=Number(lumpFreq?.value||0);
+  const emiPct=Number(emiPercent?.value||0)/100;
+  const emiFreq=Number(emiFreq?.value||0);
+  const emiStart=Number(emiStart?.value||0);
 
-  // baseline
-  let bal = P;
-  let interestBase = 0;
-  for(let m=1;m<=N;m++){
-    let i = bal*r;
-    let p = EMI - i;
-    interestBase += i;
-    bal -= p;
-  }
+  while(bal2>0 && m<600){
+    m++;
 
-  // advanced
-  let inc = Number(document.getElementById("incPercent").value)/100;
-  let freq = Number(document.getElementById("frequency").value);
-  let startMode = Number(document.getElementById("startMode").value);
-
-  let bal2 = P;
-  let interestAdv = 0;
-  let curEMI = EMI;
-  let baseEMI = EMI;
-  let month = 0;
-
-  while(bal2 > 0 && month < 600){
-    month++;
-
-    let eligibleMonth = startMode === 0 ? month : month - freq;
-    if(eligibleMonth > 0 && eligibleMonth % freq === 0){
-      let steps = Math.floor(eligibleMonth / freq);
-      curEMI = Math.round(baseEMI * (1 + steps * inc));
+    if(mode==="lump" && m%lumpFreq===0){
+      bal2-=lumpAmt;
     }
 
-    let i = bal2*r;
-    let p = curEMI - i;
-    if(p > bal2) p = bal2;
+    if(mode==="emi"){
+      const trigger = emiStart===0 ? m : m-emiFreq;
+      if(trigger>0 && trigger%emiFreq===0){
+        curEMI = Math.round(EMI*(1+(Math.floor(trigger/emiFreq)*emiPct)));
+      }
+    }
 
-    interestAdv += i;
-    bal2 -= p;
+    let i=bal2*r;
+    let p=curEMI-i;
+    if(p>bal2) p=bal2;
+    interest2+=i; bal2-=p;
   }
 
-  let interestSaved = Math.round(interestBase - interestAdv);
+  const saved=Math.round(baseInterest-interest2);
 
-  document.getElementById("output").innerHTML = `
+  output.innerHTML=`
   <div class="result">
-    <b>Original EMI:</b> ₹${formatINR(EMI)}<br>
+    <b>Original EMI:</b> ₹${format(EMI)}<br>
     <b>Original Tenure:</b> ${N} months<br>
-    <b>Total Interest:</b> ₹${formatINR(Math.round(interestBase))}
+    <b>Total Interest:</b> ₹${format(Math.round(baseInterest))}
     <hr>
-    <b>New Tenure:</b> ${month} months<br>
-    <b>Interest Saved:</b> ₹${formatINR(interestSaved)}
+    <b>New Tenure:</b> ${m} months<br>
+    <b>Interest Saved:</b> ₹${format(saved)}
   </div>
 
   <table>
     <tr><th>Metric</th><th>Before</th><th>After</th><th>Saving</th></tr>
-    <tr>
-      <td>Tenure</td>
-      <td>${N} mo</td>
-      <td>${month} mo</td>
-      <td>${N-month} mo</td>
-    </tr>
-    <tr>
-      <td>Interest</td>
-      <td>₹${formatINR(Math.round(interestBase))}</td>
-      <td>₹${formatINR(Math.round(interestAdv))}</td>
-      <td>₹${formatINR(interestSaved)}</td>
-    </tr>
+    <tr><td>Tenure</td><td>${N}</td><td>${m}</td><td>${N-m}</td></tr>
+    <tr><td>Interest</td><td>₹${format(Math.round(baseInterest))}</td>
+    <td>₹${format(Math.round(interest2))}</td><td>₹${format(saved)}</td></tr>
   </table>
 
   <div class="dark-box">
     <b>Why This Works</b><br><br>
-    EMI increases accelerate principal reduction. Since interest is calculated
-    only on remaining balance, lowering principal earlier sharply cuts total interest.
+    Reducing principal earlier lowers future interest since banks
+    calculate interest only on remaining balance.
     <br><br>
     <b>Cash Flow Impact</b>
     <ul>
-      <li>EMI rises gradually, not suddenly</li>
-      <li>Loan ends ${N-month} months earlier</li>
-      <li>EMI freed earlier for investing</li>
+      <li>Loan ends ${N-m} months earlier</li>
+      <li>EMI burden ends sooner</li>
+      <li>Better long-term liquidity</li>
     </ul>
-  </div>
-  `;
+  </div>`;
 }
 </script>
 </body>
