@@ -14,7 +14,7 @@ label{font-weight:bold;font-size:14px}
 input,select{width:100%;padding:10px;margin-top:6px;font-size:14px}
 button{margin-top:15px;padding:12px;font-size:16px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer}
 .box{margin-top:20px;padding:16px;border:1px solid #ddd;border-radius:8px}
-.hidden{display:none}
+.hidden{display:none !important}
 table{width:100%;border-collapse:collapse;margin-top:25px;font-size:14px}
 th,td{border:1px solid #ddd;padding:8px;text-align:right}
 th{background:#f1f5f9}
@@ -31,18 +31,18 @@ tr.current{background:#e0f2fe;font-weight:bold}
 <div class="grid">
   <div>
     <label>Loan Amount (₹)</label>
-    <input id="loan" placeholder="17,50,000">
+    <input id="loan" value="17,50,000">
   </div>
 
   <div>
     <label>Interest Rate (% per year)</label>
-    <input type="number" id="rate">
+    <input type="number" id="rate" value="10">
   </div>
 
   <div>
     <label>Loan Tenure</label>
     <div style="display:flex;gap:6px">
-      <input type="number" id="tenure">
+      <input type="number" id="tenure" value="3">
       <select id="tenureType">
         <option value="years">Years</option>
         <option value="months">Months</option>
@@ -77,7 +77,7 @@ tr.current{background:#e0f2fe;font-weight:bold}
   </select>
 
   <label>Increase Value</label>
-  <input type="number" id="emiValue">
+  <input type="number" id="emiValue" value="10">
 
   <label>Frequency</label>
   <select id="emiFreq">
@@ -93,7 +93,7 @@ tr.current{background:#e0f2fe;font-weight:bold}
     <option value="custom">From Custom Month</option>
   </select>
 
-  <!-- CALENDAR (HIDDEN BY DEFAULT) -->
+  <!-- CUSTOM DATE (HIDDEN BY DEFAULT) -->
   <div id="emiCustomDate" class="hidden" style="display:flex;gap:6px">
     <select id="emiStartMonth"></select>
     <select id="emiStartYear"></select>
@@ -120,24 +120,26 @@ tr.current{background:#e0f2fe;font-weight:bold}
 <div id="table"></div>
 
 <div class="note">
-Disclaimer: Approximate illustration. Actual lender calculations may differ.
+Disclaimer: This is an approximate illustration. Actual lender calculations may vary.
 </div>
 </div>
 
 <script>
 const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
+// Populate months + years
 function fillMonthYear(m,y){
   m.innerHTML=months.map((x,i)=>`<option value="${i}">${x}</option>`).join("");
-  const now=new Date().getFullYear();
   y.innerHTML="";
-  for(let i=now-10;i<=now+25;i++) y.innerHTML+=`<option>${i}</option>`;
+  for(let i=1990;i<=2050;i++){
+    y.innerHTML+=`<option ${i===2025?"selected":""}>${i}</option>`;
+  }
 }
 
 fillMonthYear(startMonth,startYear);
 fillMonthYear(emiStartMonth,emiStartYear);
 
-// Indian format
+// Indian number formatting
 loan.oninput=e=>{
   let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
   if(!v){e.target.value="";return}
@@ -145,16 +147,23 @@ loan.oninput=e=>{
   e.target.value=l.replace(/\B(?=(\d{2})+(?!\d))/g,",")+(l?","+r:r);
 };
 
+// Strategy toggle
 strategy.onchange=()=>{
   emiBox.classList.toggle("hidden",strategy.value!=="emi");
   lumpBox.classList.toggle("hidden",strategy.value!=="lump");
 };
 
-// 🔥 FIX #1 — calendar toggle
+// ✅ FINAL FIX — calendar logic
 emiStartType.onchange=()=>{
-  emiCustomDate.classList.toggle("hidden",emiStartType.value!=="custom");
+  if(emiStartType.value==="custom"){
+    emiCustomDate.classList.remove("hidden");
+  }else{
+    emiCustomDate.classList.add("hidden");
+  }
 };
-emiCustomDate.classList.add("hidden"); // ensure hidden on load
+
+// Force correct state on load
+emiCustomDate.classList.add("hidden");
 
 function inr(n){return n.toLocaleString("en-IN")}
 
@@ -163,7 +172,6 @@ function generate(){
   let r=+rate.value/12/100;
   let t=+tenure.value;
   let N=tenureType.value==="years"?t*12:t;
-
   if(!P||!r||!N){alert("Fill all fields");return}
 
   let EMI=P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
@@ -177,7 +185,10 @@ function generate(){
     emiStartKey=emiStartYear.value*12+Number(emiStartMonth.value);
   }
 
-  let html=`<table><tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Extra Payment</th><th>Balance</th></tr>`;
+  let html=`<table><tr>
+  <th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Extra Payment</th><th>Balance</th>
+  </tr>`;
+
   let advEnd=0;
 
   for(let m=1;m<=N;m++){
@@ -186,14 +197,17 @@ function generate(){
 
     let extra=0;
     if(strategy.value==="emi"&&emiValue.value&&key>=emiStartKey){
-      if(emiFreq.value==="once"&&key===emiStartKey||emiFreq.value!=="once"&&(key-emiStartKey)%emiFreq.value===0){
+      if(emiFreq.value==="once"&&key===emiStartKey||
+         emiFreq.value!=="once"&&(key-emiStartKey)%emiFreq.value===0){
         curEMI=emiType.value==="percent"?curEMI*(1+emiValue.value/100):curEMI+Number(emiValue.value);
       }
     }
 
     if(strategy.value==="lump"&&lumpAmount.value){
-      if(lumpFreq.value==="once"&&m===1||lumpFreq.value!=="once"&&m%lumpFreq.value===0){
-        extra=Math.min(+lumpAmount.value,balA);balA-=extra;
+      if(lumpFreq.value==="once"&&m===1||
+         lumpFreq.value!=="once"&&m%lumpFreq.value===0){
+        extra=Math.min(+lumpAmount.value,balA);
+        balA-=extra;
       }
     }
 
@@ -207,15 +221,16 @@ function generate(){
 <td>₹${inr(Math.round(ai))}</td>
 <td>₹${inr(Math.round(p))}</td>
 <td>${extra?`₹${inr(extra)}`:"—"}</td>
-<td>₹${inr(Math.max(0,Math.round(balA)))}</td></tr>`;
+<td>₹${inr(Math.max(0,Math.round(balA)))}</td>
+</tr>`;
 
     date.setMonth(date.getMonth()+1);
   }
 
   table.innerHTML=html+"</table>";
   summary.innerHTML=`<h3>Comparison Summary</h3>
-<p><b>Remaining Tenure:</b> ${N} → ${advEnd} months (${N-advEnd} months saved)</p>
-<p><b>Interest Saved:</b> ₹${inr(Math.round(baseI-advI))}</p>`;
+  <p><b>Remaining Tenure:</b> ${N} → ${advEnd} months (${N-advEnd} months saved)</p>
+  <p><b>Interest Saved:</b> ₹${inr(Math.round(baseI-advI))}</p>`;
   summary.classList.remove("hidden");
 }
 </script>
