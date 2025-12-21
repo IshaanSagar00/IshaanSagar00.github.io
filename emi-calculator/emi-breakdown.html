@@ -1,356 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="robots" content="index, follow">
+<meta charset="UTF-8">
+<title>Monthly EMI Breakdown</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Monthly EMI Breakdown | CalcWorld</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="View month-wise EMI breakdown with interest, principal and remaining balance. Designed for running EMIs." />
-  <link rel="canonical" href="https://calcworld.in/emi-calculator/breakdown.html" />
+<style>
+body { font-family: Arial, sans-serif; background:#f6f7fb; padding:20px; }
+.card {
+  max-width:1000px; margin:auto; background:#fff;
+  padding:25px; border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+h1 { text-align:center; margin-top:0; }
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f6f7fb;
-      margin: 0;
-      padding: 20px;
-    }
-
-    .card {
-      max-width: 900px;
-      margin: auto;
-      background: #fff;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0,0,0,.08);
-    }
-
-    h1 {
-      margin-top: 0;
-      text-align: center;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    label {
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      font-size: 14px;
-    }
-
-    button {
-      margin-top: 10px;
-      padding: 12px;
-      font-size: 16px;
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #1e4fd8;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 25px;
-      font-size: 14px;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: right;
-    }
-
-    th {
-      background: #f1f5f9;
-    }
-
-    th:first-child,
-    td:first-child {
-      text-align: left;
-    }
-
-    tr.current {
-      background: #e0f2fe;
-      font-weight: bold;
-    }
-
-    .note {
-      margin-top: 15px;
-      font-size: 13px;
-      color: #555;
-    }
-
-    footer {
-      margin-top: 25px;
-      text-align: center;
-      font-size: 13px;
-    }
-    .download-actions {
-  display: none;
-  margin: 12px 0;
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:15px;
 }
 
-.download-actions button {
-  padding: 6px 12px;
-  font-size: 13px;
-  margin-right: 6px;
-  border-radius: 6px;
-  border: 1px solid #2563eb;
-  background: white;
-  color: #2563eb;
-  cursor: pointer;
+label { font-weight:bold; font-size:14px; }
+input, select {
+  width:100%; padding:10px; margin-top:5px; font-size:14px;
 }
 
-.download-actions button:hover {
-  background: #2563eb;
-  color: white;
-}
-    .summary-box {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 16px;
-  margin: 16px 0;
-  border-radius: 8px;
-}
-.summary-box h3 {
-  margin-top: 0;
+button {
+  margin-top:12px; padding:12px; font-size:16px;
+  background:#2563eb; color:#fff;
+  border:none; border-radius:6px; cursor:pointer;
 }
 
+table {
+  width:100%; border-collapse:collapse; margin-top:25px; font-size:14px;
+}
+th, td {
+  border:1px solid #ddd; padding:8px; text-align:right;
+}
+th { background:#f1f5f9; }
+th:first-child, td:first-child { text-align:left; }
+tr.current { background:#e0f2fe; font-weight:bold; }
 
-  </style>
+.box {
+  margin-top:20px; padding:15px;
+  border:1px solid #ddd; border-radius:8px;
+}
+
+.note {
+  margin-top:15px; font-size:13px; color:#555;
+  background:#fafafa; padding:10px; border-radius:6px;
+}
+
+.hidden { display:none; }
+</style>
 </head>
 
 <body>
-
 <div class="card">
-  <h1>Monthly EMI Breakdown</h1>
+<h1>Monthly EMI Breakdown (Running Loan)</h1>
 
-  <div class="grid">
-    <div>
-      <label>Loan Amount (₹)</label>
-      <input type="text" id="loan" placeholder="e.g. 10,00,000" inputmode="numeric">
-
-    </div>
-
-    <div>
-      <label>Interest Rate (% per year)</label>
-      <input type="number" id="rate" placeholder="e.g. 10.4">
-    </div>
-
-    <div>
-      <label>Total Loan Tenure</label>
-      <div style="display:flex; gap:8px;">
-        <input type="number" id="tenure" placeholder="e.g. 3">
-        <select id="tenureType">
-          <option value="years">Years</option>
-          <option value="months">Months</option>
-        </select>
-      </div>
-    </div>
-
-    <div>
-      <label>EMI Start Month</label>
-      <input type="month" id="startMonth">
-    </div>
+<div class="grid">
+  <div>
+    <label>Outstanding Loan Amount (₹)</label>
+    <input id="loan">
   </div>
-
-  <button onclick="generateBreakdown()">Generate Monthly Breakdown</button>
-
-  <div id="downloadActions" class="download-actions">
-  <button onclick="downloadCSV()">⬇ Download EMI Breakdown (CSV) </button>
-  
+  <div>
+    <label>Interest Rate (% per year)</label>
+    <input type="number" id="rate">
   </div>
-
-
-
-  <div id="loanSummary" class="summary-box" style="display:none;"></div>
-
-
-  <div id="table"></div>
-
-  <div class="note">
-    💡 Tip: Scroll to the highlighted row to see your current month and remaining balance.
+  <div>
+    <label>Remaining Tenure (months)</label>
+    <input type="number" id="months">
   </div>
+  <div>
+    <label>EMI Start Month</label>
+    <input type="month" id="startMonth">
+  </div>
+</div>
 
-  <footer>
-    <a href="/emi-calculator/">Back to EMI Calculator</a> |
-    <a href="/privacy-policy.html">Privacy Policy</a> |
-    <a href="/terms.html">Terms & Conditions</a>
-  </footer>
+<div class="box">
+<b>Advanced Options</b><br><br>
+
+<label>Strategy</label>
+<select id="strategy">
+  <option value="none">None</option>
+  <option value="emi">EMI Increase</option>
+  <option value="lump">Lump Sum</option>
+</select>
+
+<!-- EMI INCREASE -->
+<div id="emiBox" class="hidden">
+  <label>Increase Type</label>
+  <select id="emiType">
+    <option value="percent">Percentage (%)</option>
+    <option value="amount">Fixed Amount (₹)</option>
+  </select>
+
+  <label>Increase Value</label>
+  <input type="number" id="emiValue">
+
+  <label>Start Increase</label>
+  <select id="emiStart">
+    <option value="current">From Current Month</option>
+    <option value="future">From Future Month</option>
+  </select>
+
+  <input type="month" id="emiStartMonth">
+</div>
+
+<!-- LUMP SUM -->
+<div id="lumpBox" class="hidden">
+  <label>Lump Sum Amount (₹)</label>
+  <input type="number" id="lumpAmount">
+
+  <label>Frequency</label>
+  <select id="lumpFreq">
+    <option value="once">One-time</option>
+    <option value="6">Every 6 months</option>
+    <option value="12">Every 12 months</option>
+  </select>
+
+  <label>Start Month</label>
+  <input type="month" id="lumpStart">
+</div>
+</div>
+
+<button onclick="generate()">Generate Breakdown</button>
+
+<div id="summary" class="box hidden"></div>
+<div id="table"></div>
+
+<div class="note">
+Disclaimer: This calculator provides an approximate illustration.
+Actual results may vary based on lender rules and rounding.
+</div>
+
+<footer style="margin-top:20px;text-align:center;font-size:13px;">
+<a href="/emi-calculator/">← Back to EMI Calculator</a>
+</footer>
 </div>
 
 <script>
-function formatINR(num) {
-  return new Intl.NumberFormat("en-IN").format(Math.round(num));
-}
-function formatIndianInput(value) {
-  value = value.replace(/,/g, "").replace(/\D/g, "");
-  if (!value) return "";
+function inr(n){ return n.toLocaleString("en-IN"); }
 
-  let lastThree = value.slice(-3);
-  let otherNumbers = value.slice(0, -3);
+strategy.onchange = () => {
+  emiBox.classList.toggle("hidden", strategy.value!=="emi");
+  lumpBox.classList.toggle("hidden", strategy.value!=="lump");
+};
 
-  if (otherNumbers !== "") {
-    lastThree = "," + lastThree;
+function generate(){
+  const P = +loan.value.replace(/,/g,'');
+  const rate = +document.getElementById("rate").value;
+  const N = +months.value;
+  const start = startMonth.value;
+
+  if(!P||!rate||!N||!start){ alert("Fill all fields"); return; }
+
+  const r = rate/12/100;
+  const EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
+
+  let bal=P, balAdv=P;
+  let baseInterest=0, advInterest=0;
+  let curEMI=EMI;
+
+  let html=`<table>
+  <tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Balance</th></tr>`;
+
+  let date=new Date(start+"-01");
+  const today=new Date();
+  let advEndMonth=0;
+
+  for(let m=1;m<=N;m++){
+    // NORMAL
+    let i=bal*r;
+    baseInterest+=i;
+    bal-=EMI-i;
+
+    // ADVANCED
+    if(strategy.value==="emi" && emiValue.value){
+      if(emiStart.value==="current" && m===1 ||
+         emiStart.value==="future" && emiStartMonth.value &&
+         date >= new Date(emiStartMonth.value+"-01")){
+        curEMI = emiType.value==="percent"
+          ? curEMI*(1+emiValue.value/100)
+          : curEMI+Number(emiValue.value);
+      }
+    }
+
+    if(strategy.value==="lump" && lumpAmount.value && lumpStart.value){
+      if(date >= new Date(lumpStart.value+"-01")){
+        if(lumpFreq.value==="once" && m===1 ||
+           lumpFreq.value!=="once" && m%lumpFreq.value==0){
+          balAdv-=Number(lumpAmount.value);
+        }
+      }
+    }
+
+    let ai=balAdv*r;
+    advInterest+=ai;
+    let principal=Math.min(curEMI-ai,balAdv);
+    balAdv-=principal;
+
+    if(balAdv<=0 && !advEndMonth) advEndMonth=m;
+
+    const label=date.toLocaleString("en-IN",{month:"short",year:"numeric"});
+    const isCurrent=date.getMonth()===today.getMonth()&&date.getFullYear()===today.getFullYear();
+
+    html+=`
+    <tr class="${isCurrent?'current':''}">
+      <td>${label}</td>
+      <td>₹${inr(Math.round(principal+ai))}</td>
+      <td>₹${inr(Math.round(ai))}</td>
+      <td>₹${inr(Math.round(principal))}</td>
+      <td>₹${inr(Math.max(0,Math.round(balAdv)))}</td>
+    </tr>`;
+
+    date.setMonth(date.getMonth()+1);
   }
 
-  return (
-    otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree
-  );
+  html+="</table>";
+  table.innerHTML=html;
+
+  const monthsSaved=N-advEndMonth;
+  const interestSaved=baseInterest-advInterest;
+
+  summary.innerHTML=`
+  <h3>Comparison Summary</h3>
+  <p><b>Remaining Tenure:</b> ${N} → ${advEndMonth} months (${monthsSaved} months saved)</p>
+  <p><b>Remaining Interest:</b> ₹${inr(Math.round(baseInterest))} → ₹${inr(Math.round(advInterest))}</p>
+  <p><b>Interest Saved:</b> ₹${inr(Math.round(interestSaved))}</p>`;
+  summary.classList.remove("hidden");
 }
-
-document.getElementById("loan").addEventListener("input", function (e) {
-  const raw = e.target.value.replace(/,/g, "");
-  e.target.value = formatIndianInput(raw);
-});
-
-function generateBreakdown() {
-  window.breakdownData = [];
-
-  const P = Number(
-  document.getElementById("loan").value.replace(/,/g, "")
-);
-
-  const annualRate = Number(document.getElementById("rate").value);
-  const tenureValue = Number(document.getElementById("tenure").value);
-  const tenureType = document.getElementById("tenureType").value;
-  const start = document.getElementById("startMonth").value;
-
-  if (!P || !annualRate || !tenureValue || !start) {
-    document.getElementById("table").innerHTML = "Please fill all fields.";
-    return;
-  }
-
-  const N = tenureType === "years" ? tenureValue * 12 : tenureValue;
-  const R = annualRate / 12 / 100;
-
-  const EMI = (P * R * Math.pow(1 + R, N)) / (Math.pow(1 + R, N) - 1);
-
-  
-
-
-  let balance = P;
-  let currentDate = new Date(start + "-01");
-  const today = new Date();
-
-  let html = `
-    <table>
-      <tr>
-        <th>Month</th>
-        <th>EMI</th>
-        <th>Interest</th>
-        <th>Principal</th>
-        <th>Balance</th>
-      </tr>
-  `;
-   let totalInterest = 0;
-
-  for (let i = 1; i <= N; i++) {
-    const interest = balance * R;
-    totalInterest += interest;
-
-    const principal = EMI - interest;
-    balance -= principal;
-
-    const label = currentDate.toLocaleString("en-IN", {
-      month: "short",
-      year: "numeric"
-    });
-
-    const isCurrent =
-      currentDate.getMonth() === today.getMonth() &&
-      currentDate.getFullYear() === today.getFullYear();
-
-    breakdownData.push({
-     month: label,
-     emi: EMI,
-     interest: interest,
-     principal: principal,
-     balance: Math.max(balance, 0)
-    });
-
-
-    html += `
-      <tr class="${isCurrent ? 'current' : ''}">
-        <td>${label}</td>
-        <td>₹${formatINR(EMI)}</td>
-        <td>₹${formatINR(interest)}</td>
-        <td>₹${formatINR(principal)}</td>
-        <td>₹${formatINR(Math.max(balance, 0))}</td>
-      </tr>
-    `;
-
-    currentDate.setMonth(currentDate.getMonth() + 1);
-  }
-
-  html += "</table>";
-  const totalPayable = P + totalInterest;
-
-  const endDate = new Date(currentDate);
-  endDate.setMonth(endDate.getMonth() - 1);
-
-  const endLabel = endDate.toLocaleString("en-IN", {
-    month: "long",
-    year: "numeric"
-   });
-  document.getElementById("loanSummary").innerHTML = `
-    <h3>Loan Summary</h3>
-    <p><strong>Monthly EMI:</strong> ₹${formatINR(EMI)}</p>
-    <p><strong>Total Interest Payable:</strong> ₹${formatINR(totalInterest)}</p>
-    <p><strong>Total Amount Payable:</strong> ₹${formatINR(totalPayable)}</p>
-    <p><strong>Loan End Date:</strong> ${endLabel}</p>
- `;
-  document.getElementById("loanSummary").style.display = "block";
-
-
-  document.getElementById("table").innerHTML = html;
-  // ✅ SHOW DOWNLOAD BUTTONS
-  document.getElementById("downloadActions").style.display = "block";
-
-}
-function downloadCSV() {
-  if (!window.breakdownData || !breakdownData.length) {
-    alert("Please generate the breakdown first.");
-    return;
-  }
-
-  let csv = "Month,EMI,Interest,Principal,Balance\n";
-
-  breakdownData.forEach(row => {
-    csv += `${row.month},${Math.round(row.emi)},${Math.round(row.interest)},${Math.round(row.principal)},${Math.round(row.balance)}\n`;
-  });
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "emi-breakdown.csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-
 </script>
-
 </body>
 </html>
