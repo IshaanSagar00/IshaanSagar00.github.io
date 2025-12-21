@@ -2,15 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Advanced EMI Calculator | CalcWorld</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMI Calculator with Prepayment Simulator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Advanced EMI Calculator for India with lump sum and EMI increase prepayment simulator. See interest saved, tenure reduction and detailed comparison.">
+<link rel="canonical" href="https://calcworld.in/emi-calculator/">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
   font-family: Arial, sans-serif;
-  background:#f4f6fa;
+  background:#f5f6fa;
   margin:0;
 }
 .container {
@@ -22,18 +24,18 @@ body {
   box-shadow:0 6px 16px rgba(0,0,0,.1);
 }
 h1 { text-align:center; font-size:22px; }
-label { font-weight:bold; margin-top:12px; display:block; }
+label { font-weight:bold; margin-top:14px; display:block; }
 input, select {
   width:100%;
   padding:10px;
   margin-top:6px;
-  border:1px solid #ccc;
   border-radius:6px;
+  border:1px solid #ccc;
 }
 button {
   width:100%;
+  margin-top:18px;
   padding:12px;
-  margin-top:16px;
   background:#2563eb;
   color:#fff;
   border:none;
@@ -41,24 +43,24 @@ button {
   font-size:16px;
   cursor:pointer;
 }
-.toggle {
-  margin-top:12px;
+.small-toggle {
+  margin-top:10px;
   font-size:13px;
   color:#2563eb;
   cursor:pointer;
 }
-.box {
-  margin-top:12px;
+.advanced-box {
+  display:none;
   border:1px solid #ddd;
   border-radius:8px;
   padding:12px;
-  display:none;
+  margin-top:10px;
 }
 .strategy {
   border:1px solid #ddd;
   padding:10px;
   border-radius:6px;
-  margin-bottom:8px;
+  margin-top:8px;
   cursor:pointer;
 }
 .strategy.active {
@@ -66,18 +68,29 @@ button {
   background:#f1f5ff;
 }
 .result {
-  margin-top:20px;
   background:#f1f5ff;
   padding:14px;
   border-radius:8px;
+  margin-top:16px;
+}
+hr { border:none; border-top:1px solid #ddd; margin:12px 0; }
+canvas { margin-top:16px; }
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+  font-size:13px;
+}
+th, td {
+  border:1px solid #ddd;
+  padding:8px;
+  text-align:center;
+}
+th { background:#f3f4f6; }
+.footer {
+  text-align:center;
   font-size:14px;
-}
-.chartBox {
-  margin-top:20px;
-}
-.small {
-  font-size:12px;
-  color:#555;
+  margin:30px 0;
 }
 </style>
 </head>
@@ -87,54 +100,57 @@ button {
 <h1>EMI Calculator</h1>
 
 <label>Loan Amount (₹)</label>
-<input id="loan" placeholder="e.g. 17,50,000">
+<input type="text" id="loan" placeholder="e.g. 17,50,000">
 
 <label>Interest Rate (% per year)</label>
-<input id="rate" type="number" value="10">
+<input type="number" id="rate" placeholder="e.g. 10">
 
 <label>Loan Tenure (years)</label>
-<input id="tenure" type="number" value="3">
+<input type="number" id="years" placeholder="e.g. 3">
 
-<div class="toggle" onclick="toggleAdvanced()">▶ Advanced Prepayment Options (optional)</div>
+<div class="small-toggle" onclick="toggleAdvanced()">▶ Advanced Prepayment Options (optional)</div>
 
-<div id="advancedBox" class="box">
+<div class="advanced-box" id="advancedBox">
   <strong>Choose Strategy</strong>
 
-  <div class="strategy active" onclick="selectStrategy('lumpsum')" id="lumpBox">
+  <div class="strategy active" id="lumpCard" onclick="selectStrategy('lump')">
     <b>Lump Sum Prepayment</b><br>
-    <span class="small">Pay fixed extra amount at intervals to reduce principal.</span>
+    Pay fixed extra amount at intervals to reduce principal.
   </div>
 
-  <div class="strategy" onclick="selectStrategy('emi')" id="emiBox">
+  <div class="strategy" id="emiCard" onclick="selectStrategy('emi')">
     <b>Permanent EMI Increase</b><br>
-    <span class="small">Increase EMI permanently by ₹ or %.</span>
+    Increase EMI permanently by ₹ or %.
   </div>
 
-  <div id="lumpInputs">
+  <hr>
+
+  <div id="lumpFields">
     <label>Extra Amount (₹)</label>
-    <input id="lumpAmount" value="50000">
+    <input type="number" id="lumpAmount" value="50000">
+
     <label>Frequency</label>
     <select id="lumpFreq">
+      <option value="1">One-time</option>
       <option value="3">Every 3 months</option>
       <option value="6">Every 6 months</option>
       <option value="12">Every 12 months</option>
     </select>
   </div>
 
-  <div id="emiInputs" style="display:none;">
+  <div id="emiFields" style="display:none">
     <label>Increase Type</label>
     <select id="emiType">
       <option value="percent">Percentage (%)</option>
-      <option value="amount">Rupees (₹)</option>
+      <option value="fixed">Fixed Amount (₹)</option>
     </select>
 
     <label>Increase Value</label>
-    <input id="emiValue" value="10">
+    <input type="number" id="emiValue" value="10">
 
     <label>Frequency</label>
     <select id="emiFreq">
-      <option value="once">One-time</option>
-      <option value="3">Every 3 months</option>
+      <option value="1">One-time</option>
       <option value="6">Every 6 months</option>
       <option value="12">Every 12 months</option>
     </select>
@@ -143,102 +159,123 @@ button {
 
 <button onclick="calculate()">Calculate EMI</button>
 
-<div id="output" class="result"></div>
-<div class="chartBox"><canvas id="chart"></canvas></div>
+<div id="output"></div>
+<canvas id="chart"></canvas>
+</div>
+
+<div class="footer">
+<a href="https://calcworld.in/">Home</a> |
+<a href="/privacy-policy.html">Privacy</a> |
+<a href="/terms.html">Terms</a>
 </div>
 
 <script>
-function indian(n){return new Intl.NumberFormat("en-IN").format(Math.round(n));}
+let strategy = "lump";
+let chart;
+
+function toggleAdvanced() {
+  const box = document.getElementById("advancedBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+function selectStrategy(type) {
+  strategy = type;
+  document.getElementById("lumpCard").classList.toggle("active", type==="lump");
+  document.getElementById("emiCard").classList.toggle("active", type==="emi");
+  document.getElementById("lumpFields").style.display = type==="lump" ? "block":"none";
+  document.getElementById("emiFields").style.display = type==="emi" ? "block":"none";
+}
+
+function fmt(n){ return new Intl.NumberFormat("en-IN").format(Math.round(n)); }
+
+function parseLoan(){
+  return Number(document.getElementById("loan").value.replace(/,/g,""));
+}
 
 document.getElementById("loan").addEventListener("input", e=>{
-  let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
+  let v = e.target.value.replace(/,/g,"").replace(/\D/g,"");
   if(!v) return e.target.value="";
   let last=v.slice(-3), rest=v.slice(0,-3);
   if(rest) last=","+last;
-  e.target.value=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",")+last;
+  e.target.value = rest.replace(/\B(?=(\d{2})+(?!\d))/g,",")+last;
 });
 
-let strategy="lumpsum";
-function toggleAdvanced(){
-  let b=document.getElementById("advancedBox");
-  b.style.display=b.style.display==="none"?"block":"none";
-}
-function selectStrategy(s){
-  strategy=s;
-  document.getElementById("lumpBox").classList.toggle("active",s==="lumpsum");
-  document.getElementById("emiBox").classList.toggle("active",s==="emi");
-  document.getElementById("lumpInputs").style.display=s==="lumpsum"?"block":"none";
-  document.getElementById("emiInputs").style.display=s==="emi"?"block":"none";
-}
-
-function simulate(P,R,EMI,adv){
-  let bal=P, m=0, interest=0, extraPaid=0, curEMI=EMI;
-  while(bal>0 && m<600){
-    m++;
-    let i=bal*R;
-    interest+=i;
-    let pay=curEMI-i;
-    if(adv){
-      if(adv.type==="lump" && m%adv.freq===0){
-        bal-=adv.amount;
-        extraPaid+=adv.amount;
-      }
-      if(adv.type==="emi"){
-        if(adv.freq==="once" && m===1 || adv.freq!=="once" && m%adv.freq===0){
-          curEMI+=adv.inc;
-        }
-      }
-    }
-    bal-=pay;
-  }
-  return {months:m, interest, total:P+interest+extraPaid, extraPaid, emi:curEMI};
-}
-
 function calculate(){
-  let P=+loan.value.replace(/,/g,"");
-  let R=rate.value/12/100;
-  let N=tenure.value*12;
-  let EMI=P*R*Math.pow(1+R,N)/(Math.pow(1+R,N)-1);
+  const P = parseLoan();
+  const R = document.getElementById("rate").value/12/100;
+  const N = document.getElementById("years").value*12;
+  if(!P||!R||!N) return;
 
-  let base=simulate(P,R,EMI,null);
-  let adv=null;
+  let emi = (P*R*Math.pow(1+R,N))/(Math.pow(1+R,N)-1);
+  let bal = P, month=0, interestPaid=0, extraPaid=0;
+  let currEMI = emi;
 
-  if(advancedBox.style.display==="block"){
-    if(strategy==="lumpsum"){
-      adv={type:"lump",amount:+lumpAmount.value,freq:+lumpFreq.value};
-    }else{
-      let inc=emiType.value==="percent"?EMI*(+emiValue.value/100):+emiValue.value;
-      adv={type:"emi",inc,freq:emiFreq.value};
+  while(bal>0 && month<600){
+    month++;
+    let interest = bal*R;
+    let principal = currEMI-interest;
+    bal -= principal;
+    interestPaid += interest;
+
+    if(strategy==="lump"){
+      const f = Number(document.getElementById("lumpFreq").value);
+      if((f===1 && month===1) || (f>1 && month%f===0)){
+        let extra = Number(document.getElementById("lumpAmount").value);
+        bal -= extra;
+        extraPaid += extra;
+      }
+    } else {
+      const f = Number(document.getElementById("emiFreq").value);
+      if((f===1 && month===1) || (f>1 && month%f===0)){
+        if(document.getElementById("emiType").value==="percent")
+          currEMI *= (1 + Number(document.getElementById("emiValue").value)/100);
+        else
+          currEMI += Number(document.getElementById("emiValue").value);
+      }
     }
+    if(bal<0) bal=0;
   }
 
-  let advRes=adv?simulate(P,R,EMI,adv):null;
+  let baseTotal = emi*N;
+  let baseInterest = baseTotal - P;
+  let newTotal = interestPaid + P + extraPaid;
 
-  let html=`<b>Original EMI:</b> ₹${indian(EMI)}<br>
-<b>Original Tenure:</b> ${base.months} months<br>
-<b>Total Interest:</b> ₹${indian(base.interest)}<hr>`;
+  document.getElementById("output").innerHTML = `
+  <div class="result">
+  <b>Original EMI:</b> ₹${fmt(emi)}<br>
+  <b>Original Tenure:</b> ${N} months<br>
+  <b>Total Interest:</b> ₹${fmt(baseInterest)}<hr>
 
-  if(advRes){
-    html+=`<b>New Tenure:</b> ${advRes.months} months<br>
-<b>Interest Saved:</b> ₹${indian(base.interest-advRes.interest)}<br>
-<b>Time Saved:</b> ${base.months-advRes.months} months`;
-    drawChart(base,advRes);
-  }
+  <b>New Tenure:</b> ${month} months<br>
+  <b>Interest Saved:</b> ₹${fmt(baseInterest-interestPaid)}<br>
+  <b>Extra Paid:</b> ₹${fmt(extraPaid)}
+  </div>
 
-  output.innerHTML=html;
+  <table>
+  <tr><th>Metric</th><th>Before</th><th>After</th><th>Saving</th></tr>
+  <tr><td>Total Paid</td><td>₹${fmt(baseTotal)}</td><td>₹${fmt(newTotal)}</td><td>₹${fmt(baseTotal-newTotal)}</td></tr>
+  <tr><td>Interest</td><td>₹${fmt(baseInterest)}</td><td>₹${fmt(interestPaid)}</td><td>₹${fmt(baseInterest-interestPaid)}</td></tr>
+  <tr><td>Tenure</td><td>${N} mo</td><td>${month} mo</td><td>${N-month} mo</td></tr>
+  </table>
+  `;
+
+  drawChart(baseTotal, baseInterest, newTotal, interestPaid);
 }
 
-let chart;
-function drawChart(b,a){
+function drawChart(bt, bi, nt, ni){
   if(chart) chart.destroy();
-  chart=new Chart(document.getElementById("chart"),{
+  chart = new Chart(document.getElementById("chart"), {
     type:"bar",
     data:{
       labels:["Without Extra","With Extra"],
       datasets:[
-        {label:"Total Paid",data:[b.total,a.total],backgroundColor:"#22c1dc"},
-        {label:"Interest Paid",data:[b.interest,a.interest],backgroundColor:"#ef4444"}
+        {label:"Total Paid", data:[bt,nt], backgroundColor:"#22c1dc"},
+        {label:"Interest Paid", data:[bi,ni], backgroundColor:"#ef4444"}
       ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{position:"top"}}
     }
   });
 }
