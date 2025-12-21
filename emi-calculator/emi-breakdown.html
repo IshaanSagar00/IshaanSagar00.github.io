@@ -2,56 +2,87 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Monthly EMI Breakdown</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monthly EMI Breakdown (Running Loan)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body { font-family: Arial, sans-serif; background:#f6f7fb; padding:20px; }
+body {
+  font-family: Arial, sans-serif;
+  background:#f6f7fb;
+  padding:20px;
+}
 .card {
-  max-width:1000px; margin:auto; background:#fff;
-  padding:25px; border-radius:10px;
+  max-width:1100px;
+  margin:auto;
+  background:#fff;
+  padding:25px;
+  border-radius:10px;
   box-shadow:0 10px 25px rgba(0,0,0,.08);
 }
 h1 { text-align:center; margin-top:0; }
 
 .grid {
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:15px;
 }
 
 label { font-weight:bold; font-size:14px; }
 input, select {
-  width:100%; padding:10px; margin-top:5px; font-size:14px;
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  font-size:14px;
 }
 
 button {
-  margin-top:12px; padding:12px; font-size:16px;
-  background:#2563eb; color:#fff;
-  border:none; border-radius:6px; cursor:pointer;
+  margin-top:15px;
+  padding:12px;
+  font-size:16px;
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
 }
-
-table {
-  width:100%; border-collapse:collapse; margin-top:25px; font-size:14px;
-}
-th, td {
-  border:1px solid #ddd; padding:8px; text-align:right;
-}
-th { background:#f1f5f9; }
-th:first-child, td:first-child { text-align:left; }
-tr.current { background:#e0f2fe; font-weight:bold; }
 
 .box {
-  margin-top:20px; padding:15px;
-  border:1px solid #ddd; border-radius:8px;
-}
-
-.note {
-  margin-top:15px; font-size:13px; color:#555;
-  background:#fafafa; padding:10px; border-radius:6px;
+  margin-top:20px;
+  padding:16px;
+  border:1px solid #ddd;
+  border-radius:8px;
 }
 
 .hidden { display:none; }
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:25px;
+  font-size:14px;
+}
+th, td {
+  border:1px solid #ddd;
+  padding:8px;
+  text-align:right;
+}
+th {
+  background:#f1f5f9;
+}
+th:first-child, td:first-child { text-align:left; }
+tr.current {
+  background:#e0f2fe;
+  font-weight:bold;
+}
+
+.note {
+  margin-top:15px;
+  font-size:13px;
+  color:#555;
+  background:#fafafa;
+  padding:10px;
+  border-radius:6px;
+}
 </style>
 </head>
 
@@ -61,27 +92,33 @@ tr.current { background:#e0f2fe; font-weight:bold; }
 
 <div class="grid">
   <div>
-    <label>Outstanding Loan Amount (₹)</label>
+    <label>Loan Amount (₹)</label>
     <input id="loan">
   </div>
+
   <div>
     <label>Interest Rate (% per year)</label>
     <input type="number" id="rate">
   </div>
+
   <div>
     <label>Remaining Tenure (months)</label>
     <input type="number" id="months">
   </div>
+
   <div>
     <label>EMI Start Month</label>
-    <input type="month" id="startMonth">
+    <div style="display:flex;gap:6px;">
+      <select id="startMonth"></select>
+      <select id="startYear"></select>
+    </div>
   </div>
 </div>
 
 <div class="box">
-<b>Advanced Options</b><br><br>
+<b>Advanced Options</b>
 
-<label>Strategy</label>
+<label style="margin-top:12px;">Strategy</label>
 <select id="strategy">
   <option value="none">None</option>
   <option value="emi">EMI Increase</option>
@@ -99,13 +136,24 @@ tr.current { background:#e0f2fe; font-weight:bold; }
   <label>Increase Value</label>
   <input type="number" id="emiValue">
 
+  <label>Frequency</label>
+  <select id="emiFreq">
+    <option value="once">One-time</option>
+    <option value="3">Every 3 months</option>
+    <option value="6">Every 6 months</option>
+    <option value="12">Every 12 months</option>
+  </select>
+
   <label>Start Increase</label>
-  <select id="emiStart">
+  <select id="emiStartType">
     <option value="current">From Current Month</option>
     <option value="future">From Future Month</option>
   </select>
 
-  <input type="month" id="emiStartMonth">
+  <div id="emiFuture" class="hidden" style="display:flex;gap:6px;">
+    <select id="emiStartMonth"></select>
+    <select id="emiStartYear"></select>
+  </div>
 </div>
 
 <!-- LUMP SUM -->
@@ -116,12 +164,16 @@ tr.current { background:#e0f2fe; font-weight:bold; }
   <label>Frequency</label>
   <select id="lumpFreq">
     <option value="once">One-time</option>
+    <option value="3">Every 3 months</option>
     <option value="6">Every 6 months</option>
     <option value="12">Every 12 months</option>
   </select>
 
   <label>Start Month</label>
-  <input type="month" id="lumpStart">
+  <div style="display:flex;gap:6px;">
+    <select id="lumpMonth"></select>
+    <select id="lumpYear"></select>
+  </div>
 </div>
 </div>
 
@@ -141,73 +193,96 @@ Actual results may vary based on lender rules and rounding.
 </div>
 
 <script>
-function inr(n){ return n.toLocaleString("en-IN"); }
+const monthNames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-strategy.onchange = () => {
-  emiBox.classList.toggle("hidden", strategy.value!=="emi");
-  lumpBox.classList.toggle("hidden", strategy.value!=="lump");
+function fillMonthYear(mSel,ySel){
+  mSel.innerHTML=monthNames.map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+  const y=new Date().getFullYear();
+  ySel.innerHTML="";
+  for(let i=y;i<=y+30;i++) ySel.innerHTML+=`<option>${i}</option>`;
+}
+
+fillMonthYear(startMonth,startYear);
+fillMonthYear(emiStartMonth,emiStartYear);
+fillMonthYear(lumpMonth,lumpYear);
+
+strategy.onchange=()=>{
+  emiBox.classList.toggle("hidden",strategy.value!=="emi");
+  lumpBox.classList.toggle("hidden",strategy.value!=="lump");
 };
 
+emiStartType.onchange=()=>{
+  emiFuture.classList.toggle("hidden",emiStartType.value!=="future");
+};
+
+function inr(n){return n.toLocaleString("en-IN");}
+
 function generate(){
-  const P = +loan.value.replace(/,/g,'');
-  const rate = +document.getElementById("rate").value;
-  const N = +months.value;
-  const start = startMonth.value;
+  const P=+loan.value.replace(/,/g,"");
+  const r=+rate.value/12/100;
+  const N=+months.value;
 
-  if(!P||!rate||!N||!start){ alert("Fill all fields"); return; }
+  if(!P||!r||!N){alert("Fill all fields");return;}
 
-  const r = rate/12/100;
-  const EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
+  const EMI=P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
 
   let bal=P, balAdv=P;
-  let baseInterest=0, advInterest=0;
+  let baseInt=0, advInt=0;
   let curEMI=EMI;
+
+  let date=new Date(startYear.value,startMonth.value,1);
+  const today=new Date();
+  const curKey=today.getFullYear()*12+today.getMonth();
+
+  let emiStartKey=curKey;
+  if(emiStartType.value==="future"){
+    emiStartKey=emiStartYear.value*12+Number(emiStartMonth.value);
+  }
+
+  let lumpKey=lumpYear.value*12+Number(lumpMonth.value);
 
   let html=`<table>
   <tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Balance</th></tr>`;
 
-  let date=new Date(start+"-01");
-  const today=new Date();
-  let advEndMonth=0;
+  let advEnd=0;
 
   for(let m=1;m<=N;m++){
+    const key=date.getFullYear()*12+date.getMonth();
+
     // NORMAL
     let i=bal*r;
-    baseInterest+=i;
+    baseInt+=i;
     bal-=EMI-i;
 
-    // ADVANCED
-    if(strategy.value==="emi" && emiValue.value){
-      if(emiStart.value==="current" && m===1 ||
-         emiStart.value==="future" && emiStartMonth.value &&
-         date >= new Date(emiStartMonth.value+"-01")){
-        curEMI = emiType.value==="percent"
-          ? curEMI*(1+emiValue.value/100)
-          : curEMI+Number(emiValue.value);
+    // EMI INCREASE
+    if(strategy.value==="emi" && emiValue.value && key>=emiStartKey){
+      if(emiFreq.value==="once" && key===emiStartKey ||
+         emiFreq.value!=="once" && (key-emiStartKey)%emiFreq.value===0){
+        curEMI=emiType.value==="percent"
+          ?curEMI*(1+emiValue.value/100)
+          :curEMI+Number(emiValue.value);
       }
     }
 
-    if(strategy.value==="lump" && lumpAmount.value && lumpStart.value){
-      if(date >= new Date(lumpStart.value+"-01")){
-        if(lumpFreq.value==="once" && m===1 ||
-           lumpFreq.value!=="once" && m%lumpFreq.value==0){
-          balAdv-=Number(lumpAmount.value);
-        }
+    // LUMP SUM
+    if(strategy.value==="lump" && lumpAmount.value && key>=lumpKey){
+      if(lumpFreq.value==="once" && key===lumpKey ||
+         lumpFreq.value!=="once" && (key-lumpKey)%lumpFreq.value===0){
+        balAdv-=Number(lumpAmount.value);
       }
     }
 
     let ai=balAdv*r;
-    advInterest+=ai;
+    advInt+=ai;
     let principal=Math.min(curEMI-ai,balAdv);
     balAdv-=principal;
+    if(balAdv<=0&&!advEnd) advEnd=m;
 
-    if(balAdv<=0 && !advEndMonth) advEndMonth=m;
-
-    const label=date.toLocaleString("en-IN",{month:"short",year:"numeric"});
-    const isCurrent=date.getMonth()===today.getMonth()&&date.getFullYear()===today.getFullYear();
+    const label=`${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    const isCur=date.getMonth()===today.getMonth()&&date.getFullYear()===today.getFullYear();
 
     html+=`
-    <tr class="${isCurrent?'current':''}">
+    <tr class="${isCur?'current':''}">
       <td>${label}</td>
       <td>₹${inr(Math.round(principal+ai))}</td>
       <td>₹${inr(Math.round(ai))}</td>
@@ -221,14 +296,14 @@ function generate(){
   html+="</table>";
   table.innerHTML=html;
 
-  const monthsSaved=N-advEndMonth;
-  const interestSaved=baseInterest-advInterest;
+  const savedM=N-advEnd;
+  const savedI=baseInt-advInt;
 
   summary.innerHTML=`
   <h3>Comparison Summary</h3>
-  <p><b>Remaining Tenure:</b> ${N} → ${advEndMonth} months (${monthsSaved} months saved)</p>
-  <p><b>Remaining Interest:</b> ₹${inr(Math.round(baseInterest))} → ₹${inr(Math.round(advInterest))}</p>
-  <p><b>Interest Saved:</b> ₹${inr(Math.round(interestSaved))}</p>`;
+  <p><b>Remaining Tenure:</b> ${N} → ${advEnd} months (${savedM} months saved)</p>
+  <p><b>Remaining Interest:</b> ₹${inr(Math.round(baseInt))} → ₹${inr(Math.round(advInt))}</p>
+  <p><b>Interest Saved:</b> ₹${inr(Math.round(savedI))}</p>`;
   summary.classList.remove("hidden");
 }
 </script>
