@@ -11,6 +11,26 @@ body {
   background:#f4f6f8;
   font-size:15px;
 }
+  .site-header {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 1000;
+}
+
+.site-header .brand {
+  font-size: 20px;
+  font-weight: bold;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.site-header .brand:hover {
+  text-decoration: underline;
+}
+
 .container {
   max-width:440px;
   margin:40px auto;
@@ -90,6 +110,10 @@ th { background:#f0f0f0; }
 </head>
 
 <body>
+<header class="site-header">
+  <a href="https://calcworld.in" class="brand">CalcWorld</a>
+</header>
+
 <div class="container">
 <h1>EMI Calculator</h1>
 
