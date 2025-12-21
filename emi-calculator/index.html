@@ -86,7 +86,6 @@ th { background:#f0f0f0; }
     EMI Increase Strategy
   </div>
 
-  <!-- LUMP -->
   <div id="lumpFields">
     <label>Lump Sum Amount (₹)</label>
     <input type="number" id="lumpAmount">
@@ -100,7 +99,6 @@ th { background:#f0f0f0; }
     </select>
   </div>
 
-  <!-- EMI -->
   <div id="emiFields" style="display:none;">
     <label>Increase Type</label>
     <select id="emiType">
@@ -175,16 +173,15 @@ function calculate(){
 
   const EMI = Math.round(P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1));
 
-  // BASE LOAN
+  // NORMAL LOAN
   let bal = P, baseInterest = 0;
   for(let i=1;i<=N;i++){
-    let interest = bal*r;
+    let interest = bal * r;
     baseInterest += interest;
     bal -= (EMI - interest);
   }
   const baseTotal = P + baseInterest;
 
-  // NORMAL MODE
   if(!advanced){
     output.innerHTML = `
       <div class="result">
@@ -196,33 +193,33 @@ function calculate(){
     return;
   }
 
-  // ADVANCED SIMULATION
+  // ADVANCED
   let bal2 = P, interest2 = 0, m = 0, curEMI = EMI;
 
   const lumpAmt = +lumpAmount.value || 0;
-  const lumpF = +lumpFreq.value;
+  const lumpFreq = +lumpFreq.value;
 
-  const emiVal = +emiValue.value || 0;
-  const emiF = +emiFreq.value;
+  const emiType = document.getElementById("emiType").value;
+  const emiValue = +emiValue.value || 0;
+  const emiFreq = +emiFreq.value;
   const emiStart = +emiStart.value;
-  const emiType = emiTypeSel = document.getElementById("emiType").value;
 
   while(bal2 > 0 && m < 600){
     m++;
 
-    if(mode==="lump" && lumpAmt > 0){
-      if(lumpF === 1 && m === 1) bal2 -= lumpAmt;
-      if(lumpF > 1 && m % lumpF === 0) bal2 -= lumpAmt;
+    if(mode === "lump" && lumpAmt > 0){
+      if(lumpFreq === 1 && m === 1) bal2 -= lumpAmt;
+      if(lumpFreq > 1 && m % lumpFreq === 0) bal2 -= lumpAmt;
     }
 
-    if(mode==="emi" && emiVal > 0){
-      let startMonth = emiStart === 0 ? 1 : emiF + 1;
+    if(mode === "emi" && emiValue > 0){
+      let startMonth = emiStart === 0 ? 1 : emiFreq + 1;
       if(m >= startMonth){
         let t = m - startMonth;
-        if((emiF === 1 && t === 0) || (emiF > 1 && t >= 0 && t % emiF === 0)){
+        if((emiFreq === 1 && t === 0) || (emiFreq > 1 && t >= 0 && t % emiFreq === 0)){
           curEMI = emiType === "percent"
-            ? Math.round(curEMI * (1 + emiVal/100))
-            : curEMI + emiVal;
+            ? Math.round(curEMI * (1 + emiValue / 100))
+            : curEMI + emiValue;
         }
       }
     }
