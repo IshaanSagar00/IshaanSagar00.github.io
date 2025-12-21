@@ -1,193 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>EMI Calculator India | CalcWorld</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>Advanced EMI Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta name="description" content="Calculate EMI, total interest and total amount payable using our free EMI Calculator for India." />
-  <link rel="canonical" href="https://calcworld.in/emi-calculator/" />
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f6f7f9;
-      margin: 0;
-      padding: 0;
-    }
-
-    .container {
-      max-width: 420px;
-      background: #fff;
-      margin: 60px auto;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 14px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 15px;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 22px;
-      padding: 12px;
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #1e4ed8;
-    }
-
-    .advanced-toggle {
-      margin-top: 12px;
-      font-size: 14px;
-      color: #2563eb;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .result {
-      margin-top: 22px;
-      background: #f1f5ff;
-      padding: 15px;
-      border-radius: 8px;
-      font-size: 15px;
-      line-height: 1.6;
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-      color: #666;
-    }
-  </style>
+<style>
+body{font-family:Arial;background:#f6f7f9;margin:0}
+.container{max-width:440px;background:#fff;margin:50px auto;padding:24px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.1)}
+h1{text-align:center}
+label{font-weight:bold;margin-top:14px;display:block}
+input,select{width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:6px}
+button{width:100%;padding:12px;margin-top:20px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer}
+button:hover{background:#1e4ed8}
+.small{font-size:14px;color:#2563eb;cursor:pointer;margin-top:12px}
+.box{border:1px solid #ddd;border-radius:8px;padding:12px;margin-top:12px}
+.strategy{border:1px solid #ddd;padding:10px;border-radius:6px;margin-bottom:8px;cursor:pointer}
+.strategy.active{border-color:#2563eb;background:#f1f5ff}
+.result{background:#f1f5ff;padding:14px;border-radius:8px;margin-top:20px;font-size:15px}
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+.dark{background:#111;color:#fff;padding:18px;border-radius:12px;margin-top:20px}
+.dark h3{margin-top:0}
+ul{padding-left:18px}
+</style>
 </head>
 
 <body>
+<div class="container">
+<h1>EMI Calculator</h1>
 
-  <div class="container">
-    <h1>EMI Calculator</h1>
+<label>Loan Amount (₹)</label>
+<input id="loan" placeholder="17,50,000">
 
-    <label>Loan Amount (₹)</label>
-    <input
-      type="text"
-      id="loan"
-      placeholder="e.g. 17,50,000"
-      inputmode="numeric"
-      autocomplete="off"
-    />
+<label>Interest Rate (% per year)</label>
+<input id="rate" type="number" value="10">
 
-    <label>Interest Rate (% per year)</label>
-    <input type="number" id="rate" placeholder="e.g. 10" />
+<label>Loan Tenure (years)</label>
+<input id="years" type="number" value="3">
 
-    <label>Loan Tenure (years)</label>
-    <input type="number" id="tenure" placeholder="e.g. 3" />
+<div class="small" onclick="toggleAdvanced()">▶ Advanced Prepayment Options (optional)</div>
 
-    <div class="advanced-toggle">
-      ▶ Advanced Prepayment Options (coming next)
-    </div>
+<div id="advanced" style="display:none">
 
-    <button onclick="calculateEMI()">Calculate EMI</button>
+<div class="box">
+<strong>Choose Strategy</strong>
 
-    <div id="result" class="result" style="display:none;"></div>
+<div class="strategy active" onclick="selectStrategy('lump')" id="lumpBox">
+<strong>Lump Sum Prepayment</strong><br>
+<small>Extra fixed amount paid periodically. EMI unchanged.</small>
+</div>
 
-    <p style="margin-top:14px;">
-      <a href="/emi-calculator/emi-breakdown.html">
-        Already paying EMI? View month-wise breakdown →
-      </a>
-    </p>
-  </div>
+<div class="strategy" onclick="selectStrategy('emi')" id="emiBox">
+<strong>Permanent EMI Increase</strong><br>
+<small>Increase EMI permanently by ₹ or %.</small>
+</div>
 
-  <footer>
-    <a href="https://calcworld.in/">Home</a> |
-    <a href="/privacy-policy.html">Privacy Policy</a> |
-    <a href="/terms.html">Terms</a>
-  </footer>
+<div id="lumpOptions">
+<label>Extra Amount (₹)</label>
+<input id="lumpAmount" value="50000">
+
+<label>Frequency</label>
+<select id="lumpFreq">
+<option value="1">One-time</option>
+<option value="3">Every 3 months</option>
+<option value="6">Every 6 months</option>
+<option value="12">Every 12 months</option>
+</select>
+</div>
+
+<div id="emiOptions" style="display:none">
+<label>Increase Type</label>
+<select id="emiType">
+<option value="percent">Percentage (%)</option>
+<option value="rupee">Rupees (₹)</option>
+</select>
+
+<label>Increase Value</label>
+<input id="emiValue" value="10">
+
+<label>Frequency</label>
+<select id="emiFreq">
+<option value="1">One-time</option>
+<option value="6">Every 6 months</option>
+<option value="12">Every 12 months</option>
+</select>
+</div>
+</div>
+</div>
+
+<button onclick="calculate()">Calculate EMI</button>
+
+<div id="output"></div>
+</div>
 
 <script>
-/* ---------- Helpers ---------- */
-function formatINR(num) {
-  return "₹" + new Intl.NumberFormat("en-IN").format(Math.round(num));
-}
+/* ---------- helpers ---------- */
+const fmt = n => "₹"+new Intl.NumberFormat("en-IN").format(Math.round(n));
+const parse = v => Number(v.replace(/,/g,""));
 
-function parseINR(value) {
-  return Number(value.replace(/,/g, ""));
-}
-
-/* ---------- Indian Number Formatting While Typing ---------- */
-document.getElementById("loan").addEventListener("input", function (e) {
-  let value = e.target.value.replace(/,/g, "").replace(/\D/g, "");
-
-  if (!value) {
-    e.target.value = "";
-    return;
-  }
-
-  let lastThree = value.slice(-3);
-  let rest = value.slice(0, -3);
-
-  if (rest !== "") {
-    lastThree = "," + lastThree;
-    rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",");
-  }
-
-  e.target.value = rest + lastThree;
+document.getElementById("loan").addEventListener("input",e=>{
+let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
+if(!v){e.target.value="";return;}
+let l=v.slice(-3), r=v.slice(0,-3);
+if(r) l=","+l, r=r.replace(/\B(?=(\d{2})+(?!\d))/g,",");
+e.target.value=r+l;
 });
 
-/* ---------- EMI Calculator ---------- */
-function calculateEMI() {
-  const P = parseINR(document.getElementById("loan").value);
-  const annualRate = Number(document.getElementById("rate").value);
-  const years = Number(document.getElementById("tenure").value);
+/* ---------- UI ---------- */
+let mode="lump";
+function toggleAdvanced(){advanced.style.display=advanced.style.display==="none"?"block":"none"}
+function selectStrategy(m){
+mode=m;
+lumpBox.classList.toggle("active",m==="lump");
+emiBox.classList.toggle("active",m==="emi");
+lumpOptions.style.display=m==="lump"?"block":"none";
+emiOptions.style.display=m==="emi"?"block":"none";
+}
 
-  if (!P || !annualRate || !years) {
-    alert("Please enter all values correctly");
-    return;
-  }
+/* ---------- core math ---------- */
+function simulate(P, R, EMI, extraRule){
+let bal=P, m=0, interest=0, extraPaid=0;
+while(bal>0 && m<600){
+m++;
+let i=bal*R;
+interest+=i;
+bal+=i;
+let pay=EMI;
+if(extraRule) pay+=extraRule(m,EMI);
+if(pay>bal) pay=bal;
+bal-=pay;
+extraPaid+=pay-EMI;
+}
+return {months:m, interest, extraPaid};
+}
 
-  const R = annualRate / 12 / 100;
-  const N = years * 12;
+/* ---------- main ---------- */
+function calculate(){
+const P=parse(loan.value), r=rate.value/12/100, N=years.value*12;
+const EMI=(P*r*Math.pow(1+r,N))/(Math.pow(1+r,N)-1);
 
-  const EMI =
-    (P * R * Math.pow(1 + R, N)) /
-    (Math.pow(1 + R, N) - 1);
+/* original */
+const base=simulate(P,r,EMI);
 
-  const totalPaid = EMI * N;
-  const interest = totalPaid - P;
+/* advanced */
+let rule=null;
+if(advanced.style.display==="block"){
+if(mode==="lump"){
+const amt=parse(lumpAmount.value), f=+lumpFreq.value;
+rule=(m)=> (f===1 && m===1)||(f>1 && m%f===0)?amt:0;
+}else{
+let inc=+emiValue.value, f=+emiFreq.value;
+let cur=EMI;
+rule=(m)=>{
+if(f===1 && m===1 || f>1 && m%f===0){
+cur += (emiType.value==="percent") ? cur*(inc/100) : inc;
+}
+return cur-EMI;
+};
+}
+}
 
-  document.getElementById("result").style.display = "block";
-  document.getElementById("result").innerHTML = `
-    <strong>Monthly EMI:</strong> ${formatINR(EMI)}<br>
-    <strong>Loan Tenure:</strong> ${N} months<br>
-    <strong>Total Interest Paid:</strong> ${formatINR(interest)}<br>
-    <strong>Total Amount Paid:</strong> ${formatINR(totalPaid)}
-  `;
+const adv=simulate(P,r,EMI,rule);
+
+let html=`
+<div class="result">
+<strong>Original EMI:</strong> ${fmt(EMI)}<br>
+<strong>Original Tenure:</strong> ${base.months} months<br>
+<strong>Total Interest:</strong> ${fmt(base.interest)}
+<hr>
+<strong>New Tenure:</strong> ${adv.months} months<br>
+<strong>Interest Saved:</strong> ${fmt(base.interest-adv.interest)}<br>
+<strong>Extra Paid:</strong> ${fmt(adv.extraPaid)}
+</div>
+
+<table>
+<tr><th>Metric</th><th>Before</th><th>After</th><th>Saving</th></tr>
+<tr><td>Tenure</td><td>${base.months} mo</td><td>${adv.months} mo</td><td>${base.months-adv.months} mo</td></tr>
+<tr><td>Interest</td><td>${fmt(base.interest)}</td><td>${fmt(adv.interest)}</td><td>${fmt(base.interest-adv.interest)}</td></tr>
+</table>
+
+<div class="dark">
+<h3>Why This Works</h3>
+<p>Extra payments directly reduce principal. Since interest is calculated on the remaining balance, lowering principal early dramatically cuts future interest.</p>
+
+<h3>Cash Flow Impact</h3>
+<ul>
+<li>EMI stays manageable</li>
+<li>Loan ends earlier</li>
+<li>Interest burden drops sharply</li>
+<li>Monthly cash frees up sooner</li>
+</ul>
+</div>
+`;
+
+output.innerHTML=html;
 }
 </script>
-
 </body>
 </html>
