@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>EMI Calculator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body { font-family: Arial, sans-serif; background:#f4f6f8; }
 .container {
@@ -44,13 +43,20 @@ button {
   padding:14px; border-radius:6px;
 }
 table {
-  width:100%; border-collapse:collapse; margin-top:12px;
+  width:100%; border-collapse:collapse; margin-top:14px;
 }
 th, td {
   border:1px solid #ccc; padding:8px;
   font-size:14px; text-align:center;
 }
 th { background:#f0f0f0; }
+.edu {
+  margin-top:14px;
+  background:#f9fafb;
+  padding:14px;
+  border-radius:6px;
+  font-size:14px;
+}
 </style>
 </head>
 
@@ -62,29 +68,27 @@ th { background:#f0f0f0; }
 <input type="text" id="loan" placeholder="17,50,000">
 
 <label>Interest Rate (% per year)</label>
-<input type="number" id="rate" placeholder="e.g. 10">
+<input type="number" id="rate">
 
 <label>Loan Tenure (years)</label>
-<input type="number" id="years" placeholder="e.g. 3">
+<input type="number" id="years">
 
 <div class="small" onclick="toggleAdvanced()">▶ Advanced Prepayment Options</div>
 
 <div id="advancedBox" class="box" style="display:none;">
-
   <b>Choose Strategy</b>
 
-  <div class="strategy active" id="lumpBox" onclick="setMode('lump')">
+  <div class="strategy active" onclick="setMode('lump')" id="lumpBox">
     Lump Sum Prepayment
   </div>
 
-  <div class="strategy" id="emiBox" onclick="setMode('emi')">
+  <div class="strategy" onclick="setMode('emi')" id="emiBox">
     EMI Increase Strategy
   </div>
 
-  <!-- LUMP SUM -->
   <div id="lumpFields">
     <label>Lump Sum Amount (₹)</label>
-    <input type="number" id="lumpAmount" placeholder="e.g. 50000">
+    <input type="number" id="lumpAmount">
 
     <label>Frequency</label>
     <select id="lumpFreq">
@@ -95,7 +99,6 @@ th { background:#f0f0f0; }
     </select>
   </div>
 
-  <!-- EMI INCREASE -->
   <div id="emiFields" style="display:none;">
     <label>Increase Type</label>
     <select id="emiType">
@@ -104,7 +107,7 @@ th { background:#f0f0f0; }
     </select>
 
     <label>Increase Value</label>
-    <input type="number" id="emiValue" placeholder="e.g. 10 or 5000">
+    <input type="number" id="emiValue">
 
     <label>Frequency</label>
     <select id="emiFreq">
@@ -114,38 +117,24 @@ th { background:#f0f0f0; }
       <option value="12">Every 12 months</option>
     </select>
 
-    <label>Start EMI Increase</label>
+    <label>Start Increase</label>
     <select id="emiStart">
       <option value="0">From Month 1</option>
       <option value="1">After 1 Frequency</option>
     </select>
   </div>
 
-  <!-- EDUCATION -->
-  <div id="eduBox" class="result">
+  <div class="edu">
     <b>How It Works</b><br><br>
     Extra EMI → Principal reduces faster → Less interest accrues → Tenure decreases
     <br><br>
-
-    <b>6 Core Advantages</b>
-    <ol>
-      <li>Dramatic interest savings (especially when started early)</li>
-      <li>Accelerated debt freedom (months earlier payoff)</li>
-      <li>Compounding benefit (each payment amplifies the next)</li>
-      <li>Flexible approach options (lump sums or progressive increases)</li>
-      <li>Interest rate advantage (you outpace the interest charge)</li>
-      <li>Psychological win (visible financial discipline)</li>
-    </ol>
-
     <b>Core Principle:</b><br>
     More principal today = Less interest tomorrow = Earlier freedom
   </div>
-
 </div>
 
 <button onclick="calculate()">Calculate</button>
 <div id="output"></div>
-
 </div>
 
 <script>
@@ -175,64 +164,53 @@ function calculate(){
   const P=+loan.value.replace(/,/g,'');
   const r=+rate.value/12/100;
   const N=+years.value*12;
-
-  if(!P||!r||!N){ alert("Fill all values"); return; }
+  if(!P||!r||!N){ alert("Fill all fields"); return; }
 
   const EMI=Math.round(P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1));
 
-  // BASE
   let bal=P, baseInterest=0;
   for(let i=1;i<=N;i++){
     let interest=bal*r;
     baseInterest+=interest;
     bal-=EMI-interest;
   }
+  const baseTotal=P+baseInterest;
 
   if(!advanced){
     output.innerHTML=`
     <div class="result">
       <b>Monthly EMI:</b> ₹${fmt(EMI)}<br>
       <b>Tenure:</b> ${N} months<br>
-      <b>Total Interest:</b> ₹${fmt(Math.round(baseInterest))}
+      <b>Total Interest:</b> ₹${fmt(Math.round(baseInterest))}<br>
+      <b>Total Amount Paid:</b> ₹${fmt(Math.round(baseTotal))}
     </div>`;
     return;
   }
 
-  // ADVANCED SIMULATION
   let bal2=P, interest2=0, m=0, curEMI=EMI;
-  let lumpDone=false, emiDone=false;
-
   const lumpAmt=+lumpAmount.value||0;
   const lumpF=+lumpFreq.value;
-
-  const type=emiType.value;
-  const val=+emiValue.value||0;
+  const emiVal=+emiValue.value||0;
   const emiF=+emiFreq.value;
   const start=+emiStart.value;
+  const emiType=emiType.value;
 
   while(bal2>0 && m<600){
     m++;
 
-    // LUMP SUM
     if(mode==="lump" && lumpAmt>0){
-      if(lumpF===1 && !lumpDone){
-        bal2-=lumpAmt; lumpDone=true;
-      }
-      else if(lumpF>1 && m%lumpF===0){
-        bal2-=lumpAmt;
-      }
+      if(lumpF===1 && m===1) bal2-=lumpAmt;
+      if(lumpF>1 && m%lumpF===0) bal2-=lumpAmt;
     }
 
-    // EMI INCREASE
-    if(mode==="emi" && val>0){
-      let startMonth = start===0 ? 1 : emiF+1;
+    if(mode==="emi" && emiVal>0){
+      let startMonth=start===0?1:emiF+1;
       if(m>=startMonth){
-        if(emiF===1 && !emiDone){
-          curEMI += type==="percent" ? curEMI*(val/100) : val;
-          emiDone=true;
-        }
-        else if(emiF>1 && (m-startMonth)%emiF===0){
-          curEMI += type==="percent" ? curEMI*(val/100) : val;
+        let t=m-startMonth;
+        if((emiF===1 && t===0)||(emiF>1 && t>=0 && t%emiF===0)){
+          curEMI = emiType==="percent"
+            ? Math.round(curEMI*(1+emiVal/100))
+            : curEMI+emiVal;
         }
       }
     }
@@ -243,19 +221,20 @@ function calculate(){
     bal2-=principal;
   }
 
-  output.innerHTML=`
-  <div class="result">
-    <b>Original EMI:</b> ₹${fmt(EMI)}<br>
-    <b>New Tenure:</b> ${m} months<br>
-    <b>Interest Saved:</b> ₹${fmt(Math.round(baseInterest-interest2))}
-  </div>
+  const advTotal=P+interest2;
 
+  output.innerHTML=`
   <table>
-    <tr><th></th><th>Before</th><th>After</th></tr>
-    <tr><td>Tenure</td><td>${N}</td><td>${m}</td></tr>
-    <tr><td>Interest</td>
-    <td>₹${fmt(Math.round(baseInterest))}</td>
-    <td>₹${fmt(Math.round(interest2))}</td></tr>
+    <tr><th>Metric</th><th>Normal Loan</th><th>With Strategy</th><th>Advantage</th></tr>
+    <tr><td>Loan Duration</td><td>${N} months</td><td>${m} months</td><td>${N-m} months faster</td></tr>
+    <tr><td>Total Interest</td>
+        <td>₹${fmt(Math.round(baseInterest))}</td>
+        <td>₹${fmt(Math.round(interest2))}</td>
+        <td>₹${fmt(Math.round(baseInterest-interest2))} saved</td></tr>
+    <tr><td>Total Amount Paid</td>
+        <td>₹${fmt(Math.round(baseTotal))}</td>
+        <td>₹${fmt(Math.round(advTotal))}</td>
+        <td>₹${fmt(Math.round(baseTotal-advTotal))} less</td></tr>
   </table>`;
 }
 </script>
