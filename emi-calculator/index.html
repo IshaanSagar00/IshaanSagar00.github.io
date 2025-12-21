@@ -4,42 +4,81 @@
 <meta charset="UTF-8">
 <title>EMI Calculator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body { font-family: Arial, sans-serif; background:#f4f6f8; }
+body {
+  font-family: Arial, sans-serif;
+  background:#f4f6f8;
+  font-size:15px;
+}
 .container {
-  max-width:420px; margin:40px auto; background:#fff;
-  padding:20px; border-radius:10px;
+  max-width:440px;
+  margin:40px auto;
+  background:#fff;
+  padding:22px;
+  border-radius:10px;
   box-shadow:0 4px 12px rgba(0,0,0,.1);
 }
 h1 { text-align:center; }
 
-label { display:block; margin-top:12px; font-weight:bold; }
+label { display:block; margin-top:14px; font-weight:bold; }
 input, select {
-  width:100%; padding:10px; margin-top:6px;
-  border:1px solid #ccc; border-radius:6px;
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  font-size:15px;
 }
-button {
-  width:100%; margin-top:18px; padding:12px;
-  background:#2563eb; color:#fff;
-  border:none; border-radius:6px;
-  font-size:16px; cursor:pointer;
-}
-.small { margin-top:10px; color:#2563eb; cursor:pointer; font-size:13px; }
 
-.box { margin-top:14px; padding:12px; border:1px solid #ddd; border-radius:6px; }
+button {
+  width:100%;
+  margin-top:18px;
+  padding:12px;
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  cursor:pointer;
+}
+
+.small {
+  margin-top:12px;
+  font-size:13px;
+  color:#2563eb;
+  cursor:pointer;
+}
+
+.box {
+  margin-top:14px;
+  padding:14px;
+  border:1px solid #ddd;
+  border-radius:6px;
+}
+
 .hidden { display:none; }
 
 table {
-  width:100%; border-collapse:collapse; margin-top:14px; font-size:13px;
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+  font-size:14px;
 }
 th, td {
-  border:1px solid #ccc; padding:6px; text-align:center;
+  border:1px solid #ccc;
+  padding:7px;
+  text-align:center;
 }
 th { background:#f0f0f0; }
 
 .note {
-  margin-top:12px; font-size:12px; color:#555;
-  background:#fafafa; padding:10px; border-radius:6px;
+  margin-top:14px;
+  font-size:13px;
+  color:#555;
+  background:#fafafa;
+  padding:12px;
+  border-radius:6px;
 }
 </style>
 </head>
@@ -57,6 +96,19 @@ th { background:#f0f0f0; }
 <label>Loan Tenure (years)</label>
 <input type="number" id="years">
 
+<div class="small" onclick="toggleExisting()">Already have a loan?</div>
+
+<div id="existingBox" class="box hidden">
+  <label>Outstanding Loan Amount (₹)</label>
+  <input type="number" id="existingAmt">
+
+  <label>Interest Rate (% per year)</label>
+  <input type="number" id="existingRate">
+
+  <label>Remaining Tenure (months)</label>
+  <input type="number" id="existingMonths">
+</div>
+
 <div class="small" onclick="toggleAdvanced()">▶ Advanced Options</div>
 
 <div id="advancedBox" class="box hidden">
@@ -67,7 +119,6 @@ th { background:#f0f0f0; }
   <option value="lump">Lump Sum Prepayment</option>
 </select>
 
-<!-- EMI INCREASE -->
 <div id="emiBox">
   <label>Increase Type</label>
   <select id="emiType">
@@ -86,14 +137,13 @@ th { background:#f0f0f0; }
     <option value="12">Every 12 months</option>
   </select>
 
-  <label>Start</label>
+  <label>Start Increase</label>
   <select id="emiStart">
     <option value="0">From Month 1</option>
     <option value="1">After First Frequency</option>
   </select>
 </div>
 
-<!-- LUMP SUM -->
 <div id="lumpBox" class="hidden">
   <label>Lump Sum Amount (₹)</label>
   <input type="number" id="lumpAmount">
@@ -107,12 +157,12 @@ th { background:#f0f0f0; }
 </div>
 
 <div class="note">
-<b>How It Works</b><br><br>
-Extra payments reduce the principal earlier.  
-Interest is calculated monthly on remaining balance.  
-Lower balance → lower future interest → earlier loan closure.
+<b>How it works</b><br><br>
+Any extra payment reduces the principal earlier.
+Since interest is calculated monthly on the remaining balance,
+lower principal means less interest in all future months.
+This creates a compounding benefit and shortens the loan duration.
 </div>
-
 </div>
 
 <button onclick="calculate()">Calculate</button>
@@ -120,118 +170,106 @@ Lower balance → lower future interest → earlier loan closure.
 </div>
 
 <script>
-/* ---------- UTIL ---------- */
 function inr(n){ return n.toLocaleString("en-IN"); }
 function num(v){ return Number(v)||0; }
 
-document.getElementById("loan").addEventListener("input", e=>{
+loan.addEventListener("input",e=>{
   let v=e.target.value.replace(/\D/g,'');
   e.target.value=v?inr(+v):"";
 });
 
-/* ---------- UI ---------- */
 function toggleAdvanced(){
-  document.getElementById("advancedBox").classList.toggle("hidden");
+  advancedBox.classList.toggle("hidden");
+}
+function toggleExisting(){
+  existingBox.classList.toggle("hidden");
 }
 
-document.getElementById("strategy").addEventListener("change", e=>{
-  document.getElementById("emiBox").classList.toggle("hidden", e.target.value!=="emi");
-  document.getElementById("lumpBox").classList.toggle("hidden", e.target.value!=="lump");
+strategy.addEventListener("change",e=>{
+  emiBox.classList.toggle("hidden",e.target.value!=="emi");
+  lumpBox.classList.toggle("hidden",e.target.value!=="lump");
 });
 
-/* ---------- CORE ---------- */
 function calculate(){
-  const P = num(loan.value.replace(/,/g,''));
-  const rate = num(document.getElementById("rate").value);
-  const years = num(document.getElementById("years").value);
+  let P = existingBox.classList.contains("hidden")
+    ? num(loan.value.replace(/,/g,''))
+    : num(existingAmt.value);
 
-  if(!P || !rate || !years){
-    alert("Fill all loan details");
-    return;
-  }
+  let rateVal = existingBox.classList.contains("hidden")
+    ? num(rate.value)
+    : num(existingRate.value);
 
-  const r = rate/12/100;
-  const N = years*12;
+  let N = existingBox.classList.contains("hidden")
+    ? num(years.value)*12
+    : num(existingMonths.value);
 
-  const EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
+  if(!P||!rateVal||!N){ alert("Fill all required values"); return; }
 
-  /* NORMAL */
+  const r = rateVal/12/100;
+  let EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
+
   let bal=P, baseInterest=0;
   for(let m=1;m<=N;m++){
     let i=bal*r;
     baseInterest+=i;
     bal-=EMI-i;
   }
-  const baseTotal=P+baseInterest;
 
-  /* If advanced closed */
-  if(document.getElementById("advancedBox").classList.contains("hidden")){
+  if(advancedBox.classList.contains("hidden")){
     output.innerHTML=`
-      <div class="note">
-        <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
-        <b>Tenure:</b> ${N} months<br>
-        <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
-        <b>Total Paid:</b> ₹${inr(Math.round(baseTotal))}
-      </div>`;
+    <div class="note">
+      <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
+      <b>Tenure:</b> ${N} months<br>
+      <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
+      <b>Total Paid:</b> ₹${inr(Math.round(P+baseInterest))}
+    </div>`;
     return;
   }
 
-  /* ADVANCED */
-  const strategy=document.getElementById("strategy").value;
+  let curEMI=EMI, bal2=P, interest2=0, rows="", m=0;
 
-  let curEMI=EMI, bal2=P, interest2=0, month=0;
-  let rows="";
+  while(bal2>0 && m<600){
+    m++;
 
-  const emiType=document.getElementById("emiType").value;
-  const emiVal=num(document.getElementById("emiValue").value);
-  const emiFreq=num(document.getElementById("emiFreq").value);
-  const emiStart=num(document.getElementById("emiStart").value);
-
-  const lumpAmt=num(document.getElementById("lumpAmount").value);
-  const lumpFreq=num(document.getElementById("lumpFreq").value);
-
-  while(bal2>0 && month<600){
-    month++;
-
-    if(strategy==="emi" && emiVal){
-      let startMonth = emiStart===0 ? 1 : emiFreq+1;
-      if(month>=startMonth){
-        let t=month-startMonth;
-        if((emiFreq===1 && t===0)||(emiFreq>1 && t>=0 && t%emiFreq===0)){
-          curEMI = emiType==="percent" ? curEMI*(1+emiVal/100) : curEMI+emiVal;
-        }
+    if(strategy.value==="emi" && num(emiValue.value)){
+      let startMonth=emiStart.value==0?1:num(emiFreq.value)+1;
+      let t=m-startMonth;
+      if(m>=startMonth && (emiFreq.value==1 && t==0 || emiFreq.value>1 && t>=0 && t%emiFreq.value==0)){
+        curEMI=emiType.value==="percent"
+          ?curEMI*(1+num(emiValue.value)/100)
+          :curEMI+num(emiValue.value);
       }
     }
 
-    if(strategy==="lump" && lumpAmt){
-      if((lumpFreq===1 && month===1)||(lumpFreq>1 && month%lumpFreq===0)){
-        bal2-=lumpAmt;
+    if(strategy.value==="lump" && num(lumpAmount.value)){
+      if(lumpFreq.value==1&&m==1||lumpFreq.value>1&&m%lumpFreq.value==0){
+        bal2-=num(lumpAmount.value);
       }
     }
 
     let interest=bal2*r;
-    let principal=Math.min(curEMI-interest, bal2);
+    let principal=Math.min(curEMI-interest,bal2);
+    let emiShown=principal+interest;
+
     interest2+=interest;
     bal2-=principal;
 
     rows+=`
-      <tr>
-        <td>${month}</td>
-        <td>₹${inr(Math.round(curEMI))}</td>
-        <td>₹${inr(Math.round(interest))}</td>
-        <td>₹${inr(Math.round(principal))}</td>
-        <td>₹${inr(Math.max(0,Math.round(bal2)))}</td>
-      </tr>`;
+    <tr>
+      <td>${m}</td>
+      <td>₹${inr(Math.round(emiShown))}</td>
+      <td>₹${inr(Math.round(interest))}</td>
+      <td>₹${inr(Math.round(principal))}</td>
+      <td>₹${inr(Math.max(0,Math.round(bal2)))}</td>
+    </tr>`;
   }
-
-  const advTotal=P+interest2;
 
   output.innerHTML=`
   <table>
-    <tr><th>Metric</th><th>Normal</th><th>Advanced</th><th>Advantage</th></tr>
-    <tr><td>Duration</td><td>${N}</td><td>${month}</td><td>${N-month} months</td></tr>
-    <tr><td>Total Interest</td><td>₹${inr(Math.round(baseInterest))}</td><td>₹${inr(Math.round(interest2))}</td><td>₹${inr(Math.round(baseInterest-interest2))}</td></tr>
-    <tr><td>Total Paid</td><td>₹${inr(Math.round(baseTotal))}</td><td>₹${inr(Math.round(advTotal))}</td><td>₹${inr(Math.round(baseTotal-advTotal))}</td></tr>
+    <tr><th>Metric</th><th>Normal</th><th>Advanced</th></tr>
+    <tr><td>Tenure</td><td>${N}</td><td>${m}</td></tr>
+    <tr><td>Total Interest</td><td>₹${inr(Math.round(baseInterest))}</td><td>₹${inr(Math.round(interest2))}</td></tr>
+    <tr><td>Total Paid</td><td>₹${inr(Math.round(P+baseInterest))}</td><td>₹${inr(Math.round(P+interest2))}</td></tr>
   </table>
 
   <table>
@@ -241,7 +279,7 @@ function calculate(){
 
   <div class="note">
     Disclaimer: This calculator provides an approximate illustration.
-    Actual results may vary based on lender calculation methods.
+    Actual results may vary depending on lender policies and rounding.
   </div>`;
 }
 </script>
