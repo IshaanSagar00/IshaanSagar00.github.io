@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>EMI Calculator India | CalcWorld</title>
-<meta name="description" content="Calculate EMI, interest, total payable and explore advanced prepayment strategies." />
+<title>EMI Calculator with Prepayment | CalcWorld</title>
+<meta name="description" content="Advanced EMI Calculator with lump sum and EMI increase prepayment options." />
 <link rel="canonical" href="https://calcworld.in/emi-calculator/" />
 
 <style>
-body {
-  font-family: Arial, sans-serif;
+body{
+  font-family:Arial,sans-serif;
   background:#f6f7f9;
   margin:0;
 }
-.container {
+.container{
   max-width:420px;
   background:#fff;
   margin:50px auto;
@@ -22,23 +22,16 @@ body {
   border-radius:10px;
   box-shadow:0 4px 12px rgba(0,0,0,.1);
 }
-h1 {
-  text-align:center;
-  font-size:22px;
-}
-label {
-  font-weight:600;
-  display:block;
-  margin-top:14px;
-}
-input, select {
+h1{text-align:center;font-size:22px}
+label{font-weight:600;display:block;margin-top:14px}
+input,select{
   width:100%;
   padding:10px;
   margin-top:6px;
   border-radius:6px;
   border:1px solid #ccc;
 }
-button {
+button{
   width:100%;
   padding:12px;
   margin-top:18px;
@@ -49,182 +42,187 @@ button {
   font-size:16px;
   cursor:pointer;
 }
-.small-btn {
-  background:none;
-  color:#2563eb;
+.small-link{
   font-size:13px;
-  padding:0;
+  color:#2563eb;
   margin-top:10px;
-  text-align:left;
+  cursor:pointer;
 }
-.result {
-  margin-top:20px;
-  background:#f1f5ff;
-  padding:15px;
-  border-radius:6px;
-  line-height:1.6;
-}
-.advanced-box {
-  margin-top:14px;
-  padding:14px;
+.advanced{
   border:1px solid #ddd;
+  padding:14px;
+  margin-top:12px;
   border-radius:8px;
   background:#fafafa;
 }
-.option-card {
+.card{
   border:1px solid #ddd;
   padding:12px;
   border-radius:6px;
   margin-top:10px;
   cursor:pointer;
 }
-.option-card.active {
+.card.active{
   border-color:#2563eb;
   background:#eef2ff;
 }
-.option-desc {
-  font-size:13px;
-  color:#555;
-  margin-top:4px;
+.desc{font-size:13px;color:#555;margin-top:4px}
+.hidden{display:none}
+.result{
+  margin-top:20px;
+  background:#f1f5ff;
+  padding:15px;
+  border-radius:6px;
+  line-height:1.6;
 }
-.hidden { display:none; }
 </style>
 </head>
 
 <body>
-
 <div class="container">
+
 <h1>EMI Calculator</h1>
 
 <label>Loan Amount (₹)</label>
-<input type="text" id="loan" placeholder="e.g. 5,00,000" inputmode="numeric">
+<input id="loan" placeholder="e.g. 5,00,000">
 
 <label>Interest Rate (% per year)</label>
-<input type="number" id="rate" placeholder="e.g. 9">
+<input id="rate" type="number" placeholder="e.g. 9">
 
 <label>Loan Tenure (years)</label>
-<input type="number" id="time" placeholder="e.g. 5">
+<input id="tenure" type="number" placeholder="e.g. 5">
 
-<button class="small-btn" onclick="toggleAdvanced()">▶ Advanced Prepayment Options</button>
+<div class="small-link" onclick="toggleAdvanced()">▶ Advanced Prepayment Options</div>
 
-<div id="advancedBox" class="advanced-box hidden">
+<div id="advancedBox" class="advanced hidden">
 
-  <strong>Choose Prepayment Strategy</strong>
+<strong>Choose Strategy</strong>
 
-  <div class="option-card" id="lumpCard" onclick="selectOption('lump')">
-    <strong>Lump Sum Prepayment</strong>
-    <div class="option-desc">
-      Pay extra fixed amount periodically to reduce outstanding principal and shorten loan tenure.
-    </div>
-  </div>
+<div class="card active" id="lumpCard" onclick="selectType('lump')">
+  <strong>Lump Sum Prepayment</strong>
+  <div class="desc">Pay extra amount occasionally to reduce principal and shorten tenure.</div>
+</div>
 
-  <div class="option-card" id="emiCard" onclick="selectOption('emi')">
-    <strong>Permanent EMI Increase</strong>
-    <div class="option-desc">
-      Increase EMI by fixed ₹ or % at regular intervals. EMI keeps compounding higher over time.
-    </div>
-  </div>
+<div class="card" id="emiCard" onclick="selectType('emi')">
+  <strong>Permanent EMI Increase</strong>
+  <div class="desc">Increase EMI by ₹ or % permanently to finish loan faster.</div>
+</div>
 
-  <!-- LUMP SUM -->
-  <div id="lumpBox" class="hidden">
-    <label>Extra Amount (₹)</label>
-    <input type="number" placeholder="e.g. 5000">
+<!-- Lump Sum -->
+<div id="lumpBox">
+  <label>Extra Amount (₹)</label>
+  <input id="lumpAmount" type="number">
 
-    <label>Frequency (months)</label>
-    <input type="number" min="1" max="12" value="12">
+  <label>Frequency</label>
+  <select id="lumpFreq">
+    <option value="once">One-time</option>
+    <option value="1">Every 1 month</option>
+    <option value="3">Every 3 months</option>
+    <option value="6">Every 6 months</option>
+    <option value="12">Every 12 months</option>
+  </select>
 
-    <label>Start After (months)</label>
-    <input type="number" value="0">
-  </div>
+  <label>Start After (months)</label>
+  <input id="lumpStart" type="number" value="0">
+</div>
 
-  <!-- EMI INCREASE -->
-  <div id="emiBox" class="hidden">
-    <label>Increase Type</label>
-    <select>
-      <option value="percent">Percentage (%)</option>
-      <option value="amount">Rupees (₹)</option>
-    </select>
+<!-- EMI Increase -->
+<div id="emiBox" class="hidden">
+  <label>Increase Type</label>
+  <select id="emiType">
+    <option value="percent">Percentage (%)</option>
+    <option value="amount">Rupees (₹)</option>
+  </select>
 
-    <label>Increase Value</label>
-    <input type="number" placeholder="e.g. 10 or 2000">
+  <label>Increase Value</label>
+  <input id="emiValue" type="number">
 
-    <label>Frequency (months)</label>
-    <input type="number" min="1" max="12" value="6">
+  <label>Frequency</label>
+  <select id="emiFreq">
+    <option value="once">One-time</option>
+    <option value="1">Every 1 month</option>
+    <option value="3">Every 3 months</option>
+    <option value="6">Every 6 months</option>
+    <option value="12">Every 12 months</option>
+  </select>
 
-    <label>Start After (months)</label>
-    <input type="number" value="0">
-  </div>
+  <label>Start After (months)</label>
+  <input id="emiStart" type="number" value="0">
+</div>
 
 </div>
 
-<button onclick="calculateEMI()">Calculate EMI</button>
-
-<p style="margin-top:12px;font-size:13px;">
-<a href="/emi-calculator/emi-breakdown.html">
-Already paying EMI? View month-wise breakdown →
-</a>
-</p>
+<button onclick="calculate()">Calculate EMI</button>
 
 <div class="result" id="result"></div>
+
 </div>
 
 <script>
-// Indian format
-function formatIndian(v){
-  v=v.replace(/,/g,"").replace(/\D/g,"");
-  if(!v) return "";
-  let l=v.slice(-3), o=v.slice(0,-3);
-  if(o) l=","+l;
-  return o.replace(/\B(?=(\d{2})+(?!\d))/g,",")+l;
-}
-loan.addEventListener("input",e=>e.target.value=formatIndian(e.target.value));
+function indian(n){return new Intl.NumberFormat("en-IN").format(Math.round(n))}
+loan.oninput=e=>loan.value=loan.value.replace(/,/g,"").replace(/\B(?=(\d{2})+(?!\d))/g,",").replace(/(\d+)(\d{3})$/,"$1,$2");
 
-function toggleAdvanced(){
-  advancedBox.classList.toggle("hidden");
-}
+function toggleAdvanced(){advancedBox.classList.toggle("hidden")}
 
-function selectOption(type){
+function selectType(t){
   lumpCard.classList.remove("active");
   emiCard.classList.remove("active");
   lumpBox.classList.add("hidden");
   emiBox.classList.add("hidden");
-
-  if(type==="lump"){
-    lumpCard.classList.add("active");
-    lumpBox.classList.remove("hidden");
-  } else {
-    emiCard.classList.add("active");
-    emiBox.classList.remove("hidden");
-  }
+  if(t==="lump"){lumpCard.classList.add("active");lumpBox.classList.remove("hidden")}
+  else{emiCard.classList.add("active");emiBox.classList.remove("hidden")}
 }
 
-function calculateEMI(){
+function calculate(){
   let P=Number(loan.value.replace(/,/g,""));
-  let R=rate.value/12/100;
-  let N=time.value*12;
+  let r=rate.value/12/100;
+  let n=tenure.value*12;
+  if(!P||!r||!n){result.innerHTML="Fill all fields";return}
 
-  if(!P||!R||!N){
-    result.innerHTML="Please enter all values.";
-    return;
+  let emi=(P*r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
+  let balance=P, month=0, totalInterest=0;
+  let activeEMI=emi;
+
+  while(balance>0){
+    month++;
+    let interest=balance*r;
+    let principal=activeEMI-interest;
+    balance-=principal;
+    totalInterest+=interest;
+
+    // LUMP SUM
+    if(!lumpBox.classList.contains("hidden")){
+      let f=lumpFreq.value;
+      if(month>Number(lumpStart.value)){
+        if(f==="once" && month===Number(lumpStart.value)+1) balance-=Number(lumpAmount.value||0);
+        if(f!=="once" && (month-Number(lumpStart.value))%Number(f)===0) balance-=Number(lumpAmount.value||0);
+      }
+    }
+
+    // EMI INCREASE
+    if(!emiBox.classList.contains("hidden")){
+      let f=emiFreq.value;
+      if(month>Number(emiStart.value)){
+        if(f==="once" && month===Number(emiStart.value)+1){
+          activeEMI=emiType.value==="percent"?activeEMI*(1+emiValue.value/100):activeEMI+Number(emiValue.value)
+        }
+        if(f!=="once" && (month-Number(emiStart.value))%Number(f)===0){
+          activeEMI=emiType.value==="percent"?activeEMI*(1+emiValue.value/100):activeEMI+Number(emiValue.value)
+        }
+      }
+    }
+
+    if(month>1000) break;
   }
 
-  let EMI=(P*R*Math.pow(1+R,N))/(Math.pow(1+R,N)-1);
-  let total=EMI*N;
-  let interest=total-P;
-
   result.innerHTML=`
-    <strong>Monthly EMI:</strong> ₹${new Intl.NumberFormat("en-IN").format(Math.round(EMI))}<br>
-    <strong>Total Interest:</strong> ₹${new Intl.NumberFormat("en-IN").format(Math.round(interest))}<br>
-    <strong>Total Amount Payable:</strong> ₹${new Intl.NumberFormat("en-IN").format(Math.round(total))}
+  <strong>Final EMI:</strong> ₹${indian(activeEMI)}<br>
+  <strong>New Tenure:</strong> ${month} months<br>
+  <strong>Total Interest Paid:</strong> ₹${indian(totalInterest)}<br>
+  <strong>Interest Saved:</strong> ₹${indian((emi*n)-totalInterest)}
   `;
 }
 </script>
-
-<footer style="text-align:center;padding:20px;font-size:14px;color:#666;">
-<a href="https://calcworld.in/">Home</a> |
-<a href="/privacy-policy.html">Privacy Policy</a> |
-<a href="/terms.html">Terms</a>
-</footer>
 
 </body>
 </html>
