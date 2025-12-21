@@ -98,18 +98,12 @@ th { background:#f0f0f0; }
 
 <div class="small" onclick="toggleExisting()">Already have a loan?</div>
 
-<div id="existingBox" class="box hidden">
-  <label>Outstanding Loan Amount (₹)</label>
-  <input type="number" id="existingAmt">
 
-  <label>Interest Rate (% per year)</label>
-  <input type="number" id="existingRate">
 
-  <label>Remaining Tenure (months)</label>
-  <input type="number" id="existingMonths">
-</div>
+<a class="small" href="./emi-breakdown.html">
+  Already have a loan? View EMI breakdown
+</a>
 
-<div class="small" onclick="toggleAdvanced()">▶ Advanced Options</div>
 
 <div id="advancedBox" class="box hidden">
 
@@ -181,9 +175,7 @@ loan.addEventListener("input",e=>{
 function toggleAdvanced(){
   advancedBox.classList.toggle("hidden");
 }
-function toggleExisting(){
-  existingBox.classList.toggle("hidden");
-}
+
 
 strategy.addEventListener("change",e=>{
   emiBox.classList.toggle("hidden",e.target.value!=="emi");
