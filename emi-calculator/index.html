@@ -265,17 +265,39 @@ function calculate(){
     </tr>`;
   }
 
-  output.innerHTML=`
+ const interestSaved = Math.round(baseInterest - interest2);
+const totalSaved = Math.round((P + baseInterest) - (P + interest2));
+const monthsSaved = N - m;
+
+output.innerHTML=`
   <table>
-    <tr><th>Metric</th><th>Normal</th><th>Advanced</th></tr>
-    <tr><td>Tenure</td><td>${N}</td><td>${m}</td></tr>
-    <tr><td>Total Interest</td>
-        <td>₹${inr(Math.round(baseInterest))}</td>
-        <td>₹${inr(Math.round(interest2))}</td></tr>
-    <tr><td>Total Paid</td>
-        <td>₹${inr(Math.round(P+baseInterest))}</td>
-        <td>₹${inr(Math.round(P+interest2))}</td></tr>
+    <tr>
+      <th>Metric</th>
+      <th>Normal</th>
+      <th>Advanced</th>
+      <th>Savings</th>
+    </tr>
+    <tr>
+      <td>Tenure</td>
+      <td>${N} months</td>
+      <td>${m} months</td>
+      <td>${monthsSaved} months earlier</td>
+    </tr>
+    <tr>
+      <td>Total Interest</td>
+      <td>₹${inr(Math.round(baseInterest))}</td>
+      <td>₹${inr(Math.round(interest2))}</td>
+      <td>₹${inr(interestSaved)} saved</td>
+    </tr>
+    <tr>
+      <td>Total Paid</td>
+      <td>₹${inr(Math.round(P + baseInterest))}</td>
+      <td>₹${inr(Math.round(P + interest2))}</td>
+      <td>₹${inr(totalSaved)} less</td>
+    </tr>
   </table>
+`;
+
 
   <table>
     <tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Balance</th></tr>
