@@ -6,7 +6,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
+
 body{font-family:Arial,sans-serif;background:#f6f7fb;padding:20px}
+  .site-header {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 1000;
+}
+
+.site-header .brand {
+  font-size: 20px;
+  font-weight: bold;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.site-header .brand:hover {
+  text-decoration: underline;
+}
+
 .card{max-width:1100px;margin:auto;background:#fff;padding:25px;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
 h1{text-align:center}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
@@ -25,6 +46,10 @@ tr.current{background:#e0f2fe;font-weight:bold}
 </head>
 
 <body>
+  <header class="site-header">
+  <a href="https://calcworld.in" class="brand">CalcWorld</a>
+</header>
+
 <div class="card">
 <h1>Monthly EMI Breakdown (Running Loan)</h1>
 
