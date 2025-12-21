@@ -4,55 +4,33 @@
 <meta charset="UTF-8">
 <title>EMI Calculator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body { font-family: Arial, sans-serif; background:#f4f6f8; }
 .container {
   max-width:420px; margin:40px auto; background:#fff;
-  padding:22px; border-radius:10px;
+  padding:20px; border-radius:10px;
   box-shadow:0 4px 12px rgba(0,0,0,.1);
 }
 h1 { text-align:center; }
 
-label { display:block; margin-top:14px; font-weight:bold; }
+label { display:block; margin-top:12px; font-weight:bold; }
 input, select {
   width:100%; padding:10px; margin-top:6px;
-  border-radius:6px; border:1px solid #ccc;
+  border:1px solid #ccc; border-radius:6px;
 }
-
 button {
   width:100%; margin-top:18px; padding:12px;
-  background:#2563eb; color:#fff; border:none;
-  border-radius:6px; font-size:16px; cursor:pointer;
+  background:#2563eb; color:#fff;
+  border:none; border-radius:6px;
+  font-size:16px; cursor:pointer;
 }
+.small { margin-top:10px; color:#2563eb; cursor:pointer; font-size:13px; }
 
-.small {
-  margin-top:12px; font-size:13px;
-  color:#2563eb; cursor:pointer;
-}
-
-.box {
-  margin-top:14px; padding:14px;
-  border:1px solid #ddd; border-radius:6px;
-}
-
-.strategy {
-  padding:10px; border:1px solid #ccc;
-  border-radius:6px; margin-bottom:10px;
-  cursor:pointer;
-}
-.strategy.active {
-  border-color:#2563eb; background:#f1f5ff;
-}
-
-.result {
-  margin-top:18px; background:#f1f5ff;
-  padding:14px; border-radius:6px;
-}
+.box { margin-top:14px; padding:12px; border:1px solid #ddd; border-radius:6px; }
+.hidden { display:none; }
 
 table {
-  width:100%; border-collapse:collapse;
-  margin-top:14px; font-size:13px;
+  width:100%; border-collapse:collapse; margin-top:14px; font-size:13px;
 }
 th, td {
   border:1px solid #ccc; padding:6px; text-align:center;
@@ -60,7 +38,7 @@ th, td {
 th { background:#f0f0f0; }
 
 .note {
-  margin-top:14px; font-size:12px; color:#555;
+  margin-top:12px; font-size:12px; color:#555;
   background:#fafafa; padding:10px; border-radius:6px;
 }
 </style>
@@ -81,61 +59,60 @@ th { background:#f0f0f0; }
 
 <div class="small" onclick="toggleAdvanced()">▶ Advanced Options</div>
 
-<div id="advancedBox" class="box" style="display:none;">
-  <b>Choose Strategy</b>
+<div id="advancedBox" class="box hidden">
 
-  <div class="strategy active" onclick="setMode('emi')" id="emiBtn">EMI Increase</div>
-  <div class="strategy" onclick="setMode('lump')" id="lumpBtn">Lump Sum Prepayment</div>
+<label>Strategy</label>
+<select id="strategy">
+  <option value="emi">EMI Increase</option>
+  <option value="lump">Lump Sum Prepayment</option>
+</select>
 
-  <!-- EMI INCREASE -->
-  <div id="emiFields">
-    <label>Increase Type</label>
-    <select id="incType">
-      <option value="percent">Percentage (%)</option>
-      <option value="amount">Fixed Amount (₹)</option>
-    </select>
+<!-- EMI INCREASE -->
+<div id="emiBox">
+  <label>Increase Type</label>
+  <select id="emiType">
+    <option value="percent">Percentage (%)</option>
+    <option value="amount">Fixed Amount (₹)</option>
+  </select>
 
-    <label>Increase Value</label>
-    <input type="number" id="incValue">
+  <label>Increase Value</label>
+  <input type="number" id="emiValue">
 
-    <label>Frequency</label>
-    <select id="freq">
-      <option value="1">One-time</option>
-      <option value="3">Every 3 months</option>
-      <option value="6">Every 6 months</option>
-      <option value="12">Every 12 months</option>
-    </select>
+  <label>Frequency</label>
+  <select id="emiFreq">
+    <option value="1">One-time</option>
+    <option value="3">Every 3 months</option>
+    <option value="6">Every 6 months</option>
+    <option value="12">Every 12 months</option>
+  </select>
 
-    <label>Start Increase</label>
-    <select id="start">
-      <option value="0">From Month 1</option>
-      <option value="1">After First Frequency</option>
-    </select>
-  </div>
+  <label>Start</label>
+  <select id="emiStart">
+    <option value="0">From Month 1</option>
+    <option value="1">After First Frequency</option>
+  </select>
+</div>
 
-  <!-- LUMP SUM -->
-  <div id="lumpFields" style="display:none;">
-    <label>Lump Sum Amount (₹)</label>
-    <input type="number" id="lumpAmount">
+<!-- LUMP SUM -->
+<div id="lumpBox" class="hidden">
+  <label>Lump Sum Amount (₹)</label>
+  <input type="number" id="lumpAmount">
 
-    <label>Frequency</label>
-    <select id="lumpFreq">
-      <option value="1">One-time</option>
-      <option value="6">Every 6 months</option>
-      <option value="12">Every 12 months</option>
-    </select>
-  </div>
+  <label>Frequency</label>
+  <select id="lumpFreq">
+    <option value="1">One-time</option>
+    <option value="6">Every 6 months</option>
+    <option value="12">Every 12 months</option>
+  </select>
+</div>
 
-  <div class="note">
-    <b>How It Works</b><br><br>
-    Extra payments directly reduce the outstanding principal.
-    Since interest is calculated monthly on the remaining balance,
-    a lower principal results in less interest in future months.
-    <br><br>
-    Over time, this creates a compounding benefit —
-    each extra payment reduces both current and future interest,
-    helping you close the loan earlier.
-  </div>
+<div class="note">
+<b>How It Works</b><br><br>
+Extra payments reduce the principal earlier.  
+Interest is calculated monthly on remaining balance.  
+Lower balance → lower future interest → earlier loan closure.
+</div>
+
 </div>
 
 <button onclick="calculate()">Calculate</button>
@@ -143,37 +120,42 @@ th { background:#f0f0f0; }
 </div>
 
 <script>
-let advanced=false, mode="emi";
+/* ---------- UTIL ---------- */
+function inr(n){ return n.toLocaleString("en-IN"); }
+function num(v){ return Number(v)||0; }
 
-function toggleAdvanced(){
-  advanced=!advanced;
-  advancedBox.style.display=advanced?"block":"none";
-}
-
-function setMode(m){
-  mode=m;
-  emiBtn.classList.toggle("active",m==="emi");
-  lumpBtn.classList.toggle("active",m==="lump");
-  emiFields.style.display=m==="emi"?"block":"none";
-  lumpFields.style.display=m==="lump"?"block":"none";
-}
-
-function fmt(n){ return n.toLocaleString("en-IN"); }
-
-loan.addEventListener("input",e=>{
+document.getElementById("loan").addEventListener("input", e=>{
   let v=e.target.value.replace(/\D/g,'');
-  e.target.value=v?fmt(+v):"";
+  e.target.value=v?inr(+v):"";
 });
 
+/* ---------- UI ---------- */
+function toggleAdvanced(){
+  document.getElementById("advancedBox").classList.toggle("hidden");
+}
+
+document.getElementById("strategy").addEventListener("change", e=>{
+  document.getElementById("emiBox").classList.toggle("hidden", e.target.value!=="emi");
+  document.getElementById("lumpBox").classList.toggle("hidden", e.target.value!=="lump");
+});
+
+/* ---------- CORE ---------- */
 function calculate(){
-  const P=+loan.value.replace(/,/g,'');
-  const r=+rate.value/12/100;
-  const N=+years.value*12;
-  if(!P||!r||!N){ alert("Fill all details"); return; }
+  const P = num(loan.value.replace(/,/g,''));
+  const rate = num(document.getElementById("rate").value);
+  const years = num(document.getElementById("years").value);
 
-  const EMI=P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
+  if(!P || !rate || !years){
+    alert("Fill all loan details");
+    return;
+  }
 
-  // Normal loan
+  const r = rate/12/100;
+  const N = years*12;
+
+  const EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
+
+  /* NORMAL */
   let bal=P, baseInterest=0;
   for(let m=1;m<=N;m++){
     let i=bal*r;
@@ -182,68 +164,74 @@ function calculate(){
   }
   const baseTotal=P+baseInterest;
 
-  if(!advanced){
+  /* If advanced closed */
+  if(document.getElementById("advancedBox").classList.contains("hidden")){
     output.innerHTML=`
-      <div class="result">
-        <b>Monthly EMI:</b> ₹${fmt(Math.round(EMI))}<br>
+      <div class="note">
+        <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
         <b>Tenure:</b> ${N} months<br>
-        <b>Total Interest:</b> ₹${fmt(Math.round(baseInterest))}<br>
-        <b>Total Amount Paid:</b> ₹${fmt(Math.round(baseTotal))}
+        <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
+        <b>Total Paid:</b> ₹${inr(Math.round(baseTotal))}
       </div>`;
     return;
   }
 
-  // Advanced simulation
-  let bal2=P, interest2=0, curEMI=EMI, m=0;
+  /* ADVANCED */
+  const strategy=document.getElementById("strategy").value;
+
+  let curEMI=EMI, bal2=P, interest2=0, month=0;
   let rows="";
 
-  const incType=incTypeSel=incType.value;
-  const incVal=+incValue.value||0;
-  const freqVal=+freq.value;
-  const startVal=+start.value;
+  const emiType=document.getElementById("emiType").value;
+  const emiVal=num(document.getElementById("emiValue").value);
+  const emiFreq=num(document.getElementById("emiFreq").value);
+  const emiStart=num(document.getElementById("emiStart").value);
 
-  const lumpAmt=+lumpAmount.value||0;
-  const lumpFreq=+lumpFreq.value;
+  const lumpAmt=num(document.getElementById("lumpAmount").value);
+  const lumpFreq=num(document.getElementById("lumpFreq").value);
 
-  while(bal2>0 && m<600){
-    m++;
+  while(bal2>0 && month<600){
+    month++;
 
-    if(mode==="emi" && incVal){
-      let startMonth=startVal===0?1:freqVal+1;
-      if(m>=startMonth){
-        let t=m-startMonth;
-        if((freqVal===1&&t===0)||(freqVal>1&&t>=0&&t%freqVal===0)){
-          curEMI=incType==="percent"?curEMI*(1+incVal/100):curEMI+incVal;
+    if(strategy==="emi" && emiVal){
+      let startMonth = emiStart===0 ? 1 : emiFreq+1;
+      if(month>=startMonth){
+        let t=month-startMonth;
+        if((emiFreq===1 && t===0)||(emiFreq>1 && t>=0 && t%emiFreq===0)){
+          curEMI = emiType==="percent" ? curEMI*(1+emiVal/100) : curEMI+emiVal;
         }
       }
     }
 
-    if(mode==="lump" && lumpAmt){
-      if(lumpFreq===1&&m===1) bal2-=lumpAmt;
-      if(lumpFreq>1&&m%lumpFreq===0) bal2-=lumpAmt;
+    if(strategy==="lump" && lumpAmt){
+      if((lumpFreq===1 && month===1)||(lumpFreq>1 && month%lumpFreq===0)){
+        bal2-=lumpAmt;
+      }
     }
 
     let interest=bal2*r;
-    let principal=Math.min(curEMI-interest,bal2);
+    let principal=Math.min(curEMI-interest, bal2);
     interest2+=interest;
     bal2-=principal;
 
     rows+=`
       <tr>
-        <td>${m}</td>
-        <td>₹${fmt(Math.round(curEMI))}</td>
-        <td>₹${fmt(Math.round(interest))}</td>
-        <td>₹${fmt(Math.round(principal))}</td>
-        <td>₹${fmt(Math.round(Math.max(bal2,0)))}</td>
+        <td>${month}</td>
+        <td>₹${inr(Math.round(curEMI))}</td>
+        <td>₹${inr(Math.round(interest))}</td>
+        <td>₹${inr(Math.round(principal))}</td>
+        <td>₹${inr(Math.max(0,Math.round(bal2)))}</td>
       </tr>`;
   }
+
+  const advTotal=P+interest2;
 
   output.innerHTML=`
   <table>
     <tr><th>Metric</th><th>Normal</th><th>Advanced</th><th>Advantage</th></tr>
-    <tr><td>Duration</td><td>${N} months</td><td>${m} months</td><td>${N-m} months faster</td></tr>
-    <tr><td>Total Interest</td><td>₹${fmt(Math.round(baseInterest))}</td><td>₹${fmt(Math.round(interest2))}</td><td>₹${fmt(Math.round(baseInterest-interest2))}</td></tr>
-    <tr><td>Total Paid</td><td>₹${fmt(Math.round(baseTotal))}</td><td>₹${fmt(Math.round(P+interest2))}</td><td>₹${fmt(Math.round(baseTotal-(P+interest2)))}</td></tr>
+    <tr><td>Duration</td><td>${N}</td><td>${month}</td><td>${N-month} months</td></tr>
+    <tr><td>Total Interest</td><td>₹${inr(Math.round(baseInterest))}</td><td>₹${inr(Math.round(interest2))}</td><td>₹${inr(Math.round(baseInterest-interest2))}</td></tr>
+    <tr><td>Total Paid</td><td>₹${inr(Math.round(baseTotal))}</td><td>₹${inr(Math.round(advTotal))}</td><td>₹${inr(Math.round(baseTotal-advTotal))}</td></tr>
   </table>
 
   <table>
@@ -253,8 +241,7 @@ function calculate(){
 
   <div class="note">
     Disclaimer: This calculator provides an approximate illustration.
-    Actual loan schedules may vary based on lender rules, rounding methods,
-    and interest calculation practices.
+    Actual results may vary based on lender calculation methods.
   </div>`;
 }
 </script>
