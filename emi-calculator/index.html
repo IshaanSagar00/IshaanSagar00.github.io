@@ -2,22 +2,83 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>EMI Calculator India | CalcWorld</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advanced EMI Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{font-family:Arial;background:#f6f7f9;margin:0}
-.container{max-width:420px;background:#fff;margin:40px auto;padding:25px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
-h1{text-align:center;font-size:22px}
-label{font-weight:bold;margin-top:14px;display:block}
-input,select{width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:6px}
-button{width:100%;margin-top:20px;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
-.optional{font-size:13px;color:#2563eb;cursor:pointer;margin-top:12px}
-.box{border:1px solid #ddd;border-radius:6px;padding:12px;margin-top:10px}
-.choice{border:1px solid #ddd;border-radius:6px;padding:10px;margin-bottom:8px;cursor:pointer}
-.choice.active{border-color:#2563eb;background:#f1f5ff}
-.result{background:#f1f5ff;padding:15px;border-radius:6px;margin-top:20px;font-size:14px}
-.small{font-size:13px;color:#555}
+body {
+  font-family: Arial, sans-serif;
+  background:#f4f6fa;
+  margin:0;
+}
+.container {
+  max-width:420px;
+  background:#fff;
+  margin:40px auto;
+  padding:24px;
+  border-radius:10px;
+  box-shadow:0 6px 16px rgba(0,0,0,.1);
+}
+h1 { text-align:center; font-size:22px; }
+label { font-weight:bold; margin-top:12px; display:block; }
+input, select {
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+button {
+  width:100%;
+  padding:12px;
+  margin-top:16px;
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  cursor:pointer;
+}
+.toggle {
+  margin-top:12px;
+  font-size:13px;
+  color:#2563eb;
+  cursor:pointer;
+}
+.box {
+  margin-top:12px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:12px;
+  display:none;
+}
+.strategy {
+  border:1px solid #ddd;
+  padding:10px;
+  border-radius:6px;
+  margin-bottom:8px;
+  cursor:pointer;
+}
+.strategy.active {
+  border-color:#2563eb;
+  background:#f1f5ff;
+}
+.result {
+  margin-top:20px;
+  background:#f1f5ff;
+  padding:14px;
+  border-radius:8px;
+  font-size:14px;
+}
+.chartBox {
+  margin-top:20px;
+}
+.small {
+  font-size:12px;
+  color:#555;
+}
 </style>
 </head>
 
@@ -28,147 +89,158 @@ button{width:100%;margin-top:20px;padding:12px;background:#2563eb;color:#fff;bor
 <label>Loan Amount (₹)</label>
 <input id="loan" placeholder="e.g. 17,50,000">
 
-<label>Interest Rate (% p.a.)</label>
-<input id="rate" type="number" placeholder="e.g. 10">
+<label>Interest Rate (% per year)</label>
+<input id="rate" type="number" value="10">
 
 <label>Loan Tenure (years)</label>
-<input id="years" type="number" placeholder="e.g. 3">
+<input id="tenure" type="number" value="3">
 
-<div class="optional" onclick="toggleAdvanced()">▶ Advanced Prepayment Options (optional)</div>
+<div class="toggle" onclick="toggleAdvanced()">▶ Advanced Prepayment Options (optional)</div>
 
-<div id="advanced" style="display:none">
+<div id="advancedBox" class="box">
+  <strong>Choose Strategy</strong>
 
-<div class="box">
-<strong>Choose Strategy</strong>
+  <div class="strategy active" onclick="selectStrategy('lumpsum')" id="lumpBox">
+    <b>Lump Sum Prepayment</b><br>
+    <span class="small">Pay fixed extra amount at intervals to reduce principal.</span>
+  </div>
 
-<div class="choice active" onclick="selectStrategy('lump')" id="lumpBox">
-<b>Lump Sum Prepayment</b><br>
-<span class="small">Pay extra fixed amount periodically</span>
-</div>
+  <div class="strategy" onclick="selectStrategy('emi')" id="emiBox">
+    <b>Permanent EMI Increase</b><br>
+    <span class="small">Increase EMI permanently by ₹ or %.</span>
+  </div>
 
-<div class="choice" onclick="selectStrategy('emi')" id="emiBox">
-<b>Permanent EMI Increase</b><br>
-<span class="small">Increase EMI permanently to finish faster</span>
-</div>
+  <div id="lumpInputs">
+    <label>Extra Amount (₹)</label>
+    <input id="lumpAmount" value="50000">
+    <label>Frequency</label>
+    <select id="lumpFreq">
+      <option value="3">Every 3 months</option>
+      <option value="6">Every 6 months</option>
+      <option value="12">Every 12 months</option>
+    </select>
+  </div>
 
-<div id="lumpFields">
-<label>Extra Amount (₹)</label>
-<input id="lumpAmount" placeholder="e.g. 50000">
+  <div id="emiInputs" style="display:none;">
+    <label>Increase Type</label>
+    <select id="emiType">
+      <option value="percent">Percentage (%)</option>
+      <option value="amount">Rupees (₹)</option>
+    </select>
 
-<label>Frequency</label>
-<select id="lumpFreq">
-<option value="once">One-time</option>
-<option value="1">Every month</option>
-<option value="3">Every 3 months</option>
-<option value="6">Every 6 months</option>
-<option value="12">Every year</option>
-</select>
-</div>
+    <label>Increase Value</label>
+    <input id="emiValue" value="10">
 
-<div id="emiFields" style="display:none">
-<label>Increase Type</label>
-<select id="emiType">
-<option value="rupee">₹ Amount</option>
-<option value="percent">% Increase</option>
-</select>
-
-<label>Increase Value</label>
-<input id="emiValue" placeholder="e.g. 5000 or 10">
-
-<label>Frequency</label>
-<select id="emiFreq">
-<option value="once">One-time</option>
-<option value="3">Every 3 months</option>
-<option value="6">Every 6 months</option>
-<option value="12">Every year</option>
-</select>
-</div>
-</div>
+    <label>Frequency</label>
+    <select id="emiFreq">
+      <option value="once">One-time</option>
+      <option value="3">Every 3 months</option>
+      <option value="6">Every 6 months</option>
+      <option value="12">Every 12 months</option>
+    </select>
+  </div>
 </div>
 
 <button onclick="calculate()">Calculate EMI</button>
 
-<div class="result" id="result"></div>
+<div id="output" class="result"></div>
+<div class="chartBox"><canvas id="chart"></canvas></div>
 </div>
 
 <script>
-function indian(n){return new Intl.NumberFormat("en-IN").format(Math.round(n))}
-loan.addEventListener("input",e=>{
- let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
- let last=v.slice(-3),rest=v.slice(0,-3);
- e.target.value=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",")+(rest?",":"")+last
-})
+function indian(n){return new Intl.NumberFormat("en-IN").format(Math.round(n));}
 
-let strategy="lump";
-function toggleAdvanced(){advanced.style.display=advanced.style.display?"":"block"}
+document.getElementById("loan").addEventListener("input", e=>{
+  let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
+  if(!v) return e.target.value="";
+  let last=v.slice(-3), rest=v.slice(0,-3);
+  if(rest) last=","+last;
+  e.target.value=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",")+last;
+});
+
+let strategy="lumpsum";
+function toggleAdvanced(){
+  let b=document.getElementById("advancedBox");
+  b.style.display=b.style.display==="none"?"block":"none";
+}
 function selectStrategy(s){
- strategy=s;
- lumpBox.classList.toggle("active",s==="lump");
- emiBox.classList.toggle("active",s==="emi");
- lumpFields.style.display=s==="lump"?"":"none";
- emiFields.style.display=s==="emi"?"":"none";
+  strategy=s;
+  document.getElementById("lumpBox").classList.toggle("active",s==="lumpsum");
+  document.getElementById("emiBox").classList.toggle("active",s==="emi");
+  document.getElementById("lumpInputs").style.display=s==="lumpsum"?"block":"none";
+  document.getElementById("emiInputs").style.display=s==="emi"?"block":"none";
 }
 
-function baseSchedule(P,R,N,emi){
- let bal=P,interest=0;
- for(let i=0;i<N;i++){
-  let int=bal*R;interest+=int;bal-=emi-int;
- }
- return interest;
+function simulate(P,R,EMI,adv){
+  let bal=P, m=0, interest=0, extraPaid=0, curEMI=EMI;
+  while(bal>0 && m<600){
+    m++;
+    let i=bal*R;
+    interest+=i;
+    let pay=curEMI-i;
+    if(adv){
+      if(adv.type==="lump" && m%adv.freq===0){
+        bal-=adv.amount;
+        extraPaid+=adv.amount;
+      }
+      if(adv.type==="emi"){
+        if(adv.freq==="once" && m===1 || adv.freq!=="once" && m%adv.freq===0){
+          curEMI+=adv.inc;
+        }
+      }
+    }
+    bal-=pay;
+  }
+  return {months:m, interest, total:P+interest+extraPaid, extraPaid, emi:curEMI};
 }
 
 function calculate(){
- let P=+loan.value.replace(/,/g,"");
- let r=+rate.value/1200;
- let N=+years.value*12;
- if(!P||!r||!N){result.innerHTML="Fill all fields";return}
+  let P=+loan.value.replace(/,/g,"");
+  let R=rate.value/12/100;
+  let N=tenure.value*12;
+  let EMI=P*R*Math.pow(1+R,N)/(Math.pow(1+R,N)-1);
 
- let EMI=P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
- let baseInterest=baseSchedule(P,r,N,EMI);
+  let base=simulate(P,R,EMI,null);
+  let adv=null;
 
- if(advanced.style.display==="none"){
- result.innerHTML=`
- <b>Monthly EMI:</b> ₹${indian(EMI)}<br>
- <b>Total Interest:</b> ₹${indian(baseInterest)}<br>
- <b>Total Payable:</b> ₹${indian(P+baseInterest)}
- `;
- return;
- }
-
- let bal=P,emiNow=EMI,interest=0,month=0;
- while(bal>0 && month<1000){
-  month++;
-  let extra=0;
-
-  if(strategy==="lump"){
-   let f=lumpFreq.value;
-   if(f==="once"&&month===1)extra=+lumpAmount.value||0;
-   if(f!=="once"&&month%+f===0)extra=+lumpAmount.value||0;
+  if(advancedBox.style.display==="block"){
+    if(strategy==="lumpsum"){
+      adv={type:"lump",amount:+lumpAmount.value,freq:+lumpFreq.value};
+    }else{
+      let inc=emiType.value==="percent"?EMI*(+emiValue.value/100):+emiValue.value;
+      adv={type:"emi",inc,freq:emiFreq.value};
+    }
   }
 
-  if(strategy==="emi"){
-   let f=emiFreq.value;
-   if((f==="once"&&month===1)||(f!=="once"&&month%+f===0)){
-    let v=+emiValue.value||0;
-    emiNow+=emiType.value==="percent"?emiNow*v/100:v;
-   }
+  let advRes=adv?simulate(P,R,EMI,adv):null;
+
+  let html=`<b>Original EMI:</b> ₹${indian(EMI)}<br>
+<b>Original Tenure:</b> ${base.months} months<br>
+<b>Total Interest:</b> ₹${indian(base.interest)}<hr>`;
+
+  if(advRes){
+    html+=`<b>New Tenure:</b> ${advRes.months} months<br>
+<b>Interest Saved:</b> ₹${indian(base.interest-advRes.interest)}<br>
+<b>Time Saved:</b> ${base.months-advRes.months} months`;
+    drawChart(base,advRes);
   }
 
-  let int=bal*r;interest+=int;
-  bal-=emiNow-int+extra;
- }
+  output.innerHTML=html;
+}
 
- let saved=Math.max(0,baseInterest-interest);
- result.innerHTML=`
- <b>Original EMI:</b> ₹${indian(EMI)}<br>
- <b>Original Tenure:</b> ${N} months<br><br>
-
- <b>New EMI (effective):</b> ₹${indian(emiNow)}<br>
- <b>New Tenure:</b> ${month} months<br><br>
-
- <b>Time Saved:</b> ${N-month} months<br>
- <b>Interest Saved:</b> ₹${indian(saved)}
- `;
+let chart;
+function drawChart(b,a){
+  if(chart) chart.destroy();
+  chart=new Chart(document.getElementById("chart"),{
+    type:"bar",
+    data:{
+      labels:["Without Extra","With Extra"],
+      datasets:[
+        {label:"Total Paid",data:[b.total,a.total],backgroundColor:"#22c1dc"},
+        {label:"Interest Paid",data:[b.interest,a.interest],backgroundColor:"#ef4444"}
+      ]
+    }
+  });
 }
 </script>
 </body>
