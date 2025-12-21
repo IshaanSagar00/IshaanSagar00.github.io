@@ -3,77 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <title>Monthly EMI Breakdown (Running Loan)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{
-  font-family:Arial,sans-serif;
-  background:#f6f7fb;
-  padding:20px;
-}
-.card{
-  max-width:1100px;
-  margin:auto;
-  background:#fff;
-  padding:25px;
-  border-radius:10px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
-}
-h1{text-align:center;margin-top:0}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:15px;
-}
+body{font-family:Arial,sans-serif;background:#f6f7fb;padding:20px}
+.card{max-width:1100px;margin:auto;background:#fff;padding:25px;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+h1{text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
 label{font-weight:bold;font-size:14px}
-input,select{
-  width:100%;
-  padding:10px;
-  margin-top:6px;
-  font-size:14px;
-}
-button{
-  margin-top:15px;
-  padding:12px;
-  font-size:16px;
-  background:#2563eb;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-.box{
-  margin-top:20px;
-  padding:16px;
-  border:1px solid #ddd;
-  border-radius:8px;
-}
+input,select{width:100%;padding:10px;margin-top:6px;font-size:14px}
+button{margin-top:15px;padding:12px;font-size:16px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer}
+.box{margin-top:20px;padding:16px;border:1px solid #ddd;border-radius:8px}
 .hidden{display:none}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:25px;
-  font-size:14px;
-}
-th,td{
-  border:1px solid #ddd;
-  padding:8px;
-  text-align:right;
-}
+table{width:100%;border-collapse:collapse;margin-top:25px;font-size:14px}
+th,td{border:1px solid #ddd;padding:8px;text-align:right}
 th{background:#f1f5f9}
 th:first-child,td:first-child{text-align:left}
-tr.current{
-  background:#e0f2fe;
-  font-weight:bold;
-}
-.note{
-  margin-top:15px;
-  font-size:13px;
-  color:#555;
-  background:#fafafa;
-  padding:10px;
-  border-radius:6px;
-}
+tr.current{background:#e0f2fe;font-weight:bold}
+.note{margin-top:15px;font-size:13px;color:#555;background:#fafafa;padding:10px;border-radius:6px}
 </style>
 </head>
 
@@ -89,13 +36,13 @@ tr.current{
 
   <div>
     <label>Interest Rate (% per year)</label>
-    <input type="number" id="rate" placeholder="10">
+    <input type="number" id="rate">
   </div>
 
   <div>
     <label>Loan Tenure</label>
-    <div style="display:flex;gap:6px;">
-      <input type="number" id="tenure" placeholder="3">
+    <div style="display:flex;gap:6px">
+      <input type="number" id="tenure">
       <select id="tenureType">
         <option value="years">Years</option>
         <option value="months">Months</option>
@@ -105,7 +52,7 @@ tr.current{
 
   <div>
     <label>EMI Start Month</label>
-    <div style="display:flex;gap:6px;">
+    <div style="display:flex;gap:6px">
       <select id="startMonth"></select>
       <select id="startYear"></select>
     </div>
@@ -113,16 +60,15 @@ tr.current{
 </div>
 
 <div class="box">
-<b>Advanced Options Strategy</b>
+<b>Advanced Options</b>
 
-<label style="margin-top:12px;">Strategy</label>
+<label>Strategy</label>
 <select id="strategy">
   <option value="none">None</option>
   <option value="emi">EMI Increase</option>
   <option value="lump">Lump Sum</option>
 </select>
 
-<!-- EMI INCREASE -->
 <div id="emiBox" class="hidden">
   <label>Increase Type</label>
   <select id="emiType">
@@ -147,14 +93,13 @@ tr.current{
     <option value="custom">From Custom Month</option>
   </select>
 
-  <!-- HIDDEN BY DEFAULT -->
-  <div id="emiCustomDate" class="hidden" style="display:flex;gap:6px;">
+  <!-- CALENDAR (HIDDEN BY DEFAULT) -->
+  <div id="emiCustomDate" class="hidden" style="display:flex;gap:6px">
     <select id="emiStartMonth"></select>
     <select id="emiStartYear"></select>
   </div>
 </div>
 
-<!-- LUMP SUM -->
 <div id="lumpBox" class="hidden">
   <label>Lump Sum Amount (₹)</label>
   <input type="number" id="lumpAmount">
@@ -175,13 +120,8 @@ tr.current{
 <div id="table"></div>
 
 <div class="note">
-Disclaimer: This calculator provides an approximate illustration.
-Actual results may vary based on lender rules and rounding.
+Disclaimer: Approximate illustration. Actual lender calculations may differ.
 </div>
-
-<footer style="margin-top:20px;text-align:center;font-size:13px;">
-<a href="/emi-calculator/">← Back to EMI Calculator</a>
-</footer>
 </div>
 
 <script>
@@ -189,34 +129,32 @@ const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 
 function fillMonthYear(m,y){
   m.innerHTML=months.map((x,i)=>`<option value="${i}">${x}</option>`).join("");
-  const cy=new Date().getFullYear();
+  const now=new Date().getFullYear();
   y.innerHTML="";
-  for(let i=cy;i<=cy+30;i++) y.innerHTML+=`<option>${i}</option>`;
+  for(let i=now-10;i<=now+25;i++) y.innerHTML+=`<option>${i}</option>`;
 }
 
 fillMonthYear(startMonth,startYear);
 fillMonthYear(emiStartMonth,emiStartYear);
+
+// Indian format
+loan.oninput=e=>{
+  let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
+  if(!v){e.target.value="";return}
+  let r=v.slice(-3),l=v.slice(0,-3);
+  e.target.value=l.replace(/\B(?=(\d{2})+(?!\d))/g,",")+(l?","+r:r);
+};
 
 strategy.onchange=()=>{
   emiBox.classList.toggle("hidden",strategy.value!=="emi");
   lumpBox.classList.toggle("hidden",strategy.value!=="lump");
 };
 
+// 🔥 FIX #1 — calendar toggle
 emiStartType.onchange=()=>{
   emiCustomDate.classList.toggle("hidden",emiStartType.value!=="custom");
 };
-
-// ENSURE HIDDEN ON LOAD
-document.addEventListener("DOMContentLoaded",()=>{
-  emiCustomDate.classList.add("hidden");
-});
-
-loan.oninput=e=>{
-  let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
-  if(!v){e.target.value="";return;}
-  let r=v.slice(-3),l=v.slice(0,-3);
-  e.target.value=l.replace(/\B(?=(\d{2})+(?!\d))/g,",")+(l?","+r:r);
-};
+emiCustomDate.classList.add("hidden"); // ensure hidden on load
 
 function inr(n){return n.toLocaleString("en-IN")}
 
@@ -226,12 +164,10 @@ function generate(){
   let t=+tenure.value;
   let N=tenureType.value==="years"?t*12:t;
 
-  if(!P||!r||!N){alert("Fill all fields");return;}
+  if(!P||!r||!N){alert("Fill all fields");return}
 
   let EMI=P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
-  let bal=P,balA=P,baseI=0,advI=0;
-  let curEMI=EMI;
-
+  let bal=P,balA=P,baseI=0,advI=0,curEMI=EMI;
   let date=new Date(startYear.value,startMonth.value,1);
   let today=new Date();
   let currentKey=today.getFullYear()*12+today.getMonth();
@@ -241,57 +177,43 @@ function generate(){
     emiStartKey=emiStartYear.value*12+Number(emiStartMonth.value);
   }
 
-  let html=`<table>
-<tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Extra Payment</th><th>Balance</th></tr>`;
-
+  let html=`<table><tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Extra Payment</th><th>Balance</th></tr>`;
   let advEnd=0;
 
   for(let m=1;m<=N;m++){
     let key=date.getFullYear()*12+date.getMonth();
-
     let i=bal*r;baseI+=i;bal-=EMI-i;
-    let extra=0;
 
+    let extra=0;
     if(strategy.value==="emi"&&emiValue.value&&key>=emiStartKey){
-      if(
-        emiFreq.value==="once"&&key===emiStartKey||
-        emiFreq.value!=="once"&&(key-emiStartKey)%emiFreq.value===0
-      ){
-        curEMI=emiType.value==="percent"
-          ?curEMI*(1+emiValue.value/100)
-          :curEMI+Number(emiValue.value);
+      if(emiFreq.value==="once"&&key===emiStartKey||emiFreq.value!=="once"&&(key-emiStartKey)%emiFreq.value===0){
+        curEMI=emiType.value==="percent"?curEMI*(1+emiValue.value/100):curEMI+Number(emiValue.value);
       }
     }
 
     if(strategy.value==="lump"&&lumpAmount.value){
-      if(
-        lumpFreq.value==="once"&&m===1||
-        lumpFreq.value!=="once"&&m%lumpFreq.value===0
-      ){
-        extra=Math.min(+lumpAmount.value,balA);
-        balA-=extra;
+      if(lumpFreq.value==="once"&&m===1||lumpFreq.value!=="once"&&m%lumpFreq.value===0){
+        extra=Math.min(+lumpAmount.value,balA);balA-=extra;
       }
     }
 
     let ai=balA*r;advI+=ai;
-    let principal=Math.min(curEMI-ai,balA);
-    balA-=principal;
+    let p=Math.min(curEMI-ai,balA);balA-=p;
     if(balA<=0&&!advEnd)advEnd=m;
 
     html+=`<tr class="${date.getMonth()===today.getMonth()&&date.getFullYear()===today.getFullYear()?'current':''}">
 <td>${months[date.getMonth()]} ${date.getFullYear()}</td>
-<td>₹${inr(Math.round(principal+ai))}</td>
+<td>₹${inr(Math.round(p+ai))}</td>
 <td>₹${inr(Math.round(ai))}</td>
-<td>₹${inr(Math.round(principal))}</td>
+<td>₹${inr(Math.round(p))}</td>
 <td>${extra?`₹${inr(extra)}`:"—"}</td>
-<td>₹${inr(Math.max(0,Math.round(balA)))}</td>
-</tr>`;
+<td>₹${inr(Math.max(0,Math.round(balA)))}</td></tr>`;
+
     date.setMonth(date.getMonth()+1);
   }
 
   table.innerHTML=html+"</table>";
-  summary.innerHTML=`
-<h3>Comparison Summary</h3>
+  summary.innerHTML=`<h3>Comparison Summary</h3>
 <p><b>Remaining Tenure:</b> ${N} → ${advEnd} months (${N-advEnd} months saved)</p>
 <p><b>Interest Saved:</b> ₹${inr(Math.round(baseI-advI))}</p>`;
   summary.classList.remove("hidden");
