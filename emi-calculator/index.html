@@ -21,7 +21,12 @@ body {
 }
 h1 { text-align:center; }
 
-label { display:block; margin-top:14px; font-weight:bold; }
+label {
+  display:block;
+  margin-top:14px;
+  font-weight:bold;
+}
+
 input, select {
   width:100%;
   padding:10px;
@@ -43,11 +48,12 @@ button {
   cursor:pointer;
 }
 
-.small {
-  margin-top:12px;
+.link {
+  display:block;
+  margin-top:10px;
   font-size:13px;
   color:#2563eb;
-  cursor:pointer;
+  text-decoration:none;
 }
 
 .box {
@@ -88,23 +94,22 @@ th { background:#f0f0f0; }
 <h1>EMI Calculator</h1>
 
 <label>Loan Amount (₹)</label>
-<input id="loan" placeholder="e.g 10,00,000">
+<input id="loan" placeholder="17,50,000">
 
 <label>Interest Rate (% per year)</label>
-<input type="number" id="rate"  placeholder="e.g 14.5%">
+<input type="number" id="rate">
 
 <label>Loan Tenure (years)</label>
-<input type="number" id="years"  placeholder="e.g 5 years">
+<input type="number" id="years">
 
-
-
-
-
-<a class="small" href="./emi-breakdown.html">
-  Already have a loan? View EMI breakdown
+<a class="link" href="./emi-breakdown.html">
+  Already have a loan? View EMI breakdown →
 </a>
 
-<div class="small" onclick="toggleAdvanced()">▶ Advanced Options</div>
+<a class="link" href="#" onclick="toggleAdvanced(); return false;">
+  ▶ Advanced Options
+</a>
+
 <div id="advancedBox" class="box hidden">
 
 <label>Strategy</label>
@@ -113,6 +118,7 @@ th { background:#f0f0f0; }
   <option value="lump">Lump Sum Prepayment</option>
 </select>
 
+<!-- EMI INCREASE -->
 <div id="emiBox">
   <label>Increase Type</label>
   <select id="emiType">
@@ -138,6 +144,7 @@ th { background:#f0f0f0; }
   </select>
 </div>
 
+<!-- LUMP SUM -->
 <div id="lumpBox" class="hidden">
   <label>Lump Sum Amount (₹)</label>
   <input type="number" id="lumpAmount">
@@ -152,10 +159,10 @@ th { background:#f0f0f0; }
 
 <div class="note">
 <b>How it works</b><br><br>
-Any extra payment reduces the principal earlier.
+Extra payments reduce the principal earlier.
 Since interest is calculated monthly on the remaining balance,
-lower principal means less interest in all future months.
-This creates a compounding benefit and shortens the loan duration.
+lower principal means less interest in future months.
+This compounding effect shortens your loan tenure.
 </div>
 </div>
 
@@ -176,30 +183,25 @@ function toggleAdvanced(){
   advancedBox.classList.toggle("hidden");
 }
 
-
 strategy.addEventListener("change",e=>{
   emiBox.classList.toggle("hidden",e.target.value!=="emi");
   lumpBox.classList.toggle("hidden",e.target.value!=="lump");
 });
 
 function calculate(){
-  let P = existingBox.classList.contains("hidden")
-    ? num(loan.value.replace(/,/g,''))
-    : num(existingAmt.value);
+  const P = num(loan.value.replace(/,/g,''));
+  const rateVal = num(rate.value);
+  const N = num(years.value)*12;
 
-  let rateVal = existingBox.classList.contains("hidden")
-    ? num(rate.value)
-    : num(existingRate.value);
-
-  let N = existingBox.classList.contains("hidden")
-    ? num(years.value)*12
-    : num(existingMonths.value);
-
-  if(!P||!rateVal||!N){ alert("Fill all required values"); return; }
+  if(!P||!rateVal||!N){
+    alert("Please fill all loan details");
+    return;
+  }
 
   const r = rateVal/12/100;
-  let EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
+  const EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
 
+  // NORMAL LOAN
   let bal=P, baseInterest=0;
   for(let m=1;m<=N;m++){
     let i=bal*r;
@@ -207,41 +209,48 @@ function calculate(){
     bal-=EMI-i;
   }
 
+  // IF ADVANCED OFF
   if(advancedBox.classList.contains("hidden")){
     output.innerHTML=`
-    <div class="note">
-      <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
-      <b>Tenure:</b> ${N} months<br>
-      <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
-      <b>Total Paid:</b> ₹${inr(Math.round(P+baseInterest))}
-    </div>`;
+      <div class="note">
+        <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
+        <b>Tenure:</b> ${N} months<br>
+        <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
+        <b>Total Amount Paid:</b> ₹${inr(Math.round(P+baseInterest))}
+      </div>`;
     return;
   }
 
-  let curEMI=EMI, bal2=P, interest2=0, rows="", m=0;
+  // ADVANCED SIMULATION
+  let curEMI=EMI, bal2=P, interest2=0, m=0;
+  let rows="";
 
   while(bal2>0 && m<600){
     m++;
 
     if(strategy.value==="emi" && num(emiValue.value)){
-      let startMonth=emiStart.value==0?1:num(emiFreq.value)+1;
-      let t=m-startMonth;
-      if(m>=startMonth && (emiFreq.value==1 && t==0 || emiFreq.value>1 && t>=0 && t%emiFreq.value==0)){
-        curEMI=emiType.value==="percent"
-          ?curEMI*(1+num(emiValue.value)/100)
-          :curEMI+num(emiValue.value);
+      let startMonth = emiStart.value==0 ? 1 : num(emiFreq.value)+1;
+      let t = m-startMonth;
+      if(m>=startMonth && (
+        (emiFreq.value==1 && t==0) ||
+        (emiFreq.value>1 && t>=0 && t%emiFreq.value==0)
+      )){
+        curEMI = emiType.value==="percent"
+          ? curEMI*(1+num(emiValue.value)/100)
+          : curEMI+num(emiValue.value);
       }
     }
 
     if(strategy.value==="lump" && num(lumpAmount.value)){
-      if(lumpFreq.value==1&&m==1||lumpFreq.value>1&&m%lumpFreq.value==0){
+      if((lumpFreq.value==1 && m==1) ||
+         (lumpFreq.value>1 && m%lumpFreq.value==0)){
         bal2-=num(lumpAmount.value);
       }
     }
 
     let interest=bal2*r;
     let principal=Math.min(curEMI-interest,bal2);
-    let emiShown=principal+interest;
+    let emiShown=interest+principal;
 
     interest2+=interest;
     bal2-=principal;
@@ -260,8 +269,12 @@ function calculate(){
   <table>
     <tr><th>Metric</th><th>Normal</th><th>Advanced</th></tr>
     <tr><td>Tenure</td><td>${N}</td><td>${m}</td></tr>
-    <tr><td>Total Interest</td><td>₹${inr(Math.round(baseInterest))}</td><td>₹${inr(Math.round(interest2))}</td></tr>
-    <tr><td>Total Paid</td><td>₹${inr(Math.round(P+baseInterest))}</td><td>₹${inr(Math.round(P+interest2))}</td></tr>
+    <tr><td>Total Interest</td>
+        <td>₹${inr(Math.round(baseInterest))}</td>
+        <td>₹${inr(Math.round(interest2))}</td></tr>
+    <tr><td>Total Paid</td>
+        <td>₹${inr(Math.round(P+baseInterest))}</td>
+        <td>₹${inr(Math.round(P+interest2))}</td></tr>
   </table>
 
   <table>
@@ -271,7 +284,7 @@ function calculate(){
 
   <div class="note">
     Disclaimer: This calculator provides an approximate illustration.
-    Actual results may vary depending on lender policies and rounding.
+    Actual loan schedules may vary based on lender policies and rounding methods.
   </div>`;
 }
 </script>
