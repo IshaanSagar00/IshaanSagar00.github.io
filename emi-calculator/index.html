@@ -42,14 +42,6 @@ button {
   margin-top:18px; background:#f1f5ff;
   padding:14px; border-radius:6px;
 }
-table {
-  width:100%; border-collapse:collapse; margin-top:14px;
-}
-th, td {
-  border:1px solid #ccc; padding:8px;
-  font-size:14px; text-align:center;
-}
-th { background:#f0f0f0; }
 .edu {
   margin-top:14px;
   background:#f9fafb;
@@ -57,6 +49,14 @@ th { background:#f0f0f0; }
   border-radius:6px;
   font-size:14px;
 }
+table {
+  width:100%; border-collapse:collapse; margin-top:12px;
+}
+th, td {
+  border:1px solid #ccc; padding:8px;
+  font-size:14px; text-align:center;
+}
+th { background:#f0f0f0; }
 </style>
 </head>
 
@@ -68,27 +68,28 @@ th { background:#f0f0f0; }
 <input type="text" id="loan" placeholder="17,50,000">
 
 <label>Interest Rate (% per year)</label>
-<input type="number" id="rate">
+<input type="number" id="rate" placeholder="e.g. 10">
 
 <label>Loan Tenure (years)</label>
-<input type="number" id="years">
+<input type="number" id="years" placeholder="e.g. 3">
 
 <div class="small" onclick="toggleAdvanced()">▶ Advanced Prepayment Options</div>
 
 <div id="advancedBox" class="box" style="display:none;">
   <b>Choose Strategy</b>
 
-  <div class="strategy active" id="lumpBtn" onclick="setMode('lump')">
+  <div class="strategy active" id="lumpBox" onclick="setMode('lump')">
     Lump Sum Prepayment
   </div>
 
-  <div class="strategy" id="emiBtn" onclick="setMode('emi')">
+  <div class="strategy" id="emiBox" onclick="setMode('emi')">
     EMI Increase Strategy
   </div>
 
+  <!-- LUMP SUM -->
   <div id="lumpFields">
     <label>Lump Sum Amount (₹)</label>
-    <input type="number" id="lumpAmount">
+    <input type="number" id="lumpAmount" placeholder="e.g. 50000">
 
     <label>Frequency</label>
     <select id="lumpFreq">
@@ -99,6 +100,7 @@ th { background:#f0f0f0; }
     </select>
   </div>
 
+  <!-- EMI INCREASE -->
   <div id="emiFields" style="display:none;">
     <label>Increase Type</label>
     <select id="emiType">
@@ -107,7 +109,7 @@ th { background:#f0f0f0; }
     </select>
 
     <label>Increase Value</label>
-    <input type="number" id="emiValue">
+    <input type="number" id="emiValue" placeholder="e.g. 10 or 5000">
 
     <label>Frequency</label>
     <select id="emiFreq">
@@ -124,10 +126,22 @@ th { background:#f0f0f0; }
     </select>
   </div>
 
+  <!-- EDUCATION -->
   <div class="edu">
     <b>How It Works</b><br><br>
     Extra EMI → Principal reduces faster → Less interest accrues → Tenure decreases
     <br><br>
+
+    <b>6 Core Advantages</b>
+    <ol>
+      <li>Dramatic interest savings (especially when started early)</li>
+      <li>Accelerated debt freedom (months earlier payoff)</li>
+      <li>Compounding benefit (each payment amplifies the next)</li>
+      <li>Flexible approach options (lump sums or progressive increases)</li>
+      <li>Interest rate advantage (you outpace the interest charge)</li>
+      <li>Psychological win (visible financial discipline)</li>
+    </ol>
+
     <b>Core Principle:</b><br>
     More principal today = Less interest tomorrow = Earlier freedom
   </div>
@@ -138,112 +152,105 @@ th { background:#f0f0f0; }
 </div>
 
 <script>
-let advanced = false;
-let mode = "lump";
+let advanced=false, mode="lump";
 
 function toggleAdvanced(){
-  advanced = !advanced;
-  document.getElementById("advancedBox").style.display = advanced ? "block" : "none";
+  advanced=!advanced;
+  advancedBox.style.display=advanced?"block":"none";
 }
 
 function setMode(m){
-  mode = m;
-  document.getElementById("lumpBtn").classList.toggle("active", m==="lump");
-  document.getElementById("emiBtn").classList.toggle("active", m==="emi");
-  document.getElementById("lumpFields").style.display = m==="lump" ? "block" : "none";
-  document.getElementById("emiFields").style.display = m==="emi" ? "block" : "none";
+  mode=m;
+  lumpBox.classList.toggle("active",m==="lump");
+  emiBox.classList.toggle("active",m==="emi");
+  lumpFields.style.display=m==="lump"?"block":"none";
+  emiFields.style.display=m==="emi"?"block":"none";
 }
 
 function fmt(n){ return n.toLocaleString("en-IN"); }
 
-document.getElementById("loan").addEventListener("input", e=>{
-  let v = e.target.value.replace(/\D/g,'');
-  e.target.value = v ? fmt(+v) : "";
+loan.addEventListener("input",e=>{
+  let v=e.target.value.replace(/\D/g,'');
+  e.target.value=v?fmt(+v):"";
 });
 
 function calculate(){
-  const P = +loan.value.replace(/,/g,'');
-  const r = +rate.value / 12 / 100;
-  const N = +years.value * 12;
+  const P=+loan.value.replace(/,/g,'');
+  const r=+rate.value/12/100;
+  const N=+years.value*12;
+  if(!P||!r||!N){ alert("Fill all fields"); return; }
 
-  if(!P || !r || !N){
-    alert("Please fill all loan details");
-    return;
+  const EMI=Math.round(P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1));
+
+  let bal=P, baseInterest=0;
+  for(let m=1;m<=N;m++){
+    let i=bal*r;
+    baseInterest+=i;
+    bal-=EMI-i;
   }
-
-  const EMI = Math.round(P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1));
-
-  // NORMAL LOAN
-  let bal = P, baseInterest = 0;
-  for(let i=1;i<=N;i++){
-    let interest = bal * r;
-    baseInterest += interest;
-    bal -= (EMI - interest);
-  }
-  const baseTotal = P + baseInterest;
 
   if(!advanced){
-    output.innerHTML = `
-      <div class="result">
-        <b>Monthly EMI:</b> ₹${fmt(EMI)}<br>
-        <b>Tenure:</b> ${N} months<br>
-        <b>Total Interest:</b> ₹${fmt(Math.round(baseInterest))}<br>
-        <b>Total Amount Paid:</b> ₹${fmt(Math.round(baseTotal))}
-      </div>`;
+    output.innerHTML=`
+    <div class="result">
+      <b>Monthly EMI:</b> ₹${fmt(EMI)}<br>
+      <b>Tenure:</b> ${N} months<br>
+      <b>Total Interest:</b> ₹${fmt(Math.round(baseInterest))}
+    </div>`;
     return;
   }
 
-  // ADVANCED
-  let bal2 = P, interest2 = 0, m = 0, curEMI = EMI;
+  let bal2=P, interest2=0, m=0;
+  let curEMI=EMI;
 
-  const lumpAmt = +lumpAmount.value || 0;
-  const lumpFreq = +lumpFreq.value;
+  const lumpAmt=+lumpAmount.value||0;
+  const lumpF=+lumpFreq.value;
 
-  const emiType = document.getElementById("emiType").value;
-  const emiValue = +emiValue.value || 0;
-  const emiFreq = +emiFreq.value;
-  const emiStart = +emiStart.value;
+  const emiType=emiTypeSel=emiType.value;
+  const emiVal=+emiValue.value||0;
+  const emiF=+emiFreq.value;
+  const start=+emiStart.value;
 
-  while(bal2 > 0 && m < 600){
+  while(bal2>0 && m<600){
     m++;
 
-    if(mode === "lump" && lumpAmt > 0){
-      if(lumpFreq === 1 && m === 1) bal2 -= lumpAmt;
-      if(lumpFreq > 1 && m % lumpFreq === 0) bal2 -= lumpAmt;
+    if(mode==="lump" && lumpAmt>0){
+      if(lumpF===1 && m===1) bal2-=lumpAmt;
+      if(lumpF>1 && m%lumpF===0) bal2-=lumpAmt;
     }
 
-    if(mode === "emi" && emiValue > 0){
-      let startMonth = emiStart === 0 ? 1 : emiFreq + 1;
-      if(m >= startMonth){
-        let t = m - startMonth;
-        if((emiFreq === 1 && t === 0) || (emiFreq > 1 && t >= 0 && t % emiFreq === 0)){
-          curEMI = emiType === "percent"
-            ? Math.round(curEMI * (1 + emiValue / 100))
-            : curEMI + emiValue;
+    if(mode==="emi" && emiVal>0){
+      let startMonth=start===0?1:emiF+1;
+      if(m>=startMonth){
+        let trigger = (m-startMonth);
+        if((emiF===1 && trigger===0) || (emiF>1 && trigger>=0 && trigger%emiF===0)){
+          curEMI = emiType==="percent"
+            ? Math.round(curEMI*(1+emiVal/100))
+            : curEMI + emiVal;
         }
       }
     }
 
-    let interest = bal2 * r;
-    let principal = Math.min(curEMI - interest, bal2);
-    interest2 += interest;
-    bal2 -= principal;
+    let i=bal2*r;
+    let p=Math.min(curEMI-i,bal2);
+    interest2+=i;
+    bal2-=p;
   }
 
-  const advTotal = P + interest2;
+  const saved=Math.round(baseInterest-interest2);
 
-  output.innerHTML = `
+  output.innerHTML=`
+  <div class="result">
+    <b>Original EMI:</b> ₹${fmt(EMI)}<br>
+    <b>New Tenure:</b> ${m} months<br>
+    <b>Interest Saved:</b> ₹${fmt(saved)}
+  </div>
+
   <table>
-    <tr><th>Metric</th><th>Normal Loan</th><th>With Strategy</th><th>Advantage</th></tr>
-    <tr><td>Loan Duration</td><td>${N} months</td><td>${m} months</td><td>${N-m} months faster</td></tr>
-    <tr><td>Total Interest</td>
-        <td>₹${fmt(Math.round(baseInterest))}</td>
-        <td>₹${fmt(Math.round(interest2))}</td>
-        <td>₹${fmt(Math.round(baseInterest-interest2))} saved</td></tr>
-    <tr><td>Total Amount Paid</td>
-        <td>₹${fmt(Math.round(baseTotal))}</td>
-        <td>₹${fmt(Math.round(advTotal))}</td>
-        <td>₹${fmt(Math.round(baseTotal-advTotal))} less</td></tr>
+    <tr><th></th><th>Before</th><th>After</th></tr>
+    <tr><td>Tenure</td><td>${N}</td><td>${m}</td></tr>
+    <tr><td>Interest</td>
+    <td>₹${fmt(Math.round(baseInterest))}</td>
+    <td>₹${fmt(Math.round(interest2))}</td></tr>
   </table>`;
 }
 </script>
