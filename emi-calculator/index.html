@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>EMI Calculator (Clean)</title>
+<title>EMI Calculator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -23,7 +23,7 @@ button {
   background:#2563eb; color:#fff; border:none;
   border-radius:6px; font-size:16px; cursor:pointer;
 }
-.small-link {
+.small {
   font-size:13px; color:#2563eb; cursor:pointer;
   margin-top:12px; display:inline-block;
 }
@@ -43,7 +43,7 @@ button {
   margin-top:18px; background:#f1f5ff;
   padding:14px; border-radius:6px;
 }
-.dark-box {
+.dark {
   background:#111; color:#fff;
   padding:16px; border-radius:8px;
   margin-top:16px;
@@ -72,11 +72,10 @@ th { background:#f0f0f0; }
 <label>Loan Tenure (years)</label>
 <input type="number" id="years" value="3">
 
-<div class="small-link" onclick="toggleAdvanced()">
+<div class="small" onclick="toggleAdvanced()">
 ▶ Advanced Prepayment Options (optional)
 </div>
 
-<!-- ADVANCED -->
 <div id="advancedBox" class="box" style="display:none;">
   <b>Choose Strategy</b>
 
@@ -126,25 +125,26 @@ th { background:#f0f0f0; }
 </div>
 
 <script>
+let advancedOpen = false;
 let mode = "normal";
 
 function toggleAdvanced(){
-  const box = document.getElementById("advancedBox");
-  box.style.display = box.style.display === "none" ? "block" : "none";
-  mode = box.style.display === "block" ? "lump" : "normal";
+  advancedOpen = !advancedOpen;
+  document.getElementById("advancedBox").style.display = advancedOpen ? "block" : "none";
+  mode = advancedOpen ? "lump" : "normal";
 }
 
 function setMode(m){
   mode = m;
-  document.getElementById("lumpBox").classList.toggle("active", m==="lump");
-  document.getElementById("emiBox").classList.toggle("active", m==="emi");
-  document.getElementById("lumpFields").style.display = m==="lump"?"block":"none";
-  document.getElementById("emiFields").style.display = m==="emi"?"block":"none";
+  lumpBox.classList.toggle("active", m==="lump");
+  emiBox.classList.toggle("active", m==="emi");
+  lumpFields.style.display = m==="lump" ? "block" : "none";
+  emiFields.style.display = m==="emi" ? "block" : "none";
 }
 
 function format(n){ return n.toLocaleString("en-IN"); }
 
-document.getElementById("loan").addEventListener("input", e=>{
+loan.addEventListener("input", e=>{
   let v=e.target.value.replace(/,/g,'').replace(/\D/g,'');
   if(v) e.target.value=format(Number(v));
 });
@@ -153,18 +153,22 @@ function calculate(){
   const P = Number(loan.value.replace(/,/g,''));
   const r = rate.value/12/100;
   const N = years.value*12;
-  if(!P||!r||!N) return alert("Fill all values");
+
+  if(!P||!r||!N){ alert("Fill all values"); return; }
 
   // BASE EMI
   const EMI = Math.round(P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1));
 
   let bal=P, baseInterest=0;
   for(let m=1;m<=N;m++){
-    let i=bal*r, p=EMI-i;
-    baseInterest+=i; bal-=p;
+    let i=bal*r;
+    let p=EMI-i;
+    baseInterest+=i;
+    bal-=p;
   }
 
-  if(mode==="normal"){
+  // NORMAL MODE
+  if(!advancedOpen){
     output.innerHTML=`
     <div class="result">
       <b>Monthly EMI:</b> ₹${format(EMI)}<br>
@@ -177,6 +181,7 @@ function calculate(){
 
   // ADVANCED SIMULATION
   let bal2=P, interest2=0, m=0, curEMI=EMI;
+
   const lumpAmt=Number(lumpAmount?.value||0);
   const lumpFreq=Number(lumpFreq?.value||0);
   const emiPct=Number(emiPercent?.value||0)/100;
@@ -187,11 +192,11 @@ function calculate(){
     m++;
 
     if(mode==="lump" && m%lumpFreq===0){
-      bal2-=lumpAmt;
+      bal2 -= lumpAmt;
     }
 
     if(mode==="emi"){
-      const trigger = emiStart===0 ? m : m-emiFreq;
+      let trigger = emiStart===0 ? m : m-emiFreq;
       if(trigger>0 && trigger%emiFreq===0){
         curEMI = Math.round(EMI*(1+(Math.floor(trigger/emiFreq)*emiPct)));
       }
@@ -200,7 +205,8 @@ function calculate(){
     let i=bal2*r;
     let p=curEMI-i;
     if(p>bal2) p=bal2;
-    interest2+=i; bal2-=p;
+    interest2+=i;
+    bal2-=p;
   }
 
   const saved=Math.round(baseInterest-interest2);
@@ -218,20 +224,22 @@ function calculate(){
   <table>
     <tr><th>Metric</th><th>Before</th><th>After</th><th>Saving</th></tr>
     <tr><td>Tenure</td><td>${N}</td><td>${m}</td><td>${N-m}</td></tr>
-    <tr><td>Interest</td><td>₹${format(Math.round(baseInterest))}</td>
-    <td>₹${format(Math.round(interest2))}</td><td>₹${format(saved)}</td></tr>
+    <tr><td>Interest</td>
+    <td>₹${format(Math.round(baseInterest))}</td>
+    <td>₹${format(Math.round(interest2))}</td>
+    <td>₹${format(saved)}</td></tr>
   </table>
 
-  <div class="dark-box">
+  <div class="dark">
     <b>Why This Works</b><br><br>
-    Reducing principal earlier lowers future interest since banks
-    calculate interest only on remaining balance.
+    Extra payments reduce principal early. Since interest is calculated
+    on the remaining balance, future interest drops sharply.
     <br><br>
     <b>Cash Flow Impact</b>
     <ul>
       <li>Loan ends ${N-m} months earlier</li>
-      <li>EMI burden ends sooner</li>
-      <li>Better long-term liquidity</li>
+      <li>EMI obligation ends sooner</li>
+      <li>More free cash for investing</li>
     </ul>
   </div>`;
 }
