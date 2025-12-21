@@ -123,6 +123,17 @@
   background: #2563eb;
   color: white;
 }
+    .summary-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  margin: 16px 0;
+  border-radius: 8px;
+}
+.summary-box h3 {
+  margin-top: 0;
+}
+
 
   </style>
 </head>
@@ -170,6 +181,7 @@
 
 
 
+  <div id="loanSummary" class="summary-box" style="display:none;"></div>
 
 
   <div id="table"></div>
@@ -249,9 +261,12 @@ function generateBreakdown() {
         <th>Balance</th>
       </tr>
   `;
+   let totalInterest = 0;
 
   for (let i = 1; i <= N; i++) {
     const interest = balance * R;
+    totalInterest += interest;
+
     const principal = EMI - interest;
     balance -= principal;
 
@@ -287,6 +302,25 @@ function generateBreakdown() {
   }
 
   html += "</table>";
+  const totalPayable = P + totalInterest;
+
+  const endDate = new Date(currentDate);
+  endDate.setMonth(endDate.getMonth() - 1);
+
+  const endLabel = endDate.toLocaleString("en-IN", {
+    month: "long",
+    year: "numeric"
+   });
+  document.getElementById("loanSummary").innerHTML = `
+    <h3>Loan Summary</h3>
+    <p><strong>Monthly EMI:</strong> ₹${formatINR(EMI)}</p>
+    <p><strong>Total Interest Payable:</strong> ₹${formatINR(totalInterest)}</p>
+    <p><strong>Total Amount Payable:</strong> ₹${formatINR(totalPayable)}</p>
+    <p><strong>Loan End Date:</strong> ${endLabel}</p>
+ `;
+  document.getElementById("loanSummary").style.display = "block";
+
+
   document.getElementById("table").innerHTML = html;
   // ✅ SHOW DOWNLOAD BUTTONS
   document.getElementById("downloadActions").style.display = "block";
