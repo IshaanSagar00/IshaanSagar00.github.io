@@ -164,6 +164,10 @@ function fillMonthYear(m,y){
 fillMonthYear(startMonth,startYear);
 fillMonthYear(emiStartMonth,emiStartYear);
 fillMonthYear(lumpStartMonth,lumpStartYear);
+/* 🔒 HARD BLOCK DECIMALS IN TENURE */
+tenure.addEventListener("input", () => {
+  tenure.value = tenure.value.replace(/[^0-9]/g, "");
+});
 
 loan.oninput=e=>{
   let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
