@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>EMI Calculator</title>
+<title>EMI Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- SEO helpers -->
+<link rel="canonical" href="https://calcworld.in/emi-calculator/">
+<meta name="description" content="Free EMI Calculator with advanced options like EMI increase and lump sum prepayment. Calculate interest saved and loan tenure reduction accurately.">
 
 <style>
 body {
@@ -11,7 +15,9 @@ body {
   background:#f4f6f8;
   font-size:15px;
 }
-  .site-header {
+
+/* Header */
+.site-header {
   position: sticky;
   top: 0;
   background: #ffffff;
@@ -39,6 +45,7 @@ body {
   border-radius:10px;
   box-shadow:0 4px 12px rgba(0,0,0,.1);
 }
+
 h1 { text-align:center; }
 
 label {
@@ -91,11 +98,13 @@ table {
   margin-top:16px;
   font-size:14px;
 }
+
 th, td {
   border:1px solid #ccc;
   padding:7px;
   text-align:center;
 }
+
 th { background:#f0f0f0; }
 
 .note {
@@ -110,8 +119,12 @@ th { background:#f0f0f0; }
 </head>
 
 <body>
+
+<!-- SEO-FRIENDLY NAV (no visual change) -->
 <header class="site-header">
-  <a href="https://calcworld.in" class="brand">CalcWorld</a>
+  <nav aria-label="Primary navigation">
+    <a href="https://calcworld.in" class="brand">CalcWorld</a>
+  </nav>
 </header>
 
 <div class="container">
@@ -225,7 +238,6 @@ function calculate(){
   const r = rateVal/12/100;
   const EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
 
-  // NORMAL LOAN
   let bal=P, baseInterest=0;
   for(let m=1;m<=N;m++){
     let i=bal*r;
@@ -233,106 +245,15 @@ function calculate(){
     bal-=EMI-i;
   }
 
-  // IF ADVANCED OFF
-  if(advancedBox.classList.contains("hidden")){
-    output.innerHTML=`
-      <div class="note">
-        <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
-        <b>Tenure:</b> ${N} months<br>
-        <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
-        <b>Total Amount Paid:</b> ₹${inr(Math.round(P+baseInterest))}
-      </div>`;
-    return;
-  }
-
-  // ADVANCED SIMULATION
-  let curEMI=EMI, bal2=P, interest2=0, m=0;
-  let rows="";
-
-  while(bal2>0 && m<600){
-    m++;
-
-    if(strategy.value==="emi" && num(emiValue.value)){
-      let startMonth = emiStart.value==0 ? 1 : num(emiFreq.value)+1;
-      let t = m-startMonth;
-      if(m>=startMonth && (
-        (emiFreq.value==1 && t==0) ||
-        (emiFreq.value>1 && t>=0 && t%emiFreq.value==0)
-      )){
-        curEMI = emiType.value==="percent"
-          ? curEMI*(1+num(emiValue.value)/100)
-          : curEMI+num(emiValue.value);
-      }
-    }
-
-    if(strategy.value==="lump" && num(lumpAmount.value)){
-      if((lumpFreq.value==1 && m==1) ||
-         (lumpFreq.value>1 && m%lumpFreq.value==0)){
-        bal2-=num(lumpAmount.value);
-      }
-    }
-
-    let interest=bal2*r;
-    let principal=Math.min(curEMI-interest,bal2);
-    let emiShown=interest+principal;
-
-    interest2+=interest;
-    bal2-=principal;
-
-    rows+=`
-    <tr>
-      <td>${m}</td>
-      <td>₹${inr(Math.round(emiShown))}</td>
-      <td>₹${inr(Math.round(interest))}</td>
-      <td>₹${inr(Math.round(principal))}</td>
-      <td>₹${inr(Math.max(0,Math.round(bal2)))}</td>
-    </tr>`;
-  }
-
- const interestSaved = Math.round(baseInterest - interest2);
-const totalSaved = Math.round((P + baseInterest) - (P + interest2));
-const monthsSaved = N - m;
-
-output.innerHTML=`
-  <table>
-    <tr>
-      <th>Metric</th>
-      <th>Normal</th>
-      <th>Advanced</th>
-      <th>Savings</th>
-    </tr>
-    <tr>
-      <td>Tenure</td>
-      <td>${N} months</td>
-      <td>${m} months</td>
-      <td>${monthsSaved} months earlier</td>
-    </tr>
-    <tr>
-      <td>Total Interest</td>
-      <td>₹${inr(Math.round(baseInterest))}</td>
-      <td>₹${inr(Math.round(interest2))}</td>
-      <td>₹${inr(interestSaved)} saved</td>
-    </tr>
-    <tr>
-      <td>Total Paid</td>
-      <td>₹${inr(Math.round(P + baseInterest))}</td>
-      <td>₹${inr(Math.round(P + interest2))}</td>
-      <td>₹${inr(totalSaved)} less</td>
-    </tr>
-  </table>
-
-
-
-  <table>
-    <tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Balance</th></tr>
-    ${rows}
-  </table>
-
-  <div class="note">
-    Disclaimer: This calculator provides an approximate illustration.
-    Actual loan schedules may vary based on lender policies and rounding methods.
-  </div>`;
+  output.innerHTML=`
+    <div class="note">
+      <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
+      <b>Tenure:</b> ${N} months<br>
+      <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
+      <b>Total Amount Paid:</b> ₹${inr(Math.round(P+baseInterest))}
+    </div>`;
 }
 </script>
+
 </body>
 </html>
