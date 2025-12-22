@@ -2,13 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Monthly EMI Breakdown (Running Loan)</title>
+
+<title>Monthly EMI Breakdown Calculator | CalcWorld</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="View month-wise EMI breakdown for running loans. Calculate interest, principal, balance, and see how EMI increase or lump sum prepayments reduce loan tenure and interest.">
+<link rel="canonical" href="https://calcworld.in/emi-calculator/emi-breakdown.html">
 
 <style>
 
 body{font-family:Arial,sans-serif;background:#f6f7fb;padding:20px}
-  .site-header {
+.site-header{
   position: sticky;
   top: 0;
   background: #ffffff;
@@ -16,17 +20,13 @@ body{font-family:Arial,sans-serif;background:#f6f7fb;padding:20px}
   border-bottom: 1px solid #e5e7eb;
   z-index: 1000;
 }
-
-.site-header .brand {
+.site-header .brand{
   font-size: 20px;
   font-weight: bold;
   color: #2563eb;
   text-decoration: none;
 }
-
-.site-header .brand:hover {
-  text-decoration: underline;
-}
+.site-header .brand:hover{ text-decoration: underline }
 
 .card{max-width:1100px;margin:auto;background:#fff;padding:25px;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
 h1{text-align:center}
@@ -42,12 +42,17 @@ th{background:#f1f5f9}
 th:first-child,td:first-child{text-align:left}
 tr.current{background:#e0f2fe;font-weight:bold}
 .note{margin-top:15px;font-size:13px;color:#555;background:#fafafa;padding:10px;border-radius:6px}
+
 </style>
 </head>
 
 <body>
-  <header class="site-header">
-  <a href="https://calcworld.in" class="brand">CalcWorld</a>
+
+<!-- SEO-FRIENDLY NAV (NO VISUAL CHANGE) -->
+<header class="site-header">
+  <nav aria-label="Primary navigation">
+    <a href="https://calcworld.in" class="brand">CalcWorld</a>
+  </nav>
 </header>
 
 <div class="card">
@@ -118,7 +123,6 @@ tr.current{background:#e0f2fe;font-weight:bold}
     <option value="custom">From Custom Month</option>
   </select>
 
-  <!-- CUSTOM DATE (HIDDEN BY DEFAULT) -->
   <div id="emiCustomDate" class="hidden" style="display:flex;gap:6px">
     <select id="emiStartMonth"></select>
     <select id="emiStartYear"></select>
@@ -150,9 +154,10 @@ Disclaimer: This is an approximate illustration. Actual lender calculations may 
 </div>
 
 <script>
+/* 🔒 JS LOGIC — UNCHANGED (intentionally) */
+
 const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-// Populate months + years
 function fillMonthYear(m,y){
   m.innerHTML=months.map((x,i)=>`<option value="${i}">${x}</option>`).join("");
   y.innerHTML="";
@@ -164,7 +169,6 @@ function fillMonthYear(m,y){
 fillMonthYear(startMonth,startYear);
 fillMonthYear(emiStartMonth,emiStartYear);
 
-// Indian number formatting
 loan.oninput=e=>{
   let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
   if(!v){e.target.value="";return}
@@ -172,22 +176,14 @@ loan.oninput=e=>{
   e.target.value=l.replace(/\B(?=(\d{2})+(?!\d))/g,",")+(l?","+r:r);
 };
 
-// Strategy toggle
 strategy.onchange=()=>{
   emiBox.classList.toggle("hidden",strategy.value!=="emi");
   lumpBox.classList.toggle("hidden",strategy.value!=="lump");
 };
 
-// ✅ FINAL FIX — calendar logic
 emiStartType.onchange=()=>{
-  if(emiStartType.value==="custom"){
-    emiCustomDate.classList.remove("hidden");
-  }else{
-    emiCustomDate.classList.add("hidden");
-  }
+  emiCustomDate.classList.toggle("hidden",emiStartType.value!=="custom");
 };
-
-// Force correct state on load
 emiCustomDate.classList.add("hidden");
 
 function inr(n){return n.toLocaleString("en-IN")}
