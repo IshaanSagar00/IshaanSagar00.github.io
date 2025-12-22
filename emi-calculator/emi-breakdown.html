@@ -55,7 +55,8 @@ tr.current{background:#e0f2fe;font-weight:bold}
   <div>
     <label>Loan Tenure</label>
     <div style="display:flex;gap:6px">
-      <input type="number" id="tenure" placeholder="e.g 5">
+      <input type="number" id="tenure" placeholder="e.g 5" min="1" step="1">
+
       <select id="tenureType">
         <option value="years">Years</option>
         <option value="months">Months</option>
