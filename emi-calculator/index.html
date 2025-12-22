@@ -5,9 +5,8 @@
 <title>EMI Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- SEO helpers -->
 <link rel="canonical" href="https://calcworld.in/emi-calculator/">
-<meta name="description" content="Free EMI Calculator with advanced options like EMI increase and lump sum prepayment. Calculate interest saved and loan tenure reduction accurately.">
+<meta name="description" content="Advanced EMI Calculator with EMI increase and lump sum prepayment options. Calculate interest saved and reduced loan tenure accurately.">
 
 <style>
 body {
@@ -16,7 +15,6 @@ body {
   font-size:15px;
 }
 
-/* Header */
 .site-header {
   position: sticky;
   top: 0;
@@ -31,10 +29,6 @@ body {
   font-weight: bold;
   color: #2563eb;
   text-decoration: none;
-}
-
-.site-header .brand:hover {
-  text-decoration: underline;
 }
 
 .container {
@@ -120,7 +114,6 @@ th { background:#f0f0f0; }
 
 <body>
 
-<!-- SEO-FRIENDLY NAV (no visual change) -->
 <header class="site-header">
   <nav aria-label="Primary navigation">
     <a href="https://calcworld.in" class="brand">CalcWorld</a>
@@ -238,6 +231,7 @@ function calculate(){
   const r = rateVal/12/100;
   const EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
 
+  // BASE LOAN
   let bal=P, baseInterest=0;
   for(let m=1;m<=N;m++){
     let i=bal*r;
@@ -245,13 +239,84 @@ function calculate(){
     bal-=EMI-i;
   }
 
+  // NORMAL MODE
+  if(advancedBox.classList.contains("hidden")){
+    output.innerHTML=`
+      <div class="note">
+        <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
+        <b>Tenure:</b> ${N} months<br>
+        <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
+        <b>Total Amount Paid:</b> ₹${inr(Math.round(P+baseInterest))}
+      </div>`;
+    return;
+  }
+
+  // ADVANCED MODE (RESTORED)
+  let curEMI=EMI, bal2=P, interest2=0, m=0;
+  let rows="";
+
+  while(bal2>0 && m<600){
+    m++;
+
+    // EMI INCREASE
+    if(strategy.value==="emi" && num(emiValue.value)){
+      let start = emiStart.value==0 ? 1 : num(emiFreq.value)+1;
+      let t = m-start;
+      if(m>=start && (
+        (emiFreq.value==1 && t==0) ||
+        (emiFreq.value>1 && t>=0 && t%emiFreq.value==0)
+      )){
+        curEMI = emiType.value==="percent"
+          ? curEMI*(1+num(emiValue.value)/100)
+          : curEMI+num(emiValue.value);
+      }
+    }
+
+    // LUMP SUM
+    if(strategy.value==="lump" && num(lumpAmount.value)){
+      if((lumpFreq.value==1 && m==1) ||
+         (lumpFreq.value>1 && m%lumpFreq.value==0)){
+        bal2-=num(lumpAmount.value);
+      }
+    }
+
+    let interest=bal2*r;
+    let principal=Math.min(curEMI-interest,bal2);
+    let emiShown=interest+principal;
+
+    interest2+=interest;
+    bal2-=principal;
+
+    rows+=`
+    <tr>
+      <td>${m}</td>
+      <td>₹${inr(Math.round(emiShown))}</td>
+      <td>₹${inr(Math.round(interest))}</td>
+      <td>₹${inr(Math.round(principal))}</td>
+      <td>₹${inr(Math.max(0,Math.round(bal2)))}</td>
+    </tr>`;
+  }
+
+  const interestSaved = Math.round(baseInterest - interest2);
+  const totalSaved = Math.round((P + baseInterest) - (P + interest2));
+  const monthsSaved = N - m;
+
   output.innerHTML=`
-    <div class="note">
-      <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
-      <b>Tenure:</b> ${N} months<br>
-      <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
-      <b>Total Amount Paid:</b> ₹${inr(Math.round(P+baseInterest))}
-    </div>`;
+  <table>
+    <tr><th>Metric</th><th>Normal</th><th>Advanced</th><th>Savings</th></tr>
+    <tr><td>Tenure</td><td>${N}</td><td>${m}</td><td>${monthsSaved} months</td></tr>
+    <tr><td>Total Interest</td><td>₹${inr(baseInterest)}</td><td>₹${inr(interest2)}</td><td>₹${inr(interestSaved)}</td></tr>
+    <tr><td>Total Paid</td><td>₹${inr(P+baseInterest)}</td><td>₹${inr(P+interest2)}</td><td>₹${inr(totalSaved)}</td></tr>
+  </table>
+
+  <table>
+    <tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Balance</th></tr>
+    ${rows}
+  </table>
+
+  <div class="note">
+    Disclaimer: Approximate illustration. Actual lender schedules may vary.
+  </div>`;
 }
 </script>
 
