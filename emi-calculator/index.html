@@ -9,92 +9,21 @@
 <meta name="description" content="Advanced EMI Calculator with EMI increase and lump sum prepayment options. Calculate interest saved and reduced loan tenure accurately.">
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background:#f4f6f8;
-  font-size:15px;
-}
-.site-header {
-  position: sticky;
-  top: 0;
-  background: #ffffff;
-  padding: 12px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  z-index: 1000;
-}
-.site-header .brand {
-  font-size: 20px;
-  font-weight: bold;
-  color: #2563eb;
-  text-decoration: none;
-}
-.container {
-  max-width:440px;
-  margin:40px auto;
-  background:#fff;
-  padding:22px;
-  border-radius:10px;
-  box-shadow:0 4px 12px rgba(0,0,0,.1);
-}
-h1 { text-align:center; }
-label {
-  display:block;
-  margin-top:14px;
-  font-weight:bold;
-}
-input, select {
-  width:100%;
-  padding:10px;
-  margin-top:6px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  font-size:15px;
-}
-button {
-  width:100%;
-  margin-top:18px;
-  padding:12px;
-  background:#2563eb;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  font-size:16px;
-  cursor:pointer;
-}
-.link {
-  display:block;
-  margin-top:10px;
-  font-size:13px;
-  color:#2563eb;
-  text-decoration:none;
-}
-.box {
-  margin-top:14px;
-  padding:14px;
-  border:1px solid #ddd;
-  border-radius:6px;
-}
-.hidden { display:none; }
-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-top:16px;
-  font-size:14px;
-}
-th, td {
-  border:1px solid #ccc;
-  padding:7px;
-  text-align:center;
-}
-th { background:#f0f0f0; }
-.note {
-  margin-top:14px;
-  font-size:13px;
-  color:#555;
-  background:#fafafa;
-  padding:12px;
-  border-radius:6px;
-}
+body{font-family:Arial,sans-serif;background:#f4f6f8;font-size:15px}
+.site-header{position:sticky;top:0;background:#fff;padding:12px 20px;border-bottom:1px solid #e5e7eb;z-index:1000}
+.site-header .brand{font-size:20px;font-weight:bold;color:#2563eb;text-decoration:none}
+.container{max-width:440px;margin:40px auto;background:#fff;padding:22px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+h1{text-align:center}
+label{display:block;margin-top:14px;font-weight:bold}
+input,select{width:100%;padding:10px;margin-top:6px;border-radius:6px;border:1px solid #ccc;font-size:15px}
+button{width:100%;margin-top:18px;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
+.link{display:block;margin-top:10px;font-size:13px;color:#2563eb;text-decoration:none}
+.box{margin-top:14px;padding:14px;border:1px solid #ddd;border-radius:6px}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
+th,td{border:1px solid #ccc;padding:7px;text-align:center}
+th{background:#f0f0f0}
+.note{margin-top:14px;font-size:13px;color:#555;background:#fafafa;padding:12px;border-radius:6px}
 </style>
 </head>
 
@@ -117,20 +46,16 @@ th { background:#f0f0f0; }
 
 <label>Loan Tenure</label>
 <div style="display:flex;gap:6px">
-  <input type="number" id="tenure" placeholder="e.g 5" min="1">
+  <input type="number" id="tenure" placeholder="e.g 5">
   <select id="tenureType">
     <option value="years" selected>Years</option>
     <option value="months">Months</option>
   </select>
 </div>
 
-<a class="link" href="./emi-breakdown.html">
-  Already have a loan? View EMI breakdown →
-</a>
+<a class="link" href="./emi-breakdown.html">Already have a loan? View EMI breakdown →</a>
 
-<a class="link" href="#" onclick="toggleAdvanced(); return false;">
-  ▶ Advanced Options
-</a>
+<a class="link" href="#" onclick="toggleAdvanced();return false;">▶ Advanced Options</a>
 
 <div id="advancedBox" class="box hidden">
 
@@ -179,9 +104,7 @@ th { background:#f0f0f0; }
 
 <div class="note">
 <b>How it works</b><br><br>
-Extra payments reduce the principal earlier.
-Interest is calculated monthly on remaining balance,
-which shortens loan tenure and saves interest.
+Extra payments reduce principal earlier, lowering future interest and shortening loan tenure.
 </div>
 </div>
 
@@ -190,57 +113,103 @@ which shortens loan tenure and saves interest.
 </div>
 
 <script>
-function inr(n){ return n.toLocaleString("en-IN"); }
-function num(v){ return Number(v)||0; }
+function inr(n){return n.toLocaleString("en-IN")}
+function num(v){return Number(v)||0}
 
-loan.addEventListener("input",e=>{
-  let v=e.target.value.replace(/\D/g,'');
-  e.target.value=v?inr(+v):"";
-});
-
-/* 🔒 HARD BLOCK DECIMALS IN TENURE */
-tenure.addEventListener("input",()=>{
-  tenure.value = tenure.value.replace(/[^0-9]/g,"");
-});
-
-function toggleAdvanced(){
-  advancedBox.classList.toggle("hidden");
+loan.oninput=e=>{
+  let v=e.target.value.replace(/\D/g,'')
+  e.target.value=v?inr(+v):""
 }
 
-strategy.addEventListener("change",e=>{
-  emiBox.classList.toggle("hidden",e.target.value!=="emi");
-  lumpBox.classList.toggle("hidden",e.target.value!=="lump");
-});
+/* BLOCK DECIMALS */
+tenure.addEventListener("input",()=>{
+  tenure.value = tenure.value.replace(/[^0-9]/g,"")
+})
+
+function toggleAdvanced(){advancedBox.classList.toggle("hidden")}
+
+strategy.onchange=e=>{
+  emiBox.classList.toggle("hidden",e.target.value!=="emi")
+  lumpBox.classList.toggle("hidden",e.target.value!=="lump")
+}
 
 function calculate(){
-  const P = num(loan.value.replace(/,/g,''));
-  const rateVal = num(rate.value);
-  const t = num(tenure.value);
+  const P=num(loan.value.replace(/,/g,''))
+  const rateVal=num(rate.value)
+  const t=num(tenure.value)
+  if(!P||!rateVal||!t){alert("Fill all loan details");return}
 
-  if(!P||!rateVal||!t){
-    alert("Please fill all loan details");
-    return;
+  const N=tenureType.value==="years"?t*12:t
+  const r=rateVal/12/100
+  const EMI=P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1)
+
+  /* BASE LOAN */
+  let bal=P,baseInterest=0
+  for(let i=1;i<=N;i++){
+    let interest=bal*r
+    baseInterest+=interest
+    bal-=EMI-interest
   }
 
-  const N = tenureType.value==="years" ? t*12 : t;
-  const r = rateVal/12/100;
-
-  const EMI = P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
-
-  let bal=P, baseInterest=0;
-  for(let m=1;m<=N;m++){
-    let i=bal*r;
-    baseInterest+=i;
-    bal-=EMI-i;
-  }
-
-  output.innerHTML=`
+  /* SIMPLE MODE */
+  if(advancedBox.classList.contains("hidden")){
+    output.innerHTML=`
     <div class="note">
       <b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}<br>
       <b>Tenure:</b> ${N} months<br>
       <b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}<br>
       <b>Total Amount Paid:</b> ₹${inr(Math.round(P+baseInterest))}
-    </div>`;
+    </div>`
+    return
+  }
+
+  /* ADVANCED MODE */
+  let bal2=P,curEMI=EMI,interest2=0,m=0,rows=""
+  while(bal2>0&&m<600){
+    m++
+
+    if(strategy.value==="emi"&&num(emiValue.value)){
+      let start=emiStart.value==0?1:num(emiFreq.value)+1
+      let t2=m-start
+      if(m>=start&&((emiFreq.value==1&&t2==0)||(emiFreq.value>1&&t2>=0&&t2%emiFreq.value==0))){
+        curEMI=emiType.value==="percent"
+        ?curEMI*(1+num(emiValue.value)/100)
+        :curEMI+num(emiValue.value)
+      }
+    }
+
+    if(strategy.value==="lump"&&num(lumpAmount.value)){
+      if((lumpFreq.value==1&&m==1)||(lumpFreq.value>1&&m%lumpFreq.value==0)){
+        bal2-=num(lumpAmount.value)
+      }
+    }
+
+    let interest=bal2*r
+    let principal=Math.min(curEMI-interest,bal2)
+    interest2+=interest
+    bal2-=principal
+
+    rows+=`<tr>
+      <td>${m}</td>
+      <td>₹${inr(Math.round(principal+interest))}</td>
+      <td>₹${inr(Math.round(interest))}</td>
+      <td>₹${inr(Math.round(principal))}</td>
+      <td>₹${inr(Math.max(0,Math.round(bal2)))}</td>
+    </tr>`
+  }
+
+  output.innerHTML=`
+  <table>
+    <tr><th>Metric</th><th>Normal</th><th>Advanced</th><th>Savings</th></tr>
+    <tr><td>Tenure</td><td>${N}</td><td>${m}</td><td>${N-m} months</td></tr>
+    <tr><td>Total Interest</td><td>₹${inr(baseInterest)}</td><td>₹${inr(interest2)}</td><td>₹${inr(baseInterest-interest2)}</td></tr>
+    <tr><td>Total Paid</td><td>₹${inr(P+baseInterest)}</td><td>₹${inr(P+interest2)}</td><td>₹${inr((P+baseInterest)-(P+interest2))}</td></tr>
+  </table>
+
+  <table>
+    <tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Balance</th></tr>
+    ${rows}
+  </table>`
 }
 </script>
 
