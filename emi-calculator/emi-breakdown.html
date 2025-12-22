@@ -21,7 +21,7 @@ input,select{width:100%;padding:10px;margin-top:6px;font-size:14px}
 button{margin-top:15px;padding:12px;font-size:16px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer}
 .box{margin-top:20px;padding:16px;border:1px solid #ddd;border-radius:8px}
 .hidden{display:none!important}
-table{width:100%;border-collapse:collapse;margin-top:15px;font-size:14px}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
 th,td{border:1px solid #ddd;padding:8px;text-align:right}
 th{background:#f1f5f9}
 th:first-child,td:first-child{text-align:left}
@@ -82,6 +82,7 @@ tr.current{background:#e0f2fe;font-weight:bold}
   <option value="lump">Lump Sum</option>
 </select>
 
+<!-- EMI INCREASE -->
 <div id="emiBox" class="hidden">
   <label>Increase Type</label>
   <select id="emiType">
@@ -112,6 +113,7 @@ tr.current{background:#e0f2fe;font-weight:bold}
   </div>
 </div>
 
+<!-- LUMP SUM -->
 <div id="lumpBox" class="hidden">
   <label>Lump Sum Amount (₹)</label>
   <input type="number" id="lumpAmount">
@@ -123,6 +125,17 @@ tr.current{background:#e0f2fe;font-weight:bold}
     <option value="6">Every 6 months</option>
     <option value="12">Every 12 months</option>
   </select>
+
+  <label>Start Lump Sum</label>
+  <select id="lumpStartType">
+    <option value="current">From Current Month</option>
+    <option value="custom">From Custom Month</option>
+  </select>
+
+  <div id="lumpCustomDate" class="hidden" style="display:flex;gap:6px">
+    <select id="lumpStartMonth"></select>
+    <select id="lumpStartYear"></select>
+  </div>
 </div>
 </div>
 
@@ -149,6 +162,7 @@ function fillMonthYear(m,y){
 
 fillMonthYear(startMonth,startYear);
 fillMonthYear(emiStartMonth,emiStartYear);
+fillMonthYear(lumpStartMonth,lumpStartYear);
 
 loan.oninput=e=>{
   let v=e.target.value.replace(/,/g,"").replace(/\D/g,"");
@@ -162,10 +176,8 @@ strategy.onchange=()=>{
   lumpBox.classList.toggle("hidden",strategy.value!=="lump");
 };
 
-emiStartType.onchange=()=>{
-  emiCustomDate.classList.toggle("hidden",emiStartType.value!=="custom");
-};
-emiCustomDate.classList.add("hidden");
+emiStartType.onchange=()=>emiCustomDate.classList.toggle("hidden",emiStartType.value!=="custom");
+lumpStartType.onchange=()=>lumpCustomDate.classList.toggle("hidden",lumpStartType.value!=="custom");
 
 function inr(n){return n.toLocaleString("en-IN")}
 
@@ -178,6 +190,7 @@ function generate(){
 
   let EMI=P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
 
+  // NORMAL
   let bal=P, baseInterest=0;
   for(let i=1;i<=N;i++){
     let interest=bal*r;
@@ -185,108 +198,5 @@ function generate(){
     bal-=EMI-interest;
   }
 
-  let balA=P, advInterest=0, curEMI=EMI;
-  let date=new Date(startYear.value,startMonth.value,1);
-  let today=new Date();
-  let currentKey=today.getFullYear()*12+today.getMonth();
-
-  let emiStartKey=currentKey;
-  if(emiStartType.value==="custom"){
-    emiStartKey=emiStartYear.value*12+Number(emiStartMonth.value);
-  }
-
-  let html=`<table><tr>
-  <th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Extra Payment</th><th>Balance</th>
-  </tr>`;
-
-  let advEnd=N;
-
-  for(let m=1;m<=N;m++){
-    let key=date.getFullYear()*12+date.getMonth();
-    let extra=0;
-
-    if(strategy.value==="emi"&&emiValue.value&&key>=emiStartKey){
-      if(emiFreq.value==="once"&&key===emiStartKey||
-         emiFreq.value!=="once"&&(key-emiStartKey)%emiFreq.value===0){
-        curEMI=emiType.value==="percent"
-          ? curEMI*(1+emiValue.value/100)
-          : curEMI+Number(emiValue.value);
-      }
-    }
-
-    if(strategy.value==="lump"&&lumpAmount.value){
-      if(lumpFreq.value==="once"&&m===1||
-         lumpFreq.value!=="once"&&m%lumpFreq.value===0){
-        extra=Math.min(+lumpAmount.value,balA);
-        balA-=extra;
-      }
-    }
-
-    let interest=balA*r;
-    advInterest+=interest;
-    let principal=Math.min(curEMI-interest,balA);
-    balA-=principal;
-
-    if(balA<=0){ advEnd=m; balA=0; }
-
-    html+=`<tr class="${date.getMonth()===today.getMonth()&&date.getFullYear()===today.getFullYear()?'current':''}">
-<td>${months[date.getMonth()]} ${date.getFullYear()}</td>
-<td>₹${inr(Math.round(principal+interest))}</td>
-<td>₹${inr(Math.round(interest))}</td>
-<td>₹${inr(Math.round(principal))}</td>
-<td>${extra?`₹${inr(extra)}`:"—"}</td>
-<td>₹${inr(Math.round(balA))}</td>
-</tr>`;
-
-    date.setMonth(date.getMonth()+1);
-    if(balA<=0) break;
-  }
-
-  table.innerHTML=html+"</table>";
-
-  if(strategy.value==="none"){
-    summary.innerHTML=`
-      <h3>Loan Summary</h3>
-      <p><b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}</p>
-      <p><b>Tenure:</b> ${N} months</p>
-      <p><b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}</p>
-      <p><b>Total Amount Paid:</b> ₹${inr(Math.round(P+baseInterest))}</p>
-    `;
-  } else {
-    summary.innerHTML=`
-      <h3>Comparison Summary</h3>
-      <table>
-        <tr>
-          <th>Metric</th>
-          <th>Regular Loan</th>
-          <th>With Advanced Strategy</th>
-          <th>Benefit</th>
-        </tr>
-        <tr>
-          <td>Loan Tenure</td>
-          <td>${N} months</td>
-          <td>${advEnd} months</td>
-          <td>${N-advEnd} months faster</td>
-        </tr>
-        <tr>
-          <td>Total Interest</td>
-          <td>₹${inr(Math.round(baseInterest))}</td>
-          <td>₹${inr(Math.round(advInterest))}</td>
-          <td>₹${inr(Math.round(baseInterest-advInterest))} saved</td>
-        </tr>
-        <tr>
-          <td>Total Amount Paid</td>
-          <td>₹${inr(Math.round(P+baseInterest))}</td>
-          <td>₹${inr(Math.round(P+advInterest))}</td>
-          <td>₹${inr(Math.round(baseInterest-advInterest))} less</td>
-        </tr>
-      </table>
-    `;
-  }
-
-  summary.classList.remove("hidden");
-}
-</script>
-
-</body>
-</html>
+  // ADVANCED
+  let balA=P, advInterest=0, curEM
