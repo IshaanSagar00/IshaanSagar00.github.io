@@ -155,7 +155,10 @@ tr.current{background:#e0f2fe;font-weight:bold}
 
 <button onclick="generate()">Generate Breakdown</button>
 
-<div id="summary" class="box hidden"></div>
+<div id="summary" class="box hidden">
+  <div class="table-wrap" id="summaryContent"></div>
+</div>
+
 <div id="table"></div>
 
 <div class="note">
@@ -281,7 +284,7 @@ function generate(){
 
 
   if(strategy.value==="none"){
-    summary.innerHTML=`
+    summaryContent.innerHTML=`
       <h3>Loan Summary</h3>
       <table>
         <tr><th>Metric</th><th>Value</th></tr>
@@ -292,7 +295,7 @@ function generate(){
       </table>
     `;
   } else {
-    summary.innerHTML=`
+    summaryContent.innerHTML=`
       <h3>Comparison Summary</h3>
       <table>
         <tr>
@@ -323,7 +326,7 @@ function generate(){
     `;
   }
 
-  summary.classList.remove("hidden");
+  summaryContent.classList.remove("hidden");
 }
 </script>
 
