@@ -1,202 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>SIP Calculator – Calculate Monthly SIP Returns Online | CalcWorld</title>
+<meta charset="UTF-8">
+<title>SIP & Lumpsum Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Calculate SIP and Lumpsum investment returns easily with CalcWorld.">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Calculate SIP returns instantly. Estimate total investment, returns and maturity value using our free SIP calculator in India.">
-  <link rel="canonical" href="https://calcworld.in/sip-calculator/">
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f6f7f9;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background: #fff;
-      padding: 16px 24px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 22px;
-    }
-
-    main {
-      max-width: 900px;
-      margin: 30px auto;
-      padding: 0 16px;
-    }
-
-    .card {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
-    }
-
-    .input-group {
-      margin-bottom: 18px;
-    }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 6px;
-    }
-
-    input[type="number"],
-    input[type="range"] {
-      width: 100%;
-    }
-
-    .range-value {
-      font-size: 14px;
-      color: #555;
-      margin-top: 4px;
-    }
-
-    .results {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-
-    .result-box {
-      flex: 1;
-      min-width: 220px;
-      background: #f9fafb;
-      padding: 16px;
-      border-radius: 8px;
-      text-align: center;
-    }
-
-    .result-box h3 {
-      margin: 0;
-      font-size: 16px;
-      color: #555;
-    }
-
-    .result-box p {
-      margin-top: 10px;
-      font-size: 20px;
-      font-weight: bold;
-      color: #111;
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-    }
-  </style>
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f6f7f9;
+  margin:0;
+}
+header{
+  background:#fff;
+  padding:16px 20px;
+  box-shadow:0 2px 4px rgba(0,0,0,.05);
+}
+main{
+  max-width:420px;
+  margin:30px auto;
+  padding:0 16px;
+}
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:16px;
+  box-shadow:0 6px 20px rgba(0,0,0,.08);
+}
+.tabs{
+  display:flex;
+  background:#eef2f7;
+  border-radius:30px;
+  padding:4px;
+  margin-bottom:20px;
+}
+.tab{
+  flex:1;
+  text-align:center;
+  padding:10px;
+  border-radius:30px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.tab.active{
+  background:#2563eb;
+  color:#fff;
+}
+.field{
+  margin-bottom:22px;
+}
+.label{
+  display:flex;
+  justify-content:space-between;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+.label input{
+  width:90px;
+  text-align:right;
+  padding:4px 6px;
+}
+input[type=range]{
+  width:100%;
+}
+.results{
+  margin-top:25px;
+}
+.result{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:12px;
+  font-weight:bold;
+}
+.result span:last-child{
+  color:#2563eb;
+}
+</style>
 </head>
 
 <body>
 
 <header>
-  <h1>CalcWorld</h1>
+  <h2 style="margin:0">CalcWorld</h2>
 </header>
 
 <main>
-  <h2>SIP Calculator</h2>
-  <p>Estimate your mutual fund SIP returns instantly.</p>
+<div class="card">
 
-  <!-- INPUT CARD -->
-  <div class="card">
-
-    <div class="input-group">
-      <label>Monthly Investment (₹)</label>
-      <input type="range" id="sipAmount" min="500" max="100000" step="500" value="5000">
-      <div class="range-value" id="sipAmountValue">₹5,000</div>
-    </div>
-
-    <div class="input-group">
-      <label>Expected Annual Return (%)</label>
-      <input type="range" id="returnRate" min="1" max="30" step="0.5" value="12">
-      <div class="range-value" id="returnRateValue">12%</div>
-    </div>
-
-    <div class="input-group">
-      <label>Investment Period (Years)</label>
-      <input type="number" id="years" min="1" max="40" value="10">
-    </div>
-
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" id="sipTab">SIP</div>
+    <div class="tab" id="lumpTab">Lumpsum</div>
   </div>
 
-  <!-- RESULTS -->
+  <!-- Amount -->
+  <div class="field">
+    <div class="label">
+      <span id="amountLabel">Monthly Investment</span>
+      <input type="number" id="amountInput" value="25000">
+    </div>
+    <input type="range" id="amountRange" min="500" max="100000" step="500" value="25000">
+  </div>
+
+  <!-- Return -->
+  <div class="field">
+    <div class="label">
+      <span>Expected Return (%)</span>
+      <input type="number" id="returnInput" step="0.1" value="12">
+    </div>
+    <input type="range" id="returnRange" min="1" max="30" step="0.1" value="12">
+  </div>
+
+  <!-- Time -->
+  <div class="field">
+    <div class="label">
+      <span>Time Period</span>
+      <input type="number" id="yearInput" value="14">
+    </div>
+    <input type="range" id="yearRange" min="1" max="40" step="1" value="14">
+  </div>
+
+  <!-- Results -->
   <div class="results">
-
-    <div class="result-box">
-      <h3>Total Invested</h3>
-      <p id="totalInvested">₹0</p>
+    <div class="result">
+      <span>Total Invested</span>
+      <span id="invested">₹0</span>
     </div>
-
-    <div class="result-box">
-      <h3>Estimated Returns</h3>
-      <p id="estimatedReturns">₹0</p>
+    <div class="result">
+      <span>Estimated Returns</span>
+      <span id="returns">₹0</span>
     </div>
-
-    <div class="result-box">
-      <h3>Maturity Value</h3>
-      <p id="maturityValue">₹0</p>
+    <div class="result">
+      <span>Maturity Value</span>
+      <span id="maturity">₹0</span>
     </div>
-
   </div>
+
+</div>
 </main>
 
-<footer>
-  <a href="/privacy-policy.html">Privacy Policy</a> |
-  <a href="/terms.html">Terms & Conditions</a>
-</footer>
-
 <script>
-  const sipAmount = document.getElementById("sipAmount");
-  const returnRate = document.getElementById("returnRate");
-  const years = document.getElementById("years");
+let mode = "sip";
 
-  const sipAmountValue = document.getElementById("sipAmountValue");
-  const returnRateValue = document.getElementById("returnRateValue");
+const amountInput = amountRange = document.getElementById("amountRange");
+const amountBox = document.getElementById("amountInput");
+const returnInput = document.getElementById("returnInput");
+const returnRange = document.getElementById("returnRange");
+const yearInput = document.getElementById("yearInput");
+const yearRange = document.getElementById("yearRange");
 
-  const totalInvestedEl = document.getElementById("totalInvested");
-  const estimatedReturnsEl = document.getElementById("estimatedReturns");
-  const maturityValueEl = document.getElementById("maturityValue");
+const investedEl = document.getElementById("invested");
+const returnsEl = document.getElementById("returns");
+const maturityEl = document.getElementById("maturity");
+const amountLabel = document.getElementById("amountLabel");
 
-  const formatter = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0
-  });
+const sipTab = document.getElementById("sipTab");
+const lumpTab = document.getElementById("lumpTab");
 
-  function calculateSIP() {
-    const P = Number(sipAmount.value);
-    const r = Number(returnRate.value) / (12 * 100);
-    const n = Number(years.value) * 12;
+const format = n => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(n);
 
-    const maturityValue = P * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
-    const totalInvested = P * n;
-    const estimatedReturns = maturityValue - totalInvested;
+function sync(a,b){ b.value=a.value; calculate(); }
 
-    totalInvestedEl.textContent = formatter.format(totalInvested);
-    estimatedReturnsEl.textContent = formatter.format(estimatedReturns);
-    maturityValueEl.textContent = formatter.format(maturityValue);
+function calculate(){
+  const A = +amountBox.value;
+  const r = +returnInput.value / 100;
+  const y = +yearInput.value;
 
-    sipAmountValue.textContent = formatter.format(P);
-    returnRateValue.textContent = returnRate.value + "%";
+  let invested, maturity;
+
+  if(mode==="sip"){
+    const rm = r/12;
+    const n = y*12;
+    invested = A*n;
+    maturity = A * ((Math.pow(1+rm,n)-1)/rm)*(1+rm);
+  } else {
+    invested = A;
+    maturity = A*Math.pow(1+r,y);
   }
 
-  sipAmount.addEventListener("input", calculateSIP);
-  returnRate.addEventListener("input", calculateSIP);
-  years.addEventListener("input", calculateSIP);
+  investedEl.textContent = format(invested);
+  maturityEl.textContent = format(maturity);
+  returnsEl.textContent = format(maturity-invested);
+}
 
-  calculateSIP();
+[sipTab,lumpTab].forEach(tab=>{
+  tab.onclick=()=>{
+    sipTab.classList.remove("active");
+    lumpTab.classList.remove("active");
+    tab.classList.add("active");
+    mode = tab===sipTab?"sip":"lump";
+    amountLabel.textContent = mode==="sip"?"Monthly Investment":"Investment Amount";
+    calculate();
+  }
+});
+
+amountBox.oninput=()=>sync(amountBox,amountRange);
+amountRange.oninput=()=>sync(amountRange,amountBox);
+returnInput.oninput=()=>sync(returnInput,returnRange);
+returnRange.oninput=()=>sync(returnRange,returnInput);
+yearInput.oninput=()=>sync(yearInput,yearRange);
+yearRange.oninput=()=>sync(yearRange,yearInput);
+
+calculate();
 </script>
 
 </body>
