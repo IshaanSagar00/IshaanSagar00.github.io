@@ -260,78 +260,119 @@ Disclaimer: Approximate illustration. Actual lender calculations may vary.
 </div>
 
 <script>
-/* ===== SAME LOGIC AS YOUR FINAL VERSION (UNCHANGED) ===== */
-
-const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-function fillMonthYear(m,y){
-  m.innerHTML=months.map((x,i)=>`<option value="${i}">${x}</option>`).join("");
-  y.innerHTML="";
-  for(let i=1990;i<=2050;i++){
-    y.innerHTML+=`<option ${i===2025?"selected":""}>${i}</option>`;
-  }
-}
-
-fillMonthYear(startMonth,startYear);
-
-loan.oninput=e=>{
-  let v=e.target.value.replace(/\D/g,"");
-  e.target.value=v?Number(v).toLocaleString("en-IN"):"";
-};
-
-tenure.oninput=()=>{tenure.value=tenure.value.replace(/[^0-9]/g,"")};
-
-strategy.onchange=()=>{
-  emiBox.classList.toggle("hidden",strategy.value!=="emi");
-  lumpBox.classList.toggle("hidden",strategy.value!=="lump");
-};
-
-function inr(n){return n.toLocaleString("en-IN")}
-
 function generate(){
-  let P=+loan.value.replace(/,/g,"");
-  let r=+rate.value/12/100;
-  let t=+tenure.value;
-  let N=tenureType.value==="years"?t*12:t;
-  if(!P||!r||!N){alert("Fill all fields");return}
+  let P = +loan.value.replace(/,/g,"");
+  let r = +rate.value / 12 / 100;
+  let t = +tenure.value;
+  let N = tenureType.value === "years" ? t * 12 : t;
 
-  let EMI=P*r*Math.pow(1+r,N)/(Math.pow(1+r,N)-1);
-  let bal=P,balA=P,baseI=0,advI=0,curEMI=EMI;
-  let date=new Date(startYear.value,startMonth.value,1);
-  let today=new Date();
+  if(!P || !r || !N){
+    alert("Fill all fields");
+    return;
+  }
 
-  let html=`<div class="table-wrap"><table>
-  <tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Balance</th></tr>`;
+  const EMI = P * r * Math.pow(1+r, N) / (Math.pow(1+r, N) - 1);
 
-  for(let m=1;m<=N;m++){
-    let i=bal*r;baseI+=i;bal-=EMI-i;
-    let ai=balA*r;advI+=ai;
-    let p=Math.min(curEMI-ai,balA);balA-=p;
+  /* ================= NORMAL LOAN ================= */
+  let bal = P, baseInterest = 0;
+  for(let i=1;i<=N;i++){
+    let interest = bal * r;
+    baseInterest += interest;
+    bal -= (EMI - interest);
+  }
 
-    html+=`<tr class="${date.getMonth()===today.getMonth()&&date.getFullYear()===today.getFullYear()?'current':''}">
-    <td>${months[date.getMonth()]} ${date.getFullYear()}</td>
-    <td>₹${inr(p+ai)}</td>
-    <td>₹${inr(ai)}</td>
-    <td>₹${inr(p)}</td>
-    <td>₹${inr(Math.max(0,balA))}</td>
-    </tr>`;
+  /* ================= ADVANCED ================= */
+  let balA = P, advInterest = 0;
+  let curEMI = EMI;
+  let m = 0;
+  let rows = "";
+
+  let date = new Date(startYear.value, startMonth.value, 1);
+  let today = new Date();
+
+  while(balA > 0 && m < 600){
+    m++;
+
+    /* EMI INCREASE */
+    if(strategy.value === "emi" && emiValue.value){
+      let start = 1;
+      if(emiFreq.value !== "once" && m > 1 && (m-1) % emiFreq.value === 0){
+        curEMI = emiType.value === "percent"
+          ? curEMI * (1 + (+emiValue.value)/100)
+          : curEMI + (+emiValue.value);
+      }
+      if(emiFreq.value === "once" && m === 1){
+        curEMI = emiType.value === "percent"
+          ? curEMI * (1 + (+emiValue.value)/100)
+          : curEMI + (+emiValue.value);
+      }
+    }
+
+    /* LUMP SUM */
+    if(strategy.value === "lump" && lumpAmount.value){
+      if(
+        (lumpFreq.value === "once" && m === 1) ||
+        (lumpFreq.value !== "once" && m % lumpFreq.value === 0)
+      ){
+        balA -= Math.min(+lumpAmount.value, balA);
+      }
+    }
+
+    let interest = balA * r;
+    let principal = Math.min(curEMI - interest, balA);
+    advInterest += interest;
+    balA -= principal;
+
+    rows += `
+      <tr class="${date.getMonth()===today.getMonth() && date.getFullYear()===today.getFullYear() ? 'current' : ''}">
+        <td>${months[date.getMonth()]} ${date.getFullYear()}</td>
+        <td>₹${inr(Math.round(principal + interest))}</td>
+        <td>₹${inr(Math.round(interest))}</td>
+        <td>₹${inr(Math.round(principal))}</td>
+        <td>₹${inr(Math.max(0, Math.round(balA)))}</td>
+      </tr>
+    `;
 
     date.setMonth(date.getMonth()+1);
-    if(balA<=0)break;
   }
 
-  table.innerHTML=html+"</table></div>";
-
-  summary.innerHTML=`
-  <h3>Loan Summary</h3>
-  <p><b>Monthly EMI:</b> ₹${inr(EMI)}</p>
-  <p><b>Tenure:</b> ${N} months</p>
-  <p><b>Total Interest:</b> ₹${inr(baseI)}</p>
-  <p><b>Total Paid:</b> ₹${inr(P+baseI)}</p>
+  /* ================= OUTPUT ================= */
+  table.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <tr>
+          <th>Month</th>
+          <th>EMI</th>
+          <th>Interest</th>
+          <th>Principal</th>
+          <th>Balance</th>
+        </tr>
+        ${rows}
+      </table>
+    </div>
   `;
+
+  if(strategy.value === "none"){
+    summary.innerHTML = `
+      <h3>Loan Summary</h3>
+      <p><b>Monthly EMI:</b> ₹${inr(Math.round(EMI))}</p>
+      <p><b>Tenure:</b> ${N} months</p>
+      <p><b>Total Interest:</b> ₹${inr(Math.round(baseInterest))}</p>
+      <p><b>Total Amount Paid:</b> ₹${inr(Math.round(P + baseInterest))}</p>
+    `;
+  } else {
+    summary.innerHTML = `
+      <h3>Comparison Summary</h3>
+      <p><b>Tenure:</b> ${N} → ${m} months (${N-m} months saved)</p>
+      <p><b>Total Interest:</b> ₹${inr(Math.round(baseInterest))} → ₹${inr(Math.round(advInterest))}</p>
+      <p><b>Interest Saved:</b> ₹${inr(Math.round(baseInterest - advInterest))}</p>
+    `;
+  }
+
   summary.classList.remove("hidden");
 }
 </script>
+
 
 </body>
 </html>
