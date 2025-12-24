@@ -48,35 +48,40 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <main>
 <div class="card">
 
+<!-- Tabs -->
 <div class="tabs">
   <div class="tab active" id="sipTab">SIP</div>
   <div class="tab" id="lumpTab">Lumpsum</div>
 </div>
 
+<!-- Amount -->
 <div class="field">
   <div class="label">
     <span id="amountLabel">Monthly Investment</span>
-    <div class="input-box">₹ <input type="text" id="amountInput" value="10000"></div>
+    <div class="input-box">₹ <input type="text" id="amountInput"></div>
   </div>
-  <input type="range" id="amountRange" min="100" max="100000" step="100" value="10000">
+  <input type="range" id="amountRange" min="100" max="100000" step="100">
 </div>
 
+<!-- Return -->
 <div class="field">
   <div class="label">
     <span>Expected Return</span>
-    <div class="input-box"><input type="number" id="returnInput" step="0.1" value="12"> %</div>
+    <div class="input-box"><input type="text" id="returnInput"> %</div>
   </div>
-  <input type="range" id="returnRange" min="0" max="100" step="0.1" value="12">
+  <input type="range" id="returnRange" min="1" max="40" step="0.1">
 </div>
 
+<!-- Years -->
 <div class="field">
   <div class="label">
     <span>Time Period</span>
-    <div class="input-box"><input type="number" id="yearInput" value="10"> Yr</div>
+    <div class="input-box"><input type="text" id="yearInput"> Yr</div>
   </div>
-  <input type="range" id="yearRange" min="0" max="100" step="1" value="10">
+  <input type="range" id="yearRange" min="1" max="50" step="1">
 </div>
 
+<!-- Results -->
 <div class="results">
   <div class="result">
     <div class="left"><span class="bar blue"></span>Total Invested</div>
@@ -103,10 +108,10 @@ let mode = "sip";
 
 /* ================= LIMITS ================= */
 const LIMITS = {
-  sip: { min: 100, max: 10000000 },       // 1 Cr
-  lump: { min: 100, max: 100000000 },     // 10 Cr
-  rate: { min: 0, max: 100 },
-  years:{ min: 0, max: 100 }
+  sip:  { min: 100, max: 10000000 },
+  lump: { min: 100, max: 100000000 },
+  rate: { min: 1, max: 100 },
+  years:{ min: 1, max: 100 }
 };
 
 /* ================= ELEMENTS ================= */
@@ -133,145 +138,93 @@ const formatINR = n =>
     maximumFractionDigits: 0
   }).format(Math.round(n));
 
-const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
-
-/* ================= INPUT GUARDS ================= */
-/* Block -, +, e, E at source */
-function blockInvalidKeys(e) {
-  if (["-", "+", "e", "E"].includes(e.key)) e.preventDefault();
-}
-
-/* Allow only digits & one dot */
-function sanitizeNumber(value, allowDecimal = false) {
-  if (!value) return "";
-  let v = value.replace(/[^\d.]/g, "");
-  if (!allowDecimal) v = v.replace(/\./g, "");
-  if (v.split(".").length > 2) v = v.replace(/\.+$/, "");
-  return v;
-}
+const clamp = (v,min,max)=>Math.min(Math.max(v,min),max);
+const digitsOnly = v => v.replace(/\D/g,"");
+const numberOnly = v => v.replace(/[^0-9.]/g,"");
 
 /* ================= CHART ================= */
-const chart = new Chart(donutChart, {
-  type: "doughnut",
-  data: {
-    labels: ["Estimated Returns", "Invested Amount"],
-    datasets: [{
-      data: [0, 0],
-      backgroundColor: ["#facc15", "#2563eb"]
+const chart = new Chart(donutChart,{
+  type:"doughnut",
+  data:{
+    labels:["Estimated Returns","Invested Amount"],
+    datasets:[{
+      data:[0,0],
+      backgroundColor:["#facc15","#2563eb"]
     }]
   },
-  options: {
-    plugins: {
-      legend: { position: "bottom" },
-      tooltip: {
-        callbacks: {
-          label: c => `${c.label}: ${formatINR(c.raw)}`
+  options:{
+    plugins:{
+      legend:{position:"bottom"},
+      tooltip:{
+        callbacks:{
+          label:c=>`${c.label}: ${formatINR(c.raw)}`
         }
       }
     }
   }
 });
 
-/* ================= CALCULATION ================= */
-function calculate() {
-  const limits = mode === "sip" ? LIMITS.sip : LIMITS.lump;
+/* ================= CALC ================= */
+function calculate(){
+  const A_LIMIT = mode==="sip"?LIMITS.sip:LIMITS.lump;
 
-  let amount = clamp(Number(amountInput.dataset.value || 0), limits.min, limits.max);
-  let rate   = clamp(Number(returnInput.value || 0), LIMITS.rate.min, LIMITS.rate.max) / 100;
-  let years  = clamp(Number(yearInput.value || 0), LIMITS.years.min, LIMITS.years.max);
+  let A = clamp(+digitsOnly(amountInput.value||0),A_LIMIT.min,A_LIMIT.max);
+  let r = clamp(+numberOnly(returnInput.value||LIMITS.rate.min),LIMITS.rate.min,LIMITS.rate.max)/100;
+  let y = clamp(+digitsOnly(yearInput.value||LIMITS.years.min),LIMITS.years.min,LIMITS.years.max);
 
-  amountRange.value = Math.min(amount, 100000);
-  returnRange.value = rate * 100;
-  yearRange.value   = years;
+  amountInput.value = A.toLocaleString("en-IN");
+  amountRange.value = Math.min(A,100000);
+  returnInput.value = (r*100).toFixed(1);
+  returnRange.value = Math.min(r*100,40);
+  yearInput.value   = y;
+  yearRange.value   = Math.min(y,50);
 
-  let invested, maturity;
+  let invested,maturity;
 
-  if (mode === "sip") {
-    const rm = rate / 12;
-    const n  = years * 12;
-    invested = amount * n;
-    maturity = years === 0 ? invested :
-      amount * ((Math.pow(1 + rm, n) - 1) / rm) * (1 + rm);
-  } else {
-    invested = amount;
-    maturity = years === 0 ? invested :
-      amount * Math.pow(1 + rate, years);
+  if(mode==="sip"){
+    const rm=r/12,n=y*12;
+    invested=A*n;
+    maturity=A*((Math.pow(1+rm,n)-1)/rm)*(1+rm);
+  }else{
+    invested=A;
+    maturity=A*Math.pow(1+r,y);
   }
 
   investedEl.textContent = formatINR(invested);
-  returnsEl.textContent  = formatINR(maturity - invested);
+  returnsEl.textContent  = formatINR(maturity-invested);
   maturityEl.textContent = formatINR(maturity);
 
-  chart.data.datasets[0].data = [maturity - invested, invested];
+  chart.data.datasets[0].data=[maturity-invested,invested];
   chart.update();
 }
 
-/* ================= MODE SWITCH ================= */
-function switchMode(m) {
-  mode = m;
-  sipTab.classList.toggle("active", m === "sip");
-  lumpTab.classList.toggle("active", m === "lump");
-  amountLabel.textContent = m === "sip" ? "Monthly Investment" : "Investment Amount";
+/* ================= MODE ================= */
+function switchMode(m){
+  mode=m;
+  sipTab.classList.toggle("active",m==="sip");
+  lumpTab.classList.toggle("active",m==="lump");
+  amountLabel.textContent=m==="sip"?"Monthly Investment":"Investment Amount";
   calculate();
 }
 
-sipTab.onclick  = () => switchMode("sip");
-lumpTab.onclick = () => switchMode("lump");
+sipTab.onclick=()=>switchMode("sip");
+lumpTab.onclick=()=>switchMode("lump");
 
-/* ================= EVENT BINDINGS ================= */
-/* Amount */
-amountInput.addEventListener("keydown", blockInvalidKeys);
-amountInput.addEventListener("input", e => {
-  let v = sanitizeNumber(e.target.value, false);
-  if (!v) return;
-  const limits = mode === "sip" ? LIMITS.sip : LIMITS.lump;
-  let num = clamp(Number(v), limits.min, limits.max);
-  amountInput.dataset.value = num;
-  amountInput.value = num.toLocaleString("en-IN");
-  calculate();
-});
+/* ================= EVENTS ================= */
+amountInput.oninput=calculate;
+returnInput.oninput=calculate;
+yearInput.oninput=calculate;
 
-/* Return */
-returnInput.addEventListener("keydown", blockInvalidKeys);
-returnInput.addEventListener("input", e => {
-  let v = sanitizeNumber(e.target.value, true);
-  if (v === "") v = "0";
-  let num = clamp(Number(v), LIMITS.rate.min, LIMITS.rate.max);
-  returnInput.value = num;
-  calculate();
-});
-
-/* Years */
-yearInput.addEventListener("keydown", blockInvalidKeys);
-yearInput.addEventListener("input", e => {
-  let v = sanitizeNumber(e.target.value, false);
-  if (v === "") v = "0";
-  let num = clamp(Number(v), LIMITS.years.min, LIMITS.years.max);
-  yearInput.value = num;
-  calculate();
-});
-
-/* Sliders */
-amountRange.oninput = () => {
-  amountInput.dataset.value = amountRange.value;
-  amountInput.value = Number(amountRange.value).toLocaleString("en-IN");
-  calculate();
-};
-returnRange.oninput = () => {
-  returnInput.value = returnRange.value;
-  calculate();
-};
-yearRange.oninput = () => {
-  yearInput.value = yearRange.value;
-  calculate();
-};
+amountRange.oninput=()=>{amountInput.value=amountRange.value;calculate()};
+returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate()};
+yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate()};
 
 /* ================= INIT ================= */
-amountInput.dataset.value = 10000;
-amountInput.value = "10,000";
+amountInput.value="10000";
+returnInput.value="12";
+yearInput.value="10";
 calculate();
 </script>
-
 
 </body>
 </html>
