@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>SIP & Lumpsum Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -19,13 +18,43 @@ main{max-width:420px;margin:30px auto;padding:0 16px}
 
 .field{margin-bottom:22px}
 .label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px}
-.input-box{display:flex;align-items:center;gap:4px}
-.input-box input{width:80px;text-align:right;padding:4px}
+.input-box{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  background:#eafff6;
+  padding:6px 8px;
+  border-radius:6px;
+}
+.input-box input{
+  border:none;
+  background:transparent;
+  width:80px;
+  text-align:right;
+  font-weight:bold;
+}
 input[type=range]{width:100%}
 
 .results{margin-top:20px}
-.result{display:flex;justify-content:space-between;margin-bottom:10px;font-weight:bold}
-.result span:last-child{color:#2563eb}
+.result{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+  font-weight:bold
+}
+.left{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.bar{
+  width:14px;
+  height:6px;
+  border-radius:3px;
+}
+.blue{background:#2563eb}
+.yellow{background:#facc15}
 
 canvas{max-width:220px;margin:20px auto 0;display:block}
 </style>
@@ -45,8 +74,8 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
 <div class="field">
   <div class="label">
-    <span id="amountLabel">Monthly Investment</span>
-    <div class="input-box">₹ <input type="number" id="amountInput" value="10000"></div>
+    <span>Monthly Investment</span>
+    <div class="input-box">₹ <input type="text" id="amountInput" value="10,000"></div>
   </div>
   <input type="range" id="amountRange" min="500" max="100000" step="500" value="10000">
 </div>
@@ -54,23 +83,32 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <div class="field">
   <div class="label">
     <span>Expected Return</span>
-    <div class="input-box"><input type="number" id="returnInput" step="0.1" value="11"> %</div>
+    <div class="input-box"><input type="number" id="returnInput" step="0.1" value="12"> %</div>
   </div>
-  <input type="range" id="returnRange" min="1" max="30" step="0.1" value="11">
+  <input type="range" id="returnRange" min="1" max="30" step="0.1" value="12">
 </div>
 
 <div class="field">
   <div class="label">
     <span>Time Period</span>
-    <div class="input-box"><input type="number" id="yearInput" value="10"> Years</div>
+    <div class="input-box"><input type="number" id="yearInput" value="9"> Yr</div>
   </div>
-  <input type="range" id="yearRange" min="1" max="40" step="1" value="10">
+  <input type="range" id="yearRange" min="1" max="40" step="1" value="9">
 </div>
 
 <div class="results">
-  <div class="result"><span>Total Invested</span><span id="invested">₹0</span></div>
-  <div class="result"><span>Estimated Returns</span><span id="returns">₹0</span></div>
-  <div class="result"><span>Maturity Value</span><span id="maturity">₹0</span></div>
+  <div class="result">
+    <div class="left"><span class="bar blue"></span>Total Invested</div>
+    <span id="invested">₹0</span>
+  </div>
+  <div class="result">
+    <div class="left"><span class="bar yellow"></span>Estimated Returns</div>
+    <span id="returns">₹0</span>
+  </div>
+  <div class="result">
+    <div class="left">Maturity Value</div>
+    <span id="maturity">₹0</span>
+  </div>
 </div>
 
 <canvas id="donutChart"></canvas>
@@ -91,12 +129,11 @@ const yearRange=document.getElementById("yearRange");
 const investedEl=document.getElementById("invested");
 const returnsEl=document.getElementById("returns");
 const maturityEl=document.getElementById("maturity");
-const amountLabel=document.getElementById("amountLabel");
 
 const sipTab=document.getElementById("sipTab");
 const lumpTab=document.getElementById("lumpTab");
 
-const format=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(n);
+const format=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 
 const ctx=document.getElementById("donutChart");
 const chart=new Chart(ctx,{
@@ -108,11 +145,23 @@ const chart=new Chart(ctx,{
       backgroundColor:["#facc15","#2563eb"]
     }]
   },
-  options:{plugins:{legend:{position:"bottom"}}}
+  options:{
+    plugins:{
+      legend:{position:"bottom"},
+      tooltip:{
+        callbacks:{
+          label:(c)=>`${c.label}: ${format(c.raw)}`
+        }
+      }
+    }
+  }
 });
 
+function parseAmount(v){return Number(v.replace(/,/g,""))}
+function formatInput(v){return v.toLocaleString("en-IN")}
+
 function calculate(){
-  const A=+amountInput.value;
+  const A=parseAmount(amountInput.value);
   const r=+returnInput.value/100;
   const y=+yearInput.value;
 
@@ -128,32 +177,28 @@ function calculate(){
   }
 
   investedEl.textContent=format(invested);
-  maturityEl.textContent=format(maturity);
   returnsEl.textContent=format(maturity-invested);
+  maturityEl.textContent=format(maturity);
 
   chart.data.datasets[0].data=[maturity-invested,invested];
   chart.update();
 }
 
-function sync(a,b){b.value=a.value;calculate()}
+amountInput.oninput=()=>{
+  const v=parseAmount(amountInput.value);
+  amountRange.value=v;
+  amountInput.value=formatInput(v);
+  calculate();
+};
+amountRange.oninput=()=>{
+  amountInput.value=formatInput(+amountRange.value);
+  calculate();
+};
 
-[sipTab,lumpTab].forEach(tab=>{
-  tab.onclick=()=>{
-    sipTab.classList.remove("active");
-    lumpTab.classList.remove("active");
-    tab.classList.add("active");
-    mode=tab===sipTab?"sip":"lump";
-    amountLabel.textContent=mode==="sip"?"Monthly Investment":"Investment Amount";
-    calculate();
-  }
-});
-
-amountInput.oninput=()=>sync(amountInput,amountRange);
-amountRange.oninput=()=>sync(amountRange,amountInput);
-returnInput.oninput=()=>sync(returnInput,returnRange);
-returnRange.oninput=()=>sync(returnRange,returnInput);
-yearInput.oninput=()=>sync(yearInput,yearRange);
-yearRange.oninput=()=>sync(yearRange,yearInput);
+returnInput.oninput=()=>{returnRange.value=returnInput.value;calculate()}
+returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate()}
+yearInput.oninput=()=>{yearRange.value=yearInput.value;calculate()}
+yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate()}
 
 calculate();
 </script>
