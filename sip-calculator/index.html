@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <title>SIP & Lumpsum Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Calculate SIP and Lumpsum investment returns easily with CalcWorld.">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -22,32 +20,18 @@ main{max-width:420px;margin:30px auto;padding:0 16px}
 .label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px}
 
 .input-box{
-  display:flex;
-  align-items:center;
-  gap:4px;
-  background:#eafff6;
-  padding:6px 8px;
-  border-radius:6px;
+  display:flex;align-items:center;gap:4px;
+  background:#eafff6;padding:6px 8px;border-radius:6px
 }
 .input-box input{
-  border:none;
-  background:transparent;
-  width:90px;
-  text-align:right;
-  font-weight:bold;
-  outline:none;
+  border:none;background:transparent;width:90px;
+  text-align:right;font-weight:bold;outline:none
 }
 
 input[type=range]{width:100%}
 
 .results{margin-top:20px}
-.result{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
-  font-weight:bold
-}
+.result{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:bold}
 .left{display:flex;align-items:center;gap:8px}
 .bar{width:14px;height:6px;border-radius:3px}
 .blue{background:#2563eb}
@@ -59,14 +43,11 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
 <body>
 
-<header>
-  <h2 style="margin:0">CalcWorld</h2>
-</header>
+<header><h2 style="margin:0">CalcWorld</h2></header>
 
 <main>
 <div class="card">
 
-<!-- Tabs -->
 <div class="tabs">
   <div class="tab active" id="sipTab">SIP</div>
   <div class="tab" id="lumpTab">Lumpsum</div>
@@ -78,28 +59,27 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <span id="amountLabel">Monthly Investment</span>
     <div class="input-box">₹ <input type="text" id="amountInput" value="10,000"></div>
   </div>
-  <input type="range" id="amountRange" min="500" max="100000" step="500" value="10000">
+  <input type="range" id="amountRange">
 </div>
 
 <!-- Return -->
 <div class="field">
   <div class="label">
     <span>Expected Return</span>
-    <div class="input-box"><input type="number" id="returnInput" step="0.1" value="12"> %</div>
+    <div class="input-box"><input type="number" id="returnInput" step="0.1"> %</div>
   </div>
-  <input type="range" id="returnRange" min="1" max="30" step="0.1" value="12">
+  <input type="range" id="returnRange">
 </div>
 
 <!-- Time -->
 <div class="field">
   <div class="label">
     <span>Time Period</span>
-    <div class="input-box"><input type="number" id="yearInput" value="10"> Yr</div>
+    <div class="input-box"><input type="number" id="yearInput"> Yr</div>
   </div>
-  <input type="range" id="yearRange" min="1" max="40" step="1" value="10">
+  <input type="range" id="yearRange">
 </div>
 
-<!-- Results -->
 <div class="results">
   <div class="result">
     <div class="left"><span class="bar blue"></span>Total Invested</div>
@@ -115,7 +95,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   </div>
 </div>
 
-<!-- Chart -->
 <canvas id="donutChart"></canvas>
 
 </div>
@@ -123,129 +102,114 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
 <script>
 /* ---------- STATE ---------- */
-let mode = "sip";
+let mode="sip";
+
+/* ---------- LIMITS ---------- */
+const LIMITS={
+  sip:{min:100,max:10000000},
+  lump:{min:100,max:100000000},
+  rate:{min:0,max:100},
+  years:{min:0,max:100}
+};
 
 /* ---------- ELEMENTS ---------- */
-const amountInput = document.getElementById("amountInput");
-const amountRange = document.getElementById("amountRange");
-const returnInput = document.getElementById("returnInput");
-const returnRange = document.getElementById("returnRange");
-const yearInput = document.getElementById("yearInput");
-const yearRange = document.getElementById("yearRange");
+const amountInput=document.getElementById("amountInput");
+const amountRange=document.getElementById("amountRange");
+const returnInput=document.getElementById("returnInput");
+const returnRange=document.getElementById("returnRange");
+const yearInput=document.getElementById("yearInput");
+const yearRange=document.getElementById("yearRange");
 
-const investedEl = document.getElementById("invested");
-const returnsEl = document.getElementById("returns");
-const maturityEl = document.getElementById("maturity");
+const investedEl=document.getElementById("invested");
+const returnsEl=document.getElementById("returns");
+const maturityEl=document.getElementById("maturity");
 
-const amountLabel = document.getElementById("amountLabel");
-const sipTab = document.getElementById("sipTab");
-const lumpTab = document.getElementById("lumpTab");
+const amountLabel=document.getElementById("amountLabel");
+const sipTab=document.getElementById("sipTab");
+const lumpTab=document.getElementById("lumpTab");
 
 /* ---------- HELPERS ---------- */
-const formatCurrency = n =>
-  new Intl.NumberFormat("en-IN",{
-    style:"currency",
-    currency:"INR",
-    maximumFractionDigits:0
-  }).format(Math.round(n));
-
-const parseAmount = v => Number(v.replace(/,/g,""));
-const formatInput = v => v.toLocaleString("en-IN");
+const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
+const parseAmt=v=>Number(v.replace(/,/g,""))||0;
+const formatInput=v=>v.toLocaleString("en-IN");
+const formatCur=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 
 /* ---------- CHART ---------- */
-const chart = new Chart(document.getElementById("donutChart"),{
+const chart=new Chart(donutChart,{
   type:"doughnut",
-  data:{
-    labels:["Estimated Returns","Invested Amount"],
-    datasets:[{
-      data:[0,0],
-      backgroundColor:["#facc15","#2563eb"]
-    }]
-  },
-  options:{
-    plugins:{
-      legend:{position:"bottom"},
-      tooltip:{
-        callbacks:{
-          label:c=>`${c.label}: ${formatCurrency(c.raw)}`
-        }
-      }
-    }
-  }
+  data:{labels:["Estimated Returns","Invested Amount"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]},
+  options:{plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:c=>`${c.label}: ${formatCur(c.raw)}`}}}}
 });
 
-/* ---------- CALCULATION ---------- */
+/* ---------- SET LIMITS ---------- */
+function applyLimits(){
+  const L=mode==="sip"?LIMITS.sip:LIMITS.lump;
+  amountRange.min=L.min;
+  amountRange.max=L.max;
+  amountRange.step=100;
+
+  returnRange.min=LIMITS.rate.min;
+  returnRange.max=LIMITS.rate.max;
+  returnRange.step=0.1;
+
+  yearRange.min=LIMITS.years.min;
+  yearRange.max=LIMITS.years.max;
+  yearRange.step=1;
+}
+
+/* ---------- CALC ---------- */
 function calculate(){
-  const A = parseAmount(amountInput.value);
-  const r = returnInput.value / 100;
-  const y = yearInput.value;
+  let A=clamp(parseAmt(amountInput.value),amountRange.min,amountRange.max);
+  let r=clamp(+returnInput.value||0,LIMITS.rate.min,LIMITS.rate.max)/100;
+  let y=clamp(+yearInput.value||0,LIMITS.years.min,LIMITS.years.max);
 
-  let invested, maturity;
+  amountInput.value=formatInput(A);
+  amountRange.value=A;
+  returnInput.value=(r*100).toFixed(1);
+  yearInput.value=y;
 
-  if(mode === "sip"){
-    const rm = r / 12;
-    const n = y * 12;
-    invested = A * n;
-    maturity = A * ((Math.pow(1+rm,n)-1)/rm) * (1+rm);
-  } else {
-    invested = A;
-    maturity = A * Math.pow(1+r, y);
+  let invested,maturity;
+
+  if(mode==="sip"){
+    const rm=r/12,n=y*12;
+    invested=A*n;
+    maturity=y===0?invested:A*((Math.pow(1+rm,n)-1)/rm)*(1+rm);
+  }else{
+    invested=A;
+    maturity=y===0?invested:A*Math.pow(1+r,y);
   }
 
-  investedEl.textContent = formatCurrency(invested);
-  returnsEl.textContent = formatCurrency(maturity - invested);
-  maturityEl.textContent = formatCurrency(maturity);
+  investedEl.textContent=formatCur(invested);
+  returnsEl.textContent=formatCur(maturity-invested);
+  maturityEl.textContent=formatCur(maturity);
 
-  chart.data.datasets[0].data = [maturity-invested, invested];
+  chart.data.datasets[0].data=[maturity-invested,invested];
   chart.update();
 }
 
 /* ---------- MODE SWITCH ---------- */
-function switchMode(newMode){
-  mode = newMode;
-  sipTab.classList.toggle("active", mode==="sip");
-  lumpTab.classList.toggle("active", mode==="lump");
-
-  amountLabel.textContent =
-    mode==="sip" ? "Monthly Investment" : "Investment Amount";
-
+function switchMode(m){
+  mode=m;
+  sipTab.classList.toggle("active",m==="sip");
+  lumpTab.classList.toggle("active",m==="lump");
+  amountLabel.textContent=m==="sip"?"Monthly Investment":"Investment Amount";
+  applyLimits();
   calculate();
 }
 
-sipTab.onclick = ()=>switchMode("sip");
-lumpTab.onclick = ()=>switchMode("lump");
+sipTab.onclick=()=>switchMode("sip");
+lumpTab.onclick=()=>switchMode("lump");
 
-/* ---------- INPUT SYNC ---------- */
-amountInput.oninput = ()=>{
-  const v = parseAmount(amountInput.value || "0");
-  amountRange.value = v;
-  amountInput.value = formatInput(v);
-  calculate();
-};
-amountRange.oninput = ()=>{
-  amountInput.value = formatInput(+amountRange.value);
-  calculate();
-};
-
-returnInput.oninput = ()=>{
-  returnRange.value = returnInput.value;
-  calculate();
-};
-returnRange.oninput = ()=>{
-  returnInput.value = returnRange.value;
-  calculate();
-};
-
-yearInput.oninput = ()=>{
-  yearRange.value = yearInput.value;
-  calculate();
-};
-yearRange.oninput = ()=>{
-  yearInput.value = yearRange.value;
-  calculate();
-};
+/* ---------- EVENTS ---------- */
+amountInput.oninput=calculate;
+amountRange.oninput=()=>{amountInput.value=formatInput(+amountRange.value);calculate()};
+returnInput.oninput=calculate;
+returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate()};
+yearInput.oninput=calculate;
+yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate()};
 
 /* ---------- INIT ---------- */
+applyLimits();
 calculate();
 </script>
 
