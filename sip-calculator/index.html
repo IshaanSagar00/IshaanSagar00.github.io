@@ -48,7 +48,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <main>
 <div class="card">
 
-<!-- Tabs -->
 <div class="tabs">
   <div class="tab active" id="sipTab">SIP</div>
   <div class="tab" id="lumpTab">Lumpsum</div>
@@ -81,7 +80,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <input type="range" id="yearRange" min="1" max="50" step="1">
 </div>
 
-<!-- Results -->
 <div class="results">
   <div class="result">
     <div class="left"><span class="bar blue"></span>Total Invested</div>
@@ -132,36 +130,21 @@ const amountLabel = document.getElementById("amountLabel");
 
 /* ================= HELPERS ================= */
 const formatINR = n =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0
-  }).format(Math.round(n));
+  new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0})
+  .format(Math.round(n));
 
 const clamp = (v,min,max)=>Math.min(Math.max(v,min),max);
 const digitsOnly = v => v.replace(/\D/g,"");
-const numberOnly = v => v.replace(/[^0-9.]/g,"");
+const decimalOnly = v => v.replace(/[^0-9.]/g,"");
 
 /* ================= CHART ================= */
 const chart = new Chart(donutChart,{
   type:"doughnut",
   data:{
     labels:["Estimated Returns","Invested Amount"],
-    datasets:[{
-      data:[0,0],
-      backgroundColor:["#facc15","#2563eb"]
-    }]
+    datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]
   },
-  options:{
-    plugins:{
-      legend:{position:"bottom"},
-      tooltip:{
-        callbacks:{
-          label:c=>`${c.label}: ${formatINR(c.raw)}`
-        }
-      }
-    }
-  }
+  options:{plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:c=>`${c.label}: ${formatINR(c.raw)}`}}}}
 });
 
 /* ================= CALC ================= */
@@ -169,14 +152,11 @@ function calculate(){
   const A_LIMIT = mode==="sip"?LIMITS.sip:LIMITS.lump;
 
   let A = clamp(+digitsOnly(amountInput.value||0),A_LIMIT.min,A_LIMIT.max);
-  let r = clamp(+numberOnly(returnInput.value||LIMITS.rate.min),LIMITS.rate.min,LIMITS.rate.max)/100;
+  let r = clamp(+returnInput.value||LIMITS.rate.min,LIMITS.rate.min,LIMITS.rate.max)/100;
   let y = clamp(+digitsOnly(yearInput.value||LIMITS.years.min),LIMITS.years.min,LIMITS.years.max);
 
-  amountInput.value = A.toLocaleString("en-IN");
   amountRange.value = Math.min(A,100000);
-  returnInput.value = (r*100).toFixed(1);
   returnRange.value = Math.min(r*100,40);
-  yearInput.value   = y;
   yearRange.value   = Math.min(y,50);
 
   let invested,maturity;
@@ -210,19 +190,56 @@ function switchMode(m){
 sipTab.onclick=()=>switchMode("sip");
 lumpTab.onclick=()=>switchMode("lump");
 
-/* ================= EVENTS ================= */
-amountInput.oninput=calculate;
-returnInput.oninput=calculate;
-yearInput.oninput=calculate;
+/* ================= INPUT EVENTS ================= */
+/* Prevent invalid keys */
+["keydown"].forEach(evt=>{
+  [amountInput,returnInput,yearInput].forEach(el=>{
+    el.addEventListener(evt,e=>{
+      if(["-","+","e","E"].includes(e.key)) e.preventDefault();
+    });
+  });
+});
 
-amountRange.oninput=()=>{amountInput.value=amountRange.value;calculate()};
-returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate()};
-yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate()};
+/* Allow typing freely */
+amountInput.oninput = ()=>{};
+returnInput.oninput = ()=>{};
+yearInput.oninput   = ()=>{};
+
+/* Validate on blur */
+amountInput.onblur = ()=>{
+  amountInput.value = (+digitsOnly(amountInput.value)||100).toLocaleString("en-IN");
+  calculate();
+};
+
+returnInput.onblur = ()=>{
+  let v = clamp(+decimalOnly(returnInput.value)||LIMITS.rate.min,LIMITS.rate.min,LIMITS.rate.max);
+  returnInput.value = v.toFixed(1);
+  calculate();
+};
+
+yearInput.onblur = ()=>{
+  yearInput.value = clamp(+digitsOnly(yearInput.value)||LIMITS.years.min,LIMITS.years.min,LIMITS.years.max);
+  calculate();
+};
+
+/* Sliders */
+amountRange.oninput = ()=>{
+  amountInput.value = amountRange.value;
+  calculate();
+};
+returnRange.oninput = ()=>{
+  returnInput.value = returnRange.value;
+  calculate();
+};
+yearRange.oninput = ()=>{
+  yearInput.value = yearRange.value;
+  calculate();
+};
 
 /* ================= INIT ================= */
-amountInput.value="10000";
-returnInput.value="12";
-yearInput.value="10";
+amountInput.value = "10000";
+returnInput.value = "12";
+yearInput.value   = "10";
 calculate();
 </script>
 
