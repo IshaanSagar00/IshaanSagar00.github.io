@@ -16,16 +16,23 @@ main{max-width:420px;margin:30px auto;padding:0 16px}
 .tab{flex:1;text-align:center;padding:10px;border-radius:30px;font-weight:bold;cursor:pointer}
 .tab.active{background:#2563eb;color:#fff}
 
-.field{margin-bottom:22px}
-.label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px}
+.field{margin-bottom:18px}
+.label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:6px}
 
 .input-box{
   display:flex;align-items:center;gap:4px;
   background:#eafff6;padding:6px 8px;border-radius:6px
 }
 .input-box input{
-  border:none;background:transparent;width:90px;
+  border:none;background:transparent;width:100px;
   text-align:right;font-weight:bold;outline:none
+}
+
+.error{
+  font-size:12px;
+  color:#dc2626;
+  margin-top:4px;
+  display:none;
 }
 
 input[type=range]{width:100%}
@@ -47,15 +54,8 @@ input[type=range]{width:100%}
   font-size:14px;
 }
 
-.compare h4{margin:0 0 10px 0}
-.compare-row{display:flex;justify-content:space-between;margin-bottom:6px}
-
 .results{margin-top:20px}
-.result{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:bold}
-.left{display:flex;align-items:center;gap:8px}
-.bar{width:14px;height:6px;border-radius:3px}
-.blue{background:#2563eb}
-.yellow{background:#facc15}
+.result{display:flex;justify-content:space-between;margin-bottom:8px;font-weight:bold}
 
 canvas{max-width:220px;margin:20px auto 0;display:block}
 </style>
@@ -63,7 +63,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
 <body>
 
-<header><h2 style="margin:0">CalcWorld</h2></header>
+<header><h2>CalcWorld</h2></header>
 
 <main>
 <div class="card">
@@ -80,9 +80,10 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <div class="input-box">₹ <input id="amountInput"></div>
   </div>
   <input type="range" id="amountRange" min="100" max="100000" step="100">
+  <div class="error" id="amountError"></div>
 </div>
 
-<!-- SIP ADVANCED -->
+<!-- SIP Advance -->
 <div class="field" id="sipToggleWrap">
   <label><input type="checkbox" id="sipStepToggle"> Increase SIP over time</label>
 </div>
@@ -99,26 +100,12 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <div class="field">
     <label>Increase Value</label>
     <input id="sipStepValue">
+    <div class="error" id="sipStepError"></div>
   </div>
 
   <div class="field">
     <label>Increase Interval</label>
     <select id="sipStepInterval">
-      <option value="6">Every 6 Months</option>
-      <option value="12">Every 1 Year</option>
-    </select>
-  </div>
-</div>
-
-<!-- LUMPSUM ADVANCED -->
-<div class="field" id="lumpToggleWrap" style="display:none">
-  <label><input type="checkbox" id="lumpRepeatToggle"> Add recurring lumpsum</label>
-</div>
-
-<div class="advanced" id="lumpAdvanced">
-  <div class="field">
-    <label>Frequency</label>
-    <select id="lumpInterval">
       <option value="6">Every 6 Months</option>
       <option value="12">Every 1 Year</option>
     </select>
@@ -132,6 +119,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <div class="input-box"><input id="returnInput"> %</div>
   </div>
   <input type="range" id="returnRange" min="1" max="40" step="0.1">
+  <div class="error" id="returnError"></div>
 </div>
 
 <!-- Years -->
@@ -141,29 +129,16 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <div class="input-box"><input id="yearInput"> Yr</div>
   </div>
   <input type="range" id="yearRange" min="1" max="50" step="1">
+  <div class="error" id="yearError"></div>
 </div>
 
 <div class="results">
-  <div class="result">
-    <div class="left"><span class="bar blue"></span>Total Invested</div>
-    <span id="invested">₹0</span>
-  </div>
-  <div class="result">
-    <div class="left"><span class="bar yellow"></span>Estimated Returns</div>
-    <span id="returns">₹0</span>
-  </div>
-  <div class="result">
-    <div class="left">Maturity Value</div>
-    <span id="maturity">₹0</span>
-  </div>
+  <div class="result"><span>Total Invested</span><span id="invested">₹0</span></div>
+  <div class="result"><span>Estimated Returns</span><span id="returns">₹0</span></div>
+  <div class="result"><span>Maturity Value</span><span id="maturity">₹0</span></div>
 </div>
 
-<div class="compare" id="compareBox">
-  <h4>Comparison</h4>
-  <div class="compare-row"><span>Normal Investment</span><span id="cmpNormal">₹0</span></div>
-  <div class="compare-row"><span>Advanced Investment</span><span id="cmpAdvanced">₹0</span></div>
-  <div class="compare-row"><strong>Extra Gain</strong><strong id="cmpGain">₹0</strong></div>
-</div>
+<div class="compare" id="compareBox"></div>
 
 <canvas id="donutChart"></canvas>
 
@@ -174,34 +149,42 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 const clean=v=>Number(String(v).replace(/[^0-9.]/g,""))||0;
 
+const LIMITS={
+  sip:{min:100,max:10000000},
+  lump:{min:100,max:100000000},
+  rate:{min:1,max:100},
+  years:{min:1,max:100},
+  stepAmt:{min:1,max:100000},
+  stepPct:{min:1,max:100}
+};
+
 let mode="sip";
 
 /* Elements */
-const amountInput=document.getElementById("amountInput");
-const amountRange=document.getElementById("amountRange");
-const returnInput=document.getElementById("returnInput");
-const returnRange=document.getElementById("returnRange");
-const yearInput=document.getElementById("yearInput");
-const yearRange=document.getElementById("yearRange");
+const amountInput=amountRange=returnInput=returnRange=yearInput=yearRange=null;
+
+const amount=document.getElementById("amountInput");
+const amountErr=document.getElementById("amountError");
+const amountRangeEl=document.getElementById("amountRange");
+
+const ret=document.getElementById("returnInput");
+const retErr=document.getElementById("returnError");
+const retRange=document.getElementById("returnRange");
+
+const yrs=document.getElementById("yearInput");
+const yrsErr=document.getElementById("yearError");
+const yrsRange=document.getElementById("yearRange");
 
 const sipStepToggle=document.getElementById("sipStepToggle");
 const sipAdvanced=document.getElementById("sipAdvanced");
 const sipStepType=document.getElementById("sipStepType");
 const sipStepValue=document.getElementById("sipStepValue");
+const sipStepErr=document.getElementById("sipStepError");
 const sipStepInterval=document.getElementById("sipStepInterval");
-
-const lumpRepeatToggle=document.getElementById("lumpRepeatToggle");
-const lumpAdvanced=document.getElementById("lumpAdvanced");
-const lumpInterval=document.getElementById("lumpInterval");
 
 const investedEl=document.getElementById("invested");
 const returnsEl=document.getElementById("returns");
 const maturityEl=document.getElementById("maturity");
-
-const cmpBox=document.getElementById("compareBox");
-const cmpNormal=document.getElementById("cmpNormal");
-const cmpAdvanced=document.getElementById("cmpAdvanced");
-const cmpGain=document.getElementById("cmpGain");
 
 const sipTab=document.getElementById("sipTab");
 const lumpTab=document.getElementById("lumpTab");
@@ -210,93 +193,80 @@ const amountLabel=document.getElementById("amountLabel");
 /* Chart */
 const chart=new Chart(donutChart,{
   type:"doughnut",
-  data:{labels:["Estimated Returns","Invested Amount"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
+  data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
 });
+
+/* Validation helper */
+function validate(el,val,min,max,err,msg){
+  if(val<min||val>max){
+    err.textContent=msg;
+    err.style.display="block";
+    return clamp(val,min,max);
+  }
+  err.style.display="none";
+  return val;
+}
+const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
 
 /* Mode */
 sipTab.onclick=()=>{
   mode="sip";
   sipTab.classList.add("active");
   lumpTab.classList.remove("active");
-  document.getElementById("sipToggleWrap").style.display="block";
-  document.getElementById("lumpToggleWrap").style.display="none";
-  lumpAdvanced.style.display="none";
   amountLabel.textContent="Monthly Investment";
   calculate();
 };
-
 lumpTab.onclick=()=>{
   mode="lump";
   lumpTab.classList.add("active");
   sipTab.classList.remove("active");
-  document.getElementById("sipToggleWrap").style.display="none";
-  sipAdvanced.style.display="none";
-  document.getElementById("lumpToggleWrap").style.display="block";
   amountLabel.textContent="Investment Amount";
+  sipAdvanced.style.display="none";
+  sipStepToggle.checked=false;
   calculate();
 };
 
-/* Toggles */
-sipStepToggle.onchange=()=>{sipAdvanced.style.display=sipStepToggle.checked?"block":"none";calculate();}
-lumpRepeatToggle.onchange=()=>{lumpAdvanced.style.display=lumpRepeatToggle.checked?"block":"none";calculate();}
+sipStepToggle.onchange=()=>{
+  sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
+  calculate();
+};
 
-[sipStepType,sipStepValue,sipStepInterval,lumpInterval].forEach(el=>el.oninput=calculate);
-[amountInput,returnInput,yearInput,amountRange,returnRange,yearRange].forEach(el=>el.oninput=calculate);
-
-/* Calculation */
+/* Calculate */
 function calculate(){
-  const A=clean(amountInput.value);
-  const r=clean(returnInput.value)/100;
-  const y=clean(yearInput.value);
-  const rm=r/12,months=y*12;
+  let A=clean(amount.value);
+  let r=clean(ret.value);
+  let y=clean(yrs.value);
+
+  A=validate(amount,A,
+    mode==="sip"?LIMITS.sip.min:LIMITS.lump.min,
+    mode==="sip"?LIMITS.sip.max:LIMITS.lump.max,
+    amountErr,
+    `Amount must be between ₹${LIMITS.sip.min} and ₹${mode==="sip"?LIMITS.sip.max:LIMITS.lump.max}`
+  );
+
+  r=validate(ret,r,LIMITS.rate.min,LIMITS.rate.max,retErr,"Return must be 1%–100%");
+  y=validate(yrs,y,LIMITS.years.min,LIMITS.years.max,yrsErr,"Years must be 1–100");
+
+  const rm=r/100/12,months=y*12;
 
   let invested=0,maturity=0;
-  let normalMaturity=0;
 
   if(mode==="sip"){
-    // normal SIP
-    const normalSip=A;
-    normalMaturity=normalSip*((Math.pow(1+rm,months)-1)/rm)*(1+rm);
-
-    // step-up SIP
     let sip=A;
     for(let m=1;m<=months;m++){
       invested+=sip;
       maturity+=sip*Math.pow(1+rm,months-m);
       if(sipStepToggle.checked && m%Number(sipStepInterval.value)===0){
-        sip+=sipStepType.value==="percent"
-          ? sip*clean(sipStepValue.value)/100
-          : clean(sipStepValue.value);
+        let step=clean(sipStepValue.value);
+        step= sipStepType.value==="percent"
+          ? validate(sipStepValue,step,LIMITS.stepPct.min,LIMITS.stepPct.max,sipStepErr,"1%–100% allowed")
+          : validate(sipStepValue,step,LIMITS.stepAmt.min,LIMITS.stepAmt.max,sipStepErr,"₹1–₹1,00,000 allowed");
+        sip+=sipStepType.value==="percent"?sip*step/100:step;
       }
     }
-
-    cmpBox.style.display=sipStepToggle.checked?"block":"none";
-    cmpNormal.textContent=fmt(normalMaturity);
-    cmpAdvanced.textContent=fmt(maturity);
-    cmpGain.textContent=fmt(maturity-normalMaturity);
-
   }else{
-    // normal lumpsum
     invested=A;
-    normalMaturity=A*Math.pow(1+r,y);
-    maturity=normalMaturity;
-
-    // recurring lumpsum
-    if(lumpRepeatToggle.checked){
-      let recurInvested=A;
-      let recurMaturity=normalMaturity;
-      for(let m=Number(lumpInterval.value);m<=months;m+=Number(lumpInterval.value)){
-        recurInvested+=A;
-        recurMaturity+=A*Math.pow(1+rm,months-m);
-      }
-      invested=recurInvested;
-      maturity=recurMaturity;
-    }
-
-    cmpBox.style.display=lumpRepeatToggle.checked?"block":"none";
-    cmpNormal.textContent=fmt(normalMaturity);
-    cmpAdvanced.textContent=fmt(maturity);
-    cmpGain.textContent=fmt(maturity-normalMaturity);
+    maturity=A*Math.pow(1+r/100,y);
   }
 
   investedEl.textContent=fmt(invested);
@@ -306,10 +276,19 @@ function calculate(){
   chart.update();
 }
 
+/* Events */
+[amount,ret,yrs,sipStepValue].forEach(el=>{
+  el.addEventListener("blur",calculate);
+  el.addEventListener("keydown",e=>{
+    if(["-","+","e","E"].includes(e.key)) e.preventDefault();
+  });
+});
+[amountRangeEl,retRange,yrsRange,sipStepType,sipStepInterval].forEach(el=>el.oninput=calculate);
+
 /* Init */
-amountInput.value="10000";
-returnInput.value="12";
-yearInput.value="10";
+amount.value="10000";
+ret.value="12";
+yrs.value="10";
 sipStepValue.value="5000";
 calculate();
 </script>
