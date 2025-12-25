@@ -50,7 +50,6 @@ canvas{max-width:220px;margin:18px auto 0;display:block}
 </head>
 
 <body>
-
 <header><h2 style="margin:0">CalcWorld</h2></header>
 
 <main>
@@ -71,10 +70,8 @@ canvas{max-width:220px;margin:18px auto 0;display:block}
 </div>
 
 <!-- SIP ADVANCED -->
-<div id="sipAdvancedToggle" class="field">
-  <label>
-    <input type="checkbox" id="sipStepToggle"> Increase SIP over time
-  </label>
+<div class="field">
+  <label><input type="checkbox" id="sipStepToggle"> Increase SIP over time</label>
 </div>
 
 <div id="sipAdvanced" class="advanced">
@@ -88,30 +85,12 @@ canvas{max-width:220px;margin:18px auto 0;display:block}
 
   <div class="field">
     <label>Increase Value</label>
-    <input id="sipStepValue" value="5000">
+    <input id="sipStepValue" type="number">
   </div>
 
   <div class="field">
     <label>Increase Interval</label>
     <select id="sipStepInterval">
-      <option value="6">Every 6 Months</option>
-      <option value="12">Every 1 Year</option>
-    </select>
-  </div>
-</div>
-
-<!-- LUMPSUM ADVANCED -->
-<div id="lumpAdvancedToggle" class="field" style="display:none">
-  <label>
-    <input type="checkbox" id="lumpRepeatToggle"> Add recurring lumpsum
-  </label>
-</div>
-
-<div id="lumpAdvanced" class="advanced">
-  <div class="field">
-    <label>Frequency</label>
-    <select id="lumpFreq">
-      <option value="once">Once</option>
       <option value="6">Every 6 Months</option>
       <option value="12">Every 1 Year</option>
     </select>
@@ -157,10 +136,14 @@ canvas{max-width:220px;margin:18px auto 0;display:block}
 </main>
 
 <script>
-let mode="sip";
+/* ===== Helpers ===== */
+const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
+const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
+const num=v=>Number(String(v).replace(/[^0-9.]/g,""))||0;
 
-const amountInput=amountRange=document.getElementById("amountRange");
-const amountText=document.getElementById("amountInput");
+/* ===== Elements ===== */
+const amountInput=document.getElementById("amountInput");
+const amountRange=document.getElementById("amountRange");
 const returnInput=document.getElementById("returnInput");
 const returnRange=document.getElementById("returnRange");
 const yearInput=document.getElementById("yearInput");
@@ -172,10 +155,6 @@ const sipStepType=document.getElementById("sipStepType");
 const sipStepValue=document.getElementById("sipStepValue");
 const sipStepInterval=document.getElementById("sipStepInterval");
 
-const lumpRepeatToggle=document.getElementById("lumpRepeatToggle");
-const lumpAdvanced=document.getElementById("lumpAdvanced");
-const lumpFreq=document.getElementById("lumpFreq");
-
 const investedEl=document.getElementById("invested");
 const returnsEl=document.getElementById("returns");
 const maturityEl=document.getElementById("maturity");
@@ -183,66 +162,77 @@ const maturityEl=document.getElementById("maturity");
 const sipTab=document.getElementById("sipTab");
 const lumpTab=document.getElementById("lumpTab");
 
-sipStepToggle.onchange=()=>sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
-lumpRepeatToggle.onchange=()=>lumpAdvanced.style.display=lumpRepeatToggle.checked?"block":"none";
+let mode="sip";
 
-sipTab.onclick=()=>{
-  mode="sip";
-  sipTab.classList.add("active");
-  lumpTab.classList.remove("active");
-  document.getElementById("sipAdvancedToggle").style.display="block";
-  document.getElementById("lumpAdvancedToggle").style.display="none";
-  lumpAdvanced.style.display="none";
-  calculate();
-};
-
-lumpTab.onclick=()=>{
-  mode="lump";
-  lumpTab.classList.add("active");
-  sipTab.classList.remove("active");
-  document.getElementById("sipAdvancedToggle").style.display="none";
-  sipAdvanced.style.display="none";
-  document.getElementById("lumpAdvancedToggle").style.display="block";
-  calculate();
-};
-
-const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
-
+/* ===== Chart ===== */
 const chart=new Chart(donutChart,{
   type:"doughnut",
   data:{labels:["Estimated Returns","Invested Amount"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
 });
 
+/* ===== Validation ===== */
+[amountInput,returnInput,yearInput,sipStepValue].forEach(el=>{
+  el.addEventListener("keydown",e=>{
+    if(["-","+","e","E"].includes(e.key)) e.preventDefault();
+  });
+});
+
+/* ===== Defaults ===== */
+amountInput.value="10000";
+returnInput.value="12";
+yearInput.value="10";
+sipStepValue.value="5000";
+
+/* ===== Toggle ===== */
+sipStepToggle.onchange=()=>{
+  sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
+  if(sipStepType.value==="percent") sipStepValue.value="10";
+  calculate();
+};
+
+sipStepType.onchange=()=>{
+  sipStepValue.value = sipStepType.value==="percent" ? "10" : "5000";
+  calculate();
+};
+
+/* ===== Mode ===== */
+sipTab.onclick=()=>{mode="sip";sipTab.classList.add("active");lumpTab.classList.remove("active");calculate();};
+lumpTab.onclick=()=>{mode="lump";lumpTab.classList.add("active");sipTab.classList.remove("active");calculate();};
+
+/* ===== Calculate ===== */
 function calculate(){
-  const P=+amountText.value.replace(/\D/g,"")||0;
-  const r=+returnInput.value/100;
-  const y=+yearInput.value;
-  const rm=r/12;
-  const totalMonths=y*12;
+  let base=clamp(num(amountInput.value),100,mode==="sip"?10000000:100000000);
+  amountInput.value=base.toLocaleString("en-IN");
+  amountRange.value=Math.min(base,100000);
+
+  let r=clamp(num(returnInput.value),1,100)/100;
+  returnInput.value=(r*100).toFixed(1);
+  returnRange.value=Math.min(r*100,40);
+
+  let y=clamp(num(yearInput.value),1,100);
+  yearInput.value=y;
+  yearRange.value=Math.min(y,50);
 
   let invested=0,maturity=0;
-  let currentSip=P;
+  const rm=r/12,totalMonths=y*12;
+  let sip=base;
 
   if(mode==="sip"){
     for(let m=1;m<=totalMonths;m++){
-      invested+=currentSip;
-      maturity+=currentSip*Math.pow(1+rm,totalMonths-m);
+      invested+=sip;
+      maturity+=sip*Math.pow(1+rm,totalMonths-m);
 
       if(sipStepToggle.checked && m%+sipStepInterval.value===0){
-        if(sipStepType.value==="fixed") currentSip+=+sipStepValue.value;
-        else currentSip+=currentSip*(+sipStepValue.value/100);
+        if(sipStepType.value==="fixed"){
+          sip+=clamp(num(sipStepValue.value),1,100000);
+        }else{
+          sip+=sip*clamp(num(sipStepValue.value),1,100)/100;
+        }
       }
     }
   }else{
-    invested+=P;
-    maturity+=P*Math.pow(1+r,y);
-
-    if(lumpRepeatToggle.checked && lumpFreq.value!=="once"){
-      for(let m=+lumpFreq.value;m<totalMonths;m+=+lumpFreq.value){
-        invested+=P;
-        maturity+=P*Math.pow(1+rm,totalMonths-m);
-      }
-    }
+    invested+=base;
+    maturity+=base*Math.pow(1+r,y);
   }
 
   investedEl.textContent=fmt(invested);
@@ -252,11 +242,11 @@ function calculate(){
   chart.update();
 }
 
-document.querySelectorAll("input,select").forEach(el=>el.oninput=calculate);
+/* ===== Events ===== */
+[amountInput,returnInput,yearInput,amountRange,returnRange,yearRange,sipStepValue,sipStepInterval].forEach(el=>{
+  el.addEventListener("input",calculate);
+});
 
-amountText.value="10000";
-returnInput.value="12";
-yearInput.value="10";
 calculate();
 </script>
 
