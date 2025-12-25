@@ -24,13 +24,12 @@ main{max-width:420px;margin:30px auto;padding:0 16px}
   background:#eafff6;padding:6px 8px;border-radius:6px
 }
 .input-box input{
-  border:none;background:transparent;width:90px;
+  border:none;background:transparent;width:100px;
   text-align:right;font-weight:bold;outline:none
 }
 
 input[type=range]{width:100%}
 
-/* 🔹 Advanced box */
 .advanced{
   background:#f9fafb;
   padding:12px;
@@ -40,18 +39,13 @@ input[type=range]{width:100%}
 }
 
 .results{margin-top:20px}
-.result{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:bold}
-.left{display:flex;align-items:center;gap:8px}
-.bar{width:14px;height:6px;border-radius:3px}
-.blue{background:#2563eb}
-.yellow{background:#facc15}
+.result{display:flex;justify-content:space-between;margin-bottom:10px;font-weight:bold}
 
 canvas{max-width:220px;margin:20px auto 0;display:block}
 </style>
 </head>
 
 <body>
-
 <header><h2 style="margin:0">CalcWorld</h2></header>
 
 <main>
@@ -66,20 +60,16 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <div class="field">
   <div class="label">
     <span id="amountLabel">Monthly Investment</span>
-    <div class="input-box">₹ <input type="text" id="amountInput"></div>
+    <div class="input-box">₹ <input id="amountInput"></div>
   </div>
-  <input type="range" id="amountRange" min="100" max="100000" step="100">
+  <input type="range" id="amountRange" min="1" max="1000000" step="100">
 </div>
 
-<!-- 🔹 STEP 1: SIP ADVANCE TOGGLE -->
+<!-- SIP ADVANCED -->
 <div class="field">
-  <label>
-    <input type="checkbox" id="sipStepToggle">
-    Increase SIP over time
-  </label>
+  <label><input type="checkbox" id="sipStepToggle"> Increase SIP over time</label>
 </div>
 
-<!-- 🔹 STEP 1: SIP ADVANCE UI (NO LOGIC YET) -->
 <div class="advanced" id="sipAdvanced">
   <div class="field">
     <label>Increase Type</label>
@@ -91,7 +81,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
   <div class="field">
     <label>Increase Value</label>
-    <input type="text" id="sipStepValue" placeholder="e.g. 5000 or 10">
+    <input id="sipStepValue">
   </div>
 
   <div class="field">
@@ -107,7 +97,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <div class="field">
   <div class="label">
     <span>Expected Return</span>
-    <div class="input-box"><input type="text" id="returnInput"> %</div>
+    <div class="input-box"><input id="returnInput"> %</div>
   </div>
   <input type="range" id="returnRange" min="1" max="40" step="0.1">
 </div>
@@ -116,150 +106,106 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <div class="field">
   <div class="label">
     <span>Time Period</span>
-    <div class="input-box"><input type="text" id="yearInput"> Yr</div>
+    <div class="input-box"><input id="yearInput"> Yr</div>
   </div>
-  <input type="range" id="yearRange" min="1" max="50" step="1">
+  <input type="range" id="yearRange" min="1" max="50">
 </div>
 
 <div class="results">
-  <div class="result">
-    <div class="left"><span class="bar blue"></span>Total Invested</div>
-    <span id="invested">₹0</span>
-  </div>
-  <div class="result">
-    <div class="left"><span class="bar yellow"></span>Estimated Returns</div>
-    <span id="returns">₹0</span>
-  </div>
-  <div class="result">
-    <div class="left">Maturity Value</div>
-    <span id="maturity">₹0</span>
-  </div>
+  <div class="result"><span>Total Invested</span><span id="invested">₹0</span></div>
+  <div class="result"><span>Estimated Returns</span><span id="returns">₹0</span></div>
+  <div class="result"><span>Maturity Value</span><span id="maturity">₹0</span></div>
 </div>
 
 <canvas id="donutChart"></canvas>
-
 </div>
 </main>
 
 <script>
-/* ================= STATE ================= */
-let mode = "sip";
+const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
+const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
+const num=v=>Number(String(v).replace(/[^0-9.]/g,""))||0;
 
-/* ================= LIMITS ================= */
-const LIMITS = {
-  sip:  { min: 100, max: 10000000 },
-  lump: { min: 100, max: 100000000 },
-  rate: { min: 1, max: 100 },
-  years:{ min: 1, max: 100 }
-};
+let mode="sip";
 
-/* ================= ELEMENTS ================= */
-const amountInput = document.getElementById("amountInput");
-const amountRange = document.getElementById("amountRange");
-const returnInput = document.getElementById("returnInput");
-const returnRange = document.getElementById("returnRange");
-const yearInput   = document.getElementById("yearInput");
-const yearRange   = document.getElementById("yearRange");
+const amountInput=amountRange=amountInput=document.getElementById("amountInput");
+const amountRangeEl=document.getElementById("amountRange");
+const returnInput=document.getElementById("returnInput");
+const returnRange=document.getElementById("returnRange");
+const yearInput=document.getElementById("yearInput");
+const yearRange=document.getElementById("yearRange");
 
-const sipStepToggle = document.getElementById("sipStepToggle");
-const sipAdvanced   = document.getElementById("sipAdvanced");
+const sipStepToggle=document.getElementById("sipStepToggle");
+const sipAdvanced=document.getElementById("sipAdvanced");
+const sipStepType=document.getElementById("sipStepType");
+const sipStepValue=document.getElementById("sipStepValue");
+const sipStepInterval=document.getElementById("sipStepInterval");
 
-const investedEl  = document.getElementById("invested");
-const returnsEl   = document.getElementById("returns");
-const maturityEl  = document.getElementById("maturity");
+const investedEl=document.getElementById("invested");
+const returnsEl=document.getElementById("returns");
+const maturityEl=document.getElementById("maturity");
 
-const sipTab  = document.getElementById("sipTab");
-const lumpTab = document.getElementById("lumpTab");
-const amountLabel = document.getElementById("amountLabel");
-
-/* 🔹 STEP 1: toggle only */
-sipStepToggle.onchange = () => {
-  sipAdvanced.style.display = sipStepToggle.checked ? "block" : "none";
-};
-
-/* ================= HELPERS ================= */
-const formatINR = n =>
-  new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0})
-  .format(Math.round(n));
-
-const clamp = (v,min,max)=>Math.min(Math.max(v,min),max);
-const digitsOnly = v => v.replace(/\D/g,"");
-const decimalOnly = v => v.replace(/[^0-9.]/g,"");
-
-/* ================= CHART ================= */
-const chart = new Chart(donutChart,{
+const chart=new Chart(donutChart,{
   type:"doughnut",
-  data:{
-    labels:["Estimated Returns","Invested Amount"],
-    datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]
-  },
+  data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]},
   options:{plugins:{legend:{position:"bottom"}}}
 });
 
-/* ================= CALC (UNCHANGED) ================= */
+sipStepToggle.onchange=()=>sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
+
 function calculate(){
-  const A_LIMIT = mode==="sip"?LIMITS.sip:LIMITS.lump;
+  let A=clamp(num(amountInput.value),1,mode==="sip"?1_000_000:10_000_000);
+  let r=clamp(num(returnInput.value),1,40)/100;
+  let y=clamp(num(yearInput.value),1,50);
+  let rm=r/12,months=y*12;
 
-  let A = clamp(+digitsOnly(amountInput.value||0),A_LIMIT.min,A_LIMIT.max);
-  let r = clamp(+returnInput.value||LIMITS.rate.min,LIMITS.rate.min,LIMITS.rate.max)/100;
-  let y = clamp(+digitsOnly(yearInput.value||LIMITS.years.min),LIMITS.years.min,LIMITS.years.max);
+  amountRangeEl.value=A;
+  returnRange.value=r*100;
+  yearRange.value=y;
 
-  amountRange.value = Math.min(A,100000);
-  returnRange.value = Math.min(r*100,40);
-  yearRange.value   = Math.min(y,50);
-
-  let invested,maturity;
+  let invested=0,maturity=0;
 
   if(mode==="sip"){
-    const rm=r/12,n=y*12;
-    invested=A*n;
-    maturity=A*((Math.pow(1+rm,n)-1)/rm)*(1+rm);
+    let sip=A;
+    let step=num(sipStepValue.value);
+    let interval=Number(sipStepInterval.value);
+
+    for(let m=1;m<=months;m++){
+      invested+=sip;
+      maturity+=sip*Math.pow(1+rm,months-m);
+
+      if(sipStepToggle.checked && m%interval===0){
+        if(sipStepType.value==="fixed"){
+          sip+=clamp(step,1,100000);
+        }else{
+          sip+=sip*clamp(step,1,100)/100;
+        }
+      }
+    }
   }else{
     invested=A;
     maturity=A*Math.pow(1+r,y);
   }
 
-  investedEl.textContent = formatINR(invested);
-  returnsEl.textContent  = formatINR(maturity-invested);
-  maturityEl.textContent = formatINR(maturity);
+  investedEl.textContent=fmt(invested);
+  returnsEl.textContent=fmt(maturity-invested);
+  maturityEl.textContent=fmt(maturity);
 
   chart.data.datasets[0].data=[maturity-invested,invested];
   chart.update();
 }
 
-/* ================= MODE ================= */
-function switchMode(m){
-  mode=m;
-  sipTab.classList.toggle("active",m==="sip");
-  lumpTab.classList.toggle("active",m==="lump");
-  amountLabel.textContent=m==="sip"?"Monthly Investment":"Investment Amount";
-  calculate();
-}
+[
+ amountInput,returnInput,yearInput,
+ amountRangeEl,returnRange,yearRange,
+ sipStepType,sipStepValue,sipStepInterval
+].forEach(el=>el.addEventListener("input",calculate));
 
-sipTab.onclick=()=>switchMode("sip");
-lumpTab.onclick=()=>switchMode("lump");
-
-/* ================= INPUT EVENTS ================= */
-[amountInput,returnInput,yearInput].forEach(el=>{
-  el.addEventListener("keydown",e=>{
-    if(["-","+","e","E"].includes(e.key)) e.preventDefault();
-  });
-});
-
-amountInput.onblur = ()=>{amountInput.value=(+digitsOnly(amountInput.value)||100).toLocaleString("en-IN");calculate();}
-returnInput.onblur = ()=>{returnInput.value=(+decimalOnly(returnInput.value)||12).toFixed(1);calculate();}
-yearInput.onblur   = ()=>{yearInput.value=(+digitsOnly(yearInput.value)||10);calculate();}
-
-amountRange.oninput = ()=>{amountInput.value=amountRange.value;calculate();}
-returnRange.oninput = ()=>{returnInput.value=returnRange.value;calculate();}
-yearRange.oninput   = ()=>{yearInput.value=yearRange.value;calculate();}
-
-/* ================= INIT ================= */
-amountInput.value="10000";
-returnInput.value="12";
-yearInput.value="10";
+amountInput.value=10000;
+returnInput.value=12;
+yearInput.value=10;
+sipStepValue.value=5000;
 calculate();
 </script>
-
 </body>
 </html>
