@@ -2,26 +2,50 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SIP & Lumpsum Calculator (Advanced) | CalcWorld</title>
+<title>SIP & Lumpsum Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{font-family:Arial,sans-serif;background:#f6f7f9;margin:0}
 header{background:#fff;padding:16px 20px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-main{max-width:450px;margin:30px auto;padding:0 16px}
+main{max-width:420px;margin:30px auto;padding:0 16px}
 .card{background:#fff;padding:20px;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
 
 .tabs{display:flex;background:#eef2f7;border-radius:30px;padding:4px;margin-bottom:20px}
 .tab{flex:1;text-align:center;padding:10px;border-radius:30px;font-weight:bold;cursor:pointer}
 .tab.active{background:#2563eb;color:#fff}
 
-.toggle{margin:10px 0;font-weight:bold}
-select,input{width:100%;padding:6px;margin-top:6px}
+.field{margin-bottom:18px}
+.label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:6px}
 
-.result{display:flex;justify-content:space-between;margin-top:10px;font-weight:bold}
-canvas{max-width:220px;margin:20px auto 0;display:block}
+.input-box{
+  display:flex;align-items:center;gap:4px;
+  background:#eafff6;padding:6px 8px;border-radius:6px
+}
+.input-box input{
+  border:none;background:transparent;width:90px;
+  text-align:right;font-weight:bold;outline:none
+}
+
+input[type=range]{width:100%}
+
+.advanced{
+  margin:14px 0;
+  padding:12px;
+  background:#f9fafb;
+  border-radius:10px;
+  display:none;
+}
+
+.results{margin-top:18px}
+.result{display:flex;justify-content:space-between;margin-bottom:8px;font-weight:bold}
+.left{display:flex;align-items:center;gap:8px}
+.bar{width:14px;height:6px;border-radius:3px}
+.blue{background:#2563eb}
+.yellow{background:#facc15}
+
+canvas{max-width:220px;margin:18px auto 0;display:block}
 </style>
 </head>
 
@@ -32,50 +56,67 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <main>
 <div class="card">
 
+<!-- Tabs -->
 <div class="tabs">
   <div class="tab active" id="sipTab">SIP</div>
   <div class="tab" id="lumpTab">Lumpsum</div>
 </div>
 
 <!-- Common -->
-<label>Expected Return (%)</label>
-<input id="rate" value="12">
+<div class="field">
+  <div class="label"><span>Expected Return</span></div>
+  <input id="rate" value="12">
+</div>
 
-<label>Time Period (Years)</label>
-<input id="years" value="15">
+<div class="field">
+  <div class="label"><span>Time Period (Years)</span></div>
+  <input id="years" value="15">
+</div>
 
-<!-- SIP SECTION -->
+<!-- SIP -->
 <div id="sipSection">
-  <label>Starting SIP (₹)</label>
-  <input id="sipAmount" value="10000">
+  <div class="field">
+    <div class="label"><span>Monthly SIP (₹)</span></div>
+    <input id="sipAmount" value="10000">
+  </div>
 
-  <div class="toggle">
-    Step-Up SIP?
-    <select id="sipStepType">
-      <option value="none">No Increase</option>
+  <label>
+    <input type="checkbox" id="stepToggle"> Increase SIP every year
+  </label>
+
+  <div class="advanced" id="sipAdvance">
+    <select id="stepType">
       <option value="fixed">Fixed Increase (₹)</option>
       <option value="percent">Percentage Increase (%)</option>
     </select>
+    <input id="stepValue" value="5000">
+  </div>
+</div>
+
+<!-- LUMPSUM -->
+<div id="lumpSection" style="display:none">
+  <div class="field">
+    <div class="label"><span>Lumpsum Amount (₹)</span></div>
+    <input id="lumpAmount" value="200000">
   </div>
 
-  <input id="sipStepValue" value="5000">
+  <label>
+    <input type="checkbox" id="lumpToggle"> Add recurring lumpsum
+  </label>
+
+  <div class="advanced" id="lumpAdvance">
+    <select id="lumpFreq">
+      <option value="once">Once</option>
+      <option value="6">Every 6 Months</option>
+      <option value="12">Every Year</option>
+    </select>
+  </div>
 </div>
 
-<!-- LUMPSUM SECTION -->
-<div id="lumpSection" style="display:none">
-  <label>Lumpsum Amount (₹)</label>
-  <input id="lumpAmount" value="200000">
-
-  <label>Additional Lumpsum Frequency</label>
-  <select id="lumpFreq">
-    <option value="once">Once</option>
-    <option value="6">Every 6 Months</option>
-    <option value="12">Every Year</option>
-  </select>
+<div class="results">
+  <div class="result"><span>Total Invested</span><span id="invested">₹0</span></div>
+  <div class="result"><span>Maturity Value</span><span id="maturity">₹0</span></div>
 </div>
-
-<div class="result"><span>Total Invested</span><span id="invested">₹0</span></div>
-<div class="result"><span>Maturity Value</span><span id="maturity">₹0</span></div>
 
 <canvas id="chart"></canvas>
 
@@ -83,65 +124,67 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 </main>
 
 <script>
-const sipTab=document.getElementById("sipTab");
-const lumpTab=document.getElementById("lumpTab");
+const sipTab=sipTabEl=document.getElementById("sipTab");
+const lumpTab=lumpTabEl=document.getElementById("lumpTab");
 const sipSection=document.getElementById("sipSection");
 const lumpSection=document.getElementById("lumpSection");
+
+const stepToggle=document.getElementById("stepToggle");
+const sipAdvance=document.getElementById("sipAdvance");
+
+const lumpToggle=document.getElementById("lumpToggle");
+const lumpAdvance=document.getElementById("lumpAdvance");
 
 sipTab.onclick=()=>{sipTab.classList.add("active");lumpTab.classList.remove("active");sipSection.style.display="block";lumpSection.style.display="none";calc();}
 lumpTab.onclick=()=>{lumpTab.classList.add("active");sipTab.classList.remove("active");lumpSection.style.display="block";sipSection.style.display="none";calc();}
 
-const ctx=document.getElementById("chart");
-const chart=new Chart(ctx,{type:"doughnut",data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}});
-const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(n);
+stepToggle.onchange=()=>sipAdvance.style.display=stepToggle.checked?"block":"none";
+lumpToggle.onchange=()=>lumpAdvance.style.display=lumpToggle.checked?"block":"none";
+
+const chart=new Chart(chartEl=document.getElementById("chart"),{
+  type:"doughnut",
+  data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
+});
+
+const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 
 function calc(){
   const r=+rate.value/100;
   const y=+years.value;
   let invested=0,maturity=0;
 
-  if(sipSection.style.display==="block"){
+  if(sipSection.style.display!=="none"){
     let sip=+sipAmount.value;
-    const stepType=sipStepType.value;
-    const stepVal=+sipStepValue.value;
-
     for(let yr=0;yr<y;yr++){
-      let annualSip=sip*12;
-      invested+=annualSip;
-
-      let monthsLeft=(y-yr)*12;
-      maturity+=annualSip*Math.pow(1+r/12,monthsLeft);
-
-      if(stepType==="fixed") sip+=stepVal;
-      if(stepType==="percent") sip+=sip*(stepVal/100);
+      invested+=sip*12;
+      maturity+=sip*12*Math.pow(1+r/12,(y-yr)*12);
+      if(stepToggle.checked){
+        if(stepType.value==="fixed") sip+=+stepValue.value;
+        else sip+=sip*(+stepValue.value/100);
+      }
     }
   }else{
-    let lump=+lumpAmount.value;
+    const lump=+lumpAmount.value;
     invested+=lump;
     maturity+=lump*Math.pow(1+r,y);
 
-    const freq=lumpFreq.value;
-    if(freq!=="once"){
-      let interval=+freq;
-      let totalMonths=y*12;
-      for(let m=interval;m<totalMonths;m+=interval){
+    if(lumpToggle.checked && lumpFreq.value!=="once"){
+      const freq=+lumpFreq.value;
+      const totalMonths=y*12;
+      for(let m=freq;m<totalMonths;m+=freq){
         invested+=lump;
         maturity+=lump*Math.pow(1+r/12,totalMonths-m);
       }
     }
   }
 
-  invested=Math.round(invested);
-  maturity=Math.round(maturity);
-
   document.getElementById("invested").innerText=fmt(invested);
   document.getElementById("maturity").innerText=fmt(maturity);
-
   chart.data.datasets[0].data=[maturity-invested,invested];
   chart.update();
 }
 
-document.querySelectorAll("input,select").forEach(el=>el.oninput=calc);
+document.querySelectorAll("input,select").forEach(e=>e.oninput=calc);
 calc();
 </script>
 
