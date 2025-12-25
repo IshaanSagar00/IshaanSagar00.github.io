@@ -16,8 +16,8 @@ main{max-width:420px;margin:30px auto;padding:0 16px}
 .tab{flex:1;text-align:center;padding:10px;border-radius:30px;font-weight:bold;cursor:pointer}
 .tab.active{background:#2563eb;color:#fff}
 
-.field{margin-bottom:18px}
-.label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:6px}
+.field{margin-bottom:22px}
+.label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px}
 
 .input-box{
   display:flex;align-items:center;gap:4px;
@@ -31,25 +31,26 @@ main{max-width:420px;margin:30px auto;padding:0 16px}
 input[type=range]{width:100%}
 
 .advanced{
-  margin-top:12px;
-  padding:12px;
   background:#f9fafb;
+  padding:12px;
   border-radius:10px;
+  margin-bottom:20px;
   display:none;
 }
 
-.results{margin-top:18px}
-.result{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:bold}
+.results{margin-top:20px}
+.result{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:bold}
 .left{display:flex;align-items:center;gap:8px}
 .bar{width:14px;height:6px;border-radius:3px}
 .blue{background:#2563eb}
 .yellow{background:#facc15}
 
-canvas{max-width:220px;margin:18px auto 0;display:block}
+canvas{max-width:220px;margin:20px auto 0;display:block}
 </style>
 </head>
 
 <body>
+
 <header><h2 style="margin:0">CalcWorld</h2></header>
 
 <main>
@@ -70,11 +71,11 @@ canvas{max-width:220px;margin:18px auto 0;display:block}
 </div>
 
 <!-- SIP ADVANCED -->
-<div class="field">
+<div class="field" id="sipAdvToggle">
   <label><input type="checkbox" id="sipStepToggle"> Increase SIP over time</label>
 </div>
 
-<div id="sipAdvanced" class="advanced">
+<div class="advanced" id="sipAdvanced">
   <div class="field">
     <label>Increase Type</label>
     <select id="sipStepType">
@@ -85,7 +86,7 @@ canvas{max-width:220px;margin:18px auto 0;display:block}
 
   <div class="field">
     <label>Increase Value</label>
-    <input id="sipStepValue" type="number">
+    <input type="text" id="sipStepValue" value="5000">
   </div>
 
   <div class="field">
@@ -136,12 +137,14 @@ canvas{max-width:220px;margin:18px auto 0;display:block}
 </main>
 
 <script>
-/* ===== Helpers ===== */
+let mode="sip";
+
+/* Helpers */
 const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
 const num=v=>Number(String(v).replace(/[^0-9.]/g,""))||0;
 
-/* ===== Elements ===== */
+/* Elements */
 const amountInput=document.getElementById("amountInput");
 const amountRange=document.getElementById("amountRange");
 const returnInput=document.getElementById("returnInput");
@@ -162,31 +165,16 @@ const maturityEl=document.getElementById("maturity");
 const sipTab=document.getElementById("sipTab");
 const lumpTab=document.getElementById("lumpTab");
 
-let mode="sip";
-
-/* ===== Chart ===== */
+/* Chart */
 const chart=new Chart(donutChart,{
   type:"doughnut",
   data:{labels:["Estimated Returns","Invested Amount"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
 });
 
-/* ===== Validation ===== */
-[amountInput,returnInput,yearInput,sipStepValue].forEach(el=>{
-  el.addEventListener("keydown",e=>{
-    if(["-","+","e","E"].includes(e.key)) e.preventDefault();
-  });
-});
-
-/* ===== Defaults ===== */
-amountInput.value="10000";
-returnInput.value="12";
-yearInput.value="10";
-sipStepValue.value="5000";
-
-/* ===== Toggle ===== */
+/* Toggles */
 sipStepToggle.onchange=()=>{
   sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
-  if(sipStepType.value==="percent") sipStepValue.value="10";
+  sipStepValue.value = sipStepType.value==="percent" ? "10" : "5000";
   calculate();
 };
 
@@ -195,11 +183,11 @@ sipStepType.onchange=()=>{
   calculate();
 };
 
-/* ===== Mode ===== */
+/* Mode */
 sipTab.onclick=()=>{mode="sip";sipTab.classList.add("active");lumpTab.classList.remove("active");calculate();};
 lumpTab.onclick=()=>{mode="lump";lumpTab.classList.add("active");sipTab.classList.remove("active");calculate();};
 
-/* ===== Calculate ===== */
+/* Calculation */
 function calculate(){
   let base=clamp(num(amountInput.value),100,mode==="sip"?10000000:100000000);
   amountInput.value=base.toLocaleString("en-IN");
@@ -231,8 +219,8 @@ function calculate(){
       }
     }
   }else{
-    invested+=base;
-    maturity+=base*Math.pow(1+r,y);
+    invested=base;
+    maturity=base*Math.pow(1+r,y);
   }
 
   investedEl.textContent=fmt(invested);
@@ -242,11 +230,15 @@ function calculate(){
   chart.update();
 }
 
-/* ===== Events ===== */
+/* Events */
 [amountInput,returnInput,yearInput,amountRange,returnRange,yearRange,sipStepValue,sipStepInterval].forEach(el=>{
   el.addEventListener("input",calculate);
 });
 
+/* Init */
+amountInput.value="10000";
+returnInput.value="12";
+yearInput.value="10";
 calculate();
 </script>
 
