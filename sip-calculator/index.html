@@ -1,4 +1,4 @@
-=<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -19,7 +19,7 @@ main{max-width:420px;margin:30px auto;padding:0 16px}
 .field{margin-bottom:18px}
 .label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:6px}
 .input-box{display:flex;align-items:center;gap:4px;background:#eafff6;padding:6px 8px;border-radius:6px}
-.input-box input{border:none;background:transparent;width:90px;text-align:right;font-weight:bold;outline:none}
+.input-box input{border:none;background:transparent;width:100px;text-align:right;font-weight:bold;outline:none}
 
 input[type=range]{width:100%}
 
@@ -77,7 +77,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <div class="field">
     <label>Increase Value</label>
     <input id="sipStepValue">
-    <div class="error" id="sipStepError"></div>
   </div>
   <div class="field">
     <label>Increase Interval</label>
@@ -149,93 +148,37 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
 </div>
 </main>
+
 <script>
 const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 const clean=v=>Number(String(v).replace(/[^0-9.]/g,""))||0;
 
 let mode="sip";
 
-const LIMITS={
-  sip:{min:1,max:1000000},
-  lump:{min:1,max:1000000000},
-  rate:{min:1,max:40},
-  years:{min:1,max:50},
-  stepAmt:{min:1,max:100000},
-  stepPct:{min:1,max:100}
-};
-
 const chart=new Chart(donutChart,{
-  type:"doughnut",
-  data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
+type:"doughnut",
+data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
 });
 
-function showError(id,msg){
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.textContent=msg||"";
-}
-
-function clamp(v,min,max){return Math.min(Math.max(v,min),max);}
-
-function validateAndSync(){
-  const A_LIMIT = mode==="sip"?LIMITS.sip:LIMITS.lump;
-
-  let A=clean(amountInput.value);
-  if(A<A_LIMIT.min||A>A_LIMIT.max){
-    showError("amountError",`Allowed: ₹${fmt(A_LIMIT.min)} – ₹${fmt(A_LIMIT.max)}`);
-    A=clamp(A,A_LIMIT.min,A_LIMIT.max);
-  }else showError("amountError","");
-
-  let r=clean(returnInput.value);
-  if(r<LIMITS.rate.min||r>LIMITS.rate.max){
-    showError("returnError","Return must be 1% – 40%");
-    r=clamp(r,LIMITS.rate.min,LIMITS.rate.max);
-  }
-
-  let y=clean(yearInput.value);
-  if(y<LIMITS.years.min||y>LIMITS.years.max){
-    showError("yearError","Years must be 1 – 50");
-    y=clamp(y,LIMITS.years.min,LIMITS.years.max);
-  }
-
-  if(sipStepToggle.checked){
-    let v=clean(sipStepValue.value);
-    if(sipStepType.value==="percent"){
-      if(v<LIMITS.stepPct.min||v>LIMITS.stepPct.max){
-        showError("sipStepError","1% – 100% allowed");
-        v=clamp(v,LIMITS.stepPct.min,LIMITS.stepPct.max);
-      }else showError("sipStepError","");
-    }else{
-      if(v<LIMITS.stepAmt.min||v>LIMITS.stepAmt.max){
-        showError("sipStepError","₹1 – ₹1,00,000 allowed");
-        v=clamp(v,LIMITS.stepAmt.min,LIMITS.stepAmt.max);
-      }else showError("sipStepError","");
-    }
-    sipStepValue.value=v;
-  }
-
-  amountInput.value=A;
-  returnInput.value=r;
-  yearInput.value=y;
-
-  amountRange.min=A_LIMIT.min;
-  amountRange.max=A_LIMIT.max;
-  amountRange.value=A;
-
-  returnRange.value=r;
-  yearRange.value=y;
-}
-
 function calculate(){
-  validateAndSync();
-
   let A=clean(amountInput.value);
   let r=clean(returnInput.value)/100;
   let y=clean(yearInput.value);
   let rm=r/12, months=y*12;
 
-  let investedN=0, maturityN=0;
-  let investedA=0, maturityA=0;
+  // Slider limits (FIXED)
+  if(mode==="sip"){
+    amountRange.min=1;
+    amountRange.max=1000000;
+  }else{
+    amountRange.min=1;
+    amountRange.max=1000000000;
+  }
+
+  amountRange.value=Math.min(A,amountRange.max);
+
+  let investedN=0,maturityN=0;
+  let investedA=0,maturityA=0;
 
   if(mode==="sip"){
     investedN=A*months;
@@ -254,6 +197,7 @@ function calculate(){
   }else{
     investedN=A;
     maturityN=A*Math.pow(1+r,y);
+
     investedA=investedN;
     maturityA=maturityN;
 
@@ -290,29 +234,17 @@ function calculate(){
   }
 }
 
-[
-  sipTab,lumpTab,
-  amountInput,returnInput,yearInput,
-  amountRange,returnRange,yearRange,
-  sipStepToggle,sipStepType,sipStepValue,sipStepInterval,
-  lumpRepeatToggle,lumpInterval
-].forEach(e=>e&&e.addEventListener("input",calculate));
+[sipTab,lumpTab,amountInput,returnInput,yearInput,amountRange,returnRange,yearRange,
+ sipStepToggle,sipStepType,sipStepValue,sipStepInterval,lumpRepeatToggle,lumpInterval]
+.forEach(e=>e&&e.addEventListener("input",calculate));
 
-sipTab.onclick=()=>{
-  mode="sip";
-  sipTab.classList.add("active");lumpTab.classList.remove("active");
-  sipToggleWrap.style.display="block";lumpToggleWrap.style.display="none";lumpAdvanced.style.display="none";
-  amountLabel.textContent="Monthly Investment";
-  calculate();
-};
+sipTab.onclick=()=>{mode="sip";sipTab.classList.add("active");lumpTab.classList.remove("active");
+sipToggleWrap.style.display="block";lumpToggleWrap.style.display="none";lumpAdvanced.style.display="none";
+amountLabel.textContent="Monthly Investment";calculate();};
 
-lumpTab.onclick=()=>{
-  mode="lump";
-  lumpTab.classList.add("active");sipTab.classList.remove("active");
-  sipToggleWrap.style.display="none";sipAdvanced.style.display="none";lumpToggleWrap.style.display="block";
-  amountLabel.textContent="Investment Amount";
-  calculate();
-};
+lumpTab.onclick=()=>{mode="lump";lumpTab.classList.add("active");sipTab.classList.remove("active");
+sipToggleWrap.style.display="none";sipAdvanced.style.display="none";lumpToggleWrap.style.display="block";
+amountLabel.textContent="Investment Amount";calculate();};
 
 sipStepToggle.onchange=()=>sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
 lumpRepeatToggle.onchange=()=>lumpAdvanced.style.display=lumpRepeatToggle.checked?"block":"none";
@@ -321,10 +253,11 @@ amountInput.value="10000";
 returnInput.value="12";
 yearInput.value="10";
 sipStepValue.value="5000";
+amountRange.value=10000;
+returnRange.value=12;
+yearRange.value=10;
+
 calculate();
 </script>
-
-
 </body>
 </html>
-
