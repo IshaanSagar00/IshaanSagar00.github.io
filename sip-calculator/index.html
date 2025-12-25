@@ -65,7 +65,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <div class="field">
   <div class="label">
     <span id="amountLabel">Monthly Investment</span>
-    <div class="input-box">₹ <input type="text" id="amountInput"></div>
+    <div class="input-box">₹ <input id="amountInput"></div>
   </div>
   <input type="range" id="amountRange" min="100" max="100000" step="100">
 </div>
@@ -86,7 +86,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
   <div class="field">
     <label>Increase Value</label>
-    <input type="text" id="sipStepValue">
+    <input id="sipStepValue">
   </div>
 
   <div class="field">
@@ -102,7 +102,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <div class="field">
   <div class="label">
     <span>Expected Return</span>
-    <div class="input-box"><input type="text" id="returnInput"> %</div>
+    <div class="input-box"><input id="returnInput"> %</div>
   </div>
   <input type="range" id="returnRange" min="1" max="40" step="0.1">
 </div>
@@ -111,7 +111,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <div class="field">
   <div class="label">
     <span>Time Period</span>
-    <div class="input-box"><input type="text" id="yearInput"> Yr</div>
+    <div class="input-box"><input id="yearInput"> Yr</div>
   </div>
   <input type="range" id="yearRange" min="1" max="50" step="1">
 </div>
@@ -137,48 +137,68 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 </main>
 
 <script>
-/* ---------- Helpers ---------- */
-const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
-const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
-const cleanNum=v=>Number(String(v).replace(/[^0-9.]/g,""))||0;
+/* ---------- helpers ---------- */
+const fmt = n => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
+const clamp = (v,min,max)=>Math.min(Math.max(v,min),max);
+const clean = v => Number(String(v).replace(/[^0-9.]/g,""))||0;
 
-/* ---------- Elements ---------- */
-const amountInput=document.getElementById("amountInput");
-const amountRange=document.getElementById("amountRange");
-const returnInput=document.getElementById("returnInput");
-const returnRange=document.getElementById("returnRange");
-const yearInput=document.getElementById("yearInput");
-const yearRange=document.getElementById("yearRange");
+/* ---------- elements ---------- */
+const amountInput = document.getElementById("amountInput");
+const amountRange = document.getElementById("amountRange");
+const returnInput = document.getElementById("returnInput");
+const returnRange = document.getElementById("returnRange");
+const yearInput   = document.getElementById("yearInput");
+const yearRange   = document.getElementById("yearRange");
 
-const sipStepToggle=document.getElementById("sipStepToggle");
-const sipAdvanced=document.getElementById("sipAdvanced");
-const sipStepType=document.getElementById("sipStepType");
-const sipStepValue=document.getElementById("sipStepValue");
-const sipStepInterval=document.getElementById("sipStepInterval");
+const sipStepToggle   = document.getElementById("sipStepToggle");
+const sipAdvanced     = document.getElementById("sipAdvanced");
+const sipStepType     = document.getElementById("sipStepType");
+const sipStepValue    = document.getElementById("sipStepValue");
+const sipStepInterval = document.getElementById("sipStepInterval");
 
-const investedEl=document.getElementById("invested");
-const returnsEl=document.getElementById("returns");
-const maturityEl=document.getElementById("maturity");
+const investedEl = document.getElementById("invested");
+const returnsEl  = document.getElementById("returns");
+const maturityEl = document.getElementById("maturity");
 
-const sipTab=document.getElementById("sipTab");
-const lumpTab=document.getElementById("lumpTab");
+const sipTab  = document.getElementById("sipTab");
+const lumpTab = document.getElementById("lumpTab");
+const amountLabel = document.getElementById("amountLabel");
 
-let mode="sip";
+let mode = "sip";
 
-/* ---------- Chart ---------- */
-const chart=new Chart(donutChart,{
+/* ---------- chart ---------- */
+const chart = new Chart(donutChart,{
   type:"doughnut",
   data:{labels:["Estimated Returns","Invested Amount"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
 });
 
-/* ---------- Block invalid keys ---------- */
+/* ---------- block invalid keys ---------- */
 [amountInput,returnInput,yearInput,sipStepValue].forEach(el=>{
   el.addEventListener("keydown",e=>{
     if(["-","+","e","E"].includes(e.key)) e.preventDefault();
   });
 });
 
-/* ---------- Toggles ---------- */
+/* ---------- mode switch ---------- */
+sipTab.onclick=()=>{
+  mode="sip";
+  sipTab.classList.add("active");
+  lumpTab.classList.remove("active");
+  amountLabel.textContent="Monthly Investment";
+  calculate();
+};
+
+lumpTab.onclick=()=>{
+  mode="lump";
+  lumpTab.classList.add("active");
+  sipTab.classList.remove("active");
+  amountLabel.textContent="Investment Amount";
+  sipStepToggle.checked=false;
+  sipAdvanced.style.display="none";
+  calculate();
+};
+
+/* ---------- sip advanced ---------- */
 sipStepToggle.onchange=()=>{
   sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
   sipStepValue.value = sipStepType.value==="percent" ? "10" : "5000";
@@ -187,73 +207,63 @@ sipStepToggle.onchange=()=>{
 
 sipStepType.onchange=()=>{
   sipStepValue.value = sipStepType.value==="percent" ? "10" : "5000";
+  calculate();
 };
 
-/* ---------- Mode ---------- */
-sipTab.onclick=()=>{mode="sip";sipTab.classList.add("active");lumpTab.classList.remove("active");calculate();};
-lumpTab.onclick=()=>{mode="lump";lumpTab.classList.add("active");sipTab.classList.remove("active");calculate();};
-
-/* ---------- Sanitize on blur ---------- */
+/* ---------- sanitize on blur ---------- */
 amountInput.onblur=()=>{
-  let v=clamp(cleanNum(amountInput.value),100,mode==="sip"?10000000:100000000);
-  amountInput.value=v.toLocaleString("en-IN");
-  amountRange.value=Math.min(v,100000);
+  let max = mode==="sip"?10000000:100000000;
+  let v = clamp(clean(amountInput.value),100,max);
+  amountInput.value = v.toLocaleString("en-IN");
+  amountRange.value = Math.min(v,100000);
   calculate();
 };
 
 returnInput.onblur=()=>{
-  let v=clamp(cleanNum(returnInput.value),1,100);
-  returnInput.value=v.toFixed(1);
-  returnRange.value=Math.min(v,40);
+  let v = clamp(clean(returnInput.value),1,100);
+  returnInput.value = v.toFixed(1);
+  returnRange.value = Math.min(v,40);
   calculate();
 };
 
 yearInput.onblur=()=>{
-  let v=clamp(cleanNum(yearInput.value),1,100);
-  yearInput.value=v;
-  yearRange.value=Math.min(v,50);
+  let v = clamp(clean(yearInput.value),1,100);
+  yearInput.value = v;
+  yearRange.value = Math.min(v,50);
   calculate();
 };
 
 sipStepValue.onblur=()=>{
-  let v=sipStepType.value==="percent"
-    ? clamp(cleanNum(sipStepValue.value),1,100)
-    : clamp(cleanNum(sipStepValue.value),1,100000);
-  sipStepValue.value=v;
-};
-
-/* ---------- Sliders ---------- */
-amountRange.oninput=()=>{
-  amountInput.value=amountRange.value;
-  calculate();
-};
-returnRange.oninput=()=>{
-  returnInput.value=returnRange.value;
-  calculate();
-};
-yearRange.oninput=()=>{
-  yearInput.value=yearRange.value;
+  let v = sipStepType.value==="percent"
+    ? clamp(clean(sipStepValue.value),1,100)
+    : clamp(clean(sipStepValue.value),1,100000);
+  sipStepValue.value = v;
   calculate();
 };
 
-/* ---------- Calculation ---------- */
+/* ---------- sliders ---------- */
+amountRange.oninput=()=>{amountInput.value=amountRange.value;calculate();}
+returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate();}
+yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate();}
+
+/* ---------- calculation ---------- */
 function calculate(){
-  let A=cleanNum(amountInput.value);
-  let r=cleanNum(returnInput.value)/100;
-  let y=cleanNum(yearInput.value);
+  let A = clean(amountInput.value);
+  let r = clean(returnInput.value)/100;
+  let y = clean(yearInput.value);
 
   let invested=0,maturity=0;
-  const rm=r/12,totalMonths=y*12;
+  const rm=r/12, months=y*12;
   let sip=A;
 
   if(mode==="sip"){
-    for(let m=1;m<=totalMonths;m++){
+    for(let m=1;m<=months;m++){
       invested+=sip;
-      maturity+=sip*Math.pow(1+rm,totalMonths-m);
-      if(sipStepToggle.checked && m%+sipStepInterval.value===0){
+      maturity+=sip*Math.pow(1+rm,months-m);
+      if(sipStepToggle.checked && m % +sipStepInterval.value === 0){
         sip += sipStepType.value==="percent"
-          ? sip*cleanNum(sipStepValue.value)/100
-          : cleanNum(sipStepValue.value);
+          ? sip * clean(sipStepValue.value)/100
+          : clean(sipStepValue.value);
       }
     }
   }else{
@@ -268,7 +278,7 @@ function calculate(){
   chart.update();
 }
 
-/* ---------- Init ---------- */
+/* ---------- init ---------- */
 amountInput.value="10,000";
 returnInput.value="12";
 yearInput.value="10";
