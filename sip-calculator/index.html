@@ -38,6 +38,18 @@ input[type=range]{width:100%}
   display:none;
 }
 
+.compare{
+  background:#eef2f7;
+  padding:12px;
+  border-radius:10px;
+  margin-top:20px;
+  display:none;
+  font-size:14px;
+}
+
+.compare h4{margin:0 0 10px 0}
+.compare-row{display:flex;justify-content:space-between;margin-bottom:6px}
+
 .results{margin-top:20px}
 .result{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:bold}
 .left{display:flex;align-items:center;gap:8px}
@@ -71,7 +83,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 </div>
 
 <!-- SIP ADVANCED -->
-<div class="field">
+<div class="field" id="sipToggleWrap">
   <label><input type="checkbox" id="sipStepToggle"> Increase SIP over time</label>
 </div>
 
@@ -92,6 +104,21 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <div class="field">
     <label>Increase Interval</label>
     <select id="sipStepInterval">
+      <option value="6">Every 6 Months</option>
+      <option value="12">Every 1 Year</option>
+    </select>
+  </div>
+</div>
+
+<!-- LUMPSUM ADVANCED -->
+<div class="field" id="lumpToggleWrap" style="display:none">
+  <label><input type="checkbox" id="lumpRepeatToggle"> Add recurring lumpsum</label>
+</div>
+
+<div class="advanced" id="lumpAdvanced">
+  <div class="field">
+    <label>Frequency</label>
+    <select id="lumpInterval">
       <option value="6">Every 6 Months</option>
       <option value="12">Every 1 Year</option>
     </select>
@@ -131,18 +158,25 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   </div>
 </div>
 
+<div class="compare" id="compareBox">
+  <h4>Comparison</h4>
+  <div class="compare-row"><span>Normal Investment</span><span id="cmpNormal">₹0</span></div>
+  <div class="compare-row"><span>Advanced Investment</span><span id="cmpAdvanced">₹0</span></div>
+  <div class="compare-row"><strong>Extra Gain</strong><strong id="cmpGain">₹0</strong></div>
+</div>
+
 <canvas id="donutChart"></canvas>
 
 </div>
 </main>
 
 <script>
-/* ---------- helpers ---------- */
 const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
-const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
 const clean=v=>Number(String(v).replace(/[^0-9.]/g,""))||0;
 
-/* ---------- elements ---------- */
+let mode="sip";
+
+/* Elements */
 const amountInput=document.getElementById("amountInput");
 const amountRange=document.getElementById("amountRange");
 const returnInput=document.getElementById("returnInput");
@@ -156,34 +190,37 @@ const sipStepType=document.getElementById("sipStepType");
 const sipStepValue=document.getElementById("sipStepValue");
 const sipStepInterval=document.getElementById("sipStepInterval");
 
+const lumpRepeatToggle=document.getElementById("lumpRepeatToggle");
+const lumpAdvanced=document.getElementById("lumpAdvanced");
+const lumpInterval=document.getElementById("lumpInterval");
+
 const investedEl=document.getElementById("invested");
 const returnsEl=document.getElementById("returns");
 const maturityEl=document.getElementById("maturity");
+
+const cmpBox=document.getElementById("compareBox");
+const cmpNormal=document.getElementById("cmpNormal");
+const cmpAdvanced=document.getElementById("cmpAdvanced");
+const cmpGain=document.getElementById("cmpGain");
 
 const sipTab=document.getElementById("sipTab");
 const lumpTab=document.getElementById("lumpTab");
 const amountLabel=document.getElementById("amountLabel");
 
-let mode="sip";
-
-/* ---------- chart ---------- */
+/* Chart */
 const chart=new Chart(donutChart,{
   type:"doughnut",
   data:{labels:["Estimated Returns","Invested Amount"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
 });
 
-/* ---------- block invalid keys ---------- */
-[amountInput,returnInput,yearInput,sipStepValue].forEach(el=>{
-  el.addEventListener("keydown",e=>{
-    if(["-","+","e","E"].includes(e.key)) e.preventDefault();
-  });
-});
-
-/* ---------- mode ---------- */
+/* Mode */
 sipTab.onclick=()=>{
   mode="sip";
   sipTab.classList.add("active");
   lumpTab.classList.remove("active");
+  document.getElementById("sipToggleWrap").style.display="block";
+  document.getElementById("lumpToggleWrap").style.display="none";
+  lumpAdvanced.style.display="none";
   amountLabel.textContent="Monthly Investment";
   calculate();
 };
@@ -192,86 +229,74 @@ lumpTab.onclick=()=>{
   mode="lump";
   lumpTab.classList.add("active");
   sipTab.classList.remove("active");
-  amountLabel.textContent="Investment Amount";
-  sipStepToggle.checked=false;
+  document.getElementById("sipToggleWrap").style.display="none";
   sipAdvanced.style.display="none";
+  document.getElementById("lumpToggleWrap").style.display="block";
+  amountLabel.textContent="Investment Amount";
   calculate();
 };
 
-/* ---------- sip advanced ---------- */
-sipStepToggle.onchange=()=>{
-  sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
-  sipStepValue.value=sipStepType.value==="percent"?"10":"5000";
-  calculate();
-};
+/* Toggles */
+sipStepToggle.onchange=()=>{sipAdvanced.style.display=sipStepToggle.checked?"block":"none";calculate();}
+lumpRepeatToggle.onchange=()=>{lumpAdvanced.style.display=lumpRepeatToggle.checked?"block":"none";calculate();}
 
-sipStepType.onchange=()=>{
-  sipStepValue.value=sipStepType.value==="percent"?"10":"5000";
-  calculate();
-};
+[sipStepType,sipStepValue,sipStepInterval,lumpInterval].forEach(el=>el.oninput=calculate);
+[amountInput,returnInput,yearInput,amountRange,returnRange,yearRange].forEach(el=>el.oninput=calculate);
 
-sipStepInterval.onchange=calculate;
-sipStepValue.oninput=calculate;
-
-/* ---------- sanitize on blur ---------- */
-amountInput.onblur=()=>{
-  let max=mode==="sip"?10000000:100000000;
-  let v=clamp(clean(amountInput.value),100,max);
-  amountInput.value=v.toLocaleString("en-IN");
-  amountRange.value=Math.min(v,100000);
-  calculate();
-};
-
-returnInput.onblur=()=>{
-  let v=clamp(clean(returnInput.value),1,100);
-  returnInput.value=v.toFixed(1);
-  returnRange.value=Math.min(v,40);
-  calculate();
-};
-
-yearInput.onblur=()=>{
-  let v=clamp(clean(yearInput.value),1,100);
-  yearInput.value=v;
-  yearRange.value=Math.min(v,50);
-  calculate();
-};
-
-sipStepValue.onblur=()=>{
-  let v=sipStepType.value==="percent"
-    ? clamp(clean(sipStepValue.value),1,100)
-    : clamp(clean(sipStepValue.value),1,100000);
-  sipStepValue.value=v;
-};
-
-/* ---------- sliders ---------- */
-amountRange.oninput=()=>{amountInput.value=amountRange.value;calculate();}
-returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate();}
-yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate();}
-
-/* ---------- calculation ---------- */
+/* Calculation */
 function calculate(){
-  let A=clean(amountInput.value);
-  let r=clean(returnInput.value)/100;
-  let y=clean(yearInput.value);
+  const A=clean(amountInput.value);
+  const r=clean(returnInput.value)/100;
+  const y=clean(yearInput.value);
+  const rm=r/12,months=y*12;
 
   let invested=0,maturity=0;
-  const rm=r/12,months=y*12;
-  let sip=A;
+  let normalMaturity=0;
 
   if(mode==="sip"){
+    // normal SIP
+    const normalSip=A;
+    normalMaturity=normalSip*((Math.pow(1+rm,months)-1)/rm)*(1+rm);
+
+    // step-up SIP
+    let sip=A;
     for(let m=1;m<=months;m++){
       invested+=sip;
       maturity+=sip*Math.pow(1+rm,months-m);
-
       if(sipStepToggle.checked && m%Number(sipStepInterval.value)===0){
         sip+=sipStepType.value==="percent"
           ? sip*clean(sipStepValue.value)/100
           : clean(sipStepValue.value);
       }
     }
+
+    cmpBox.style.display=sipStepToggle.checked?"block":"none";
+    cmpNormal.textContent=fmt(normalMaturity);
+    cmpAdvanced.textContent=fmt(maturity);
+    cmpGain.textContent=fmt(maturity-normalMaturity);
+
   }else{
+    // normal lumpsum
     invested=A;
-    maturity=A*Math.pow(1+r,y);
+    normalMaturity=A*Math.pow(1+r,y);
+    maturity=normalMaturity;
+
+    // recurring lumpsum
+    if(lumpRepeatToggle.checked){
+      let recurInvested=A;
+      let recurMaturity=normalMaturity;
+      for(let m=Number(lumpInterval.value);m<=months;m+=Number(lumpInterval.value)){
+        recurInvested+=A;
+        recurMaturity+=A*Math.pow(1+rm,months-m);
+      }
+      invested=recurInvested;
+      maturity=recurMaturity;
+    }
+
+    cmpBox.style.display=lumpRepeatToggle.checked?"block":"none";
+    cmpNormal.textContent=fmt(normalMaturity);
+    cmpAdvanced.textContent=fmt(maturity);
+    cmpGain.textContent=fmt(maturity-normalMaturity);
   }
 
   investedEl.textContent=fmt(invested);
@@ -281,8 +306,8 @@ function calculate(){
   chart.update();
 }
 
-/* ---------- init ---------- */
-amountInput.value="10,000";
+/* Init */
+amountInput.value="10000";
 returnInput.value="12";
 yearInput.value="10";
 sipStepValue.value="5000";
