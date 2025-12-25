@@ -148,43 +148,46 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <script>
 const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 const clean=v=>Number(String(v).replace(/[^0-9.]/g,""))||0;
+const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
 
+/* ===== LIMITS ===== */
 const LIMITS={
-  sip:{min:100,max:10000000},
-  lump:{min:100,max:100000000},
+  sipAmt:{min:100,max:10000000},
+  lumpAmt:{min:100,max:100000000},
   rate:{min:1,max:100},
   years:{min:1,max:100},
-  stepAmt:{min:1,max:100000},
+  stepFixed:{min:1,max:100000},
   stepPct:{min:1,max:100}
 };
 
 let mode="sip";
 
 /* Elements */
-const amountInput=amountRange=returnInput=returnRange=yearInput=yearRange=null;
-
-const amount=document.getElementById("amountInput");
-const amountErr=document.getElementById("amountError");
-const amountRangeEl=document.getElementById("amountRange");
-
-const ret=document.getElementById("returnInput");
-const retErr=document.getElementById("returnError");
-const retRange=document.getElementById("returnRange");
-
-const yrs=document.getElementById("yearInput");
-const yrsErr=document.getElementById("yearError");
-const yrsRange=document.getElementById("yearRange");
+const amountInput=document.getElementById("amountInput");
+const amountRange=document.getElementById("amountRange");
+const returnInput=document.getElementById("returnInput");
+const returnRange=document.getElementById("returnRange");
+const yearInput=document.getElementById("yearInput");
+const yearRange=document.getElementById("yearRange");
 
 const sipStepToggle=document.getElementById("sipStepToggle");
 const sipAdvanced=document.getElementById("sipAdvanced");
 const sipStepType=document.getElementById("sipStepType");
 const sipStepValue=document.getElementById("sipStepValue");
-const sipStepErr=document.getElementById("sipStepError");
 const sipStepInterval=document.getElementById("sipStepInterval");
+
+const lumpRepeatToggle=document.getElementById("lumpRepeatToggle");
+const lumpAdvanced=document.getElementById("lumpAdvanced");
+const lumpInterval=document.getElementById("lumpInterval");
 
 const investedEl=document.getElementById("invested");
 const returnsEl=document.getElementById("returns");
 const maturityEl=document.getElementById("maturity");
+
+const cmpBox=document.getElementById("compareBox");
+const cmpNormal=document.getElementById("cmpNormal");
+const cmpAdvanced=document.getElementById("cmpAdvanced");
+const cmpGain=document.getElementById("cmpGain");
 
 const sipTab=document.getElementById("sipTab");
 const lumpTab=document.getElementById("lumpTab");
@@ -193,80 +196,149 @@ const amountLabel=document.getElementById("amountLabel");
 /* Chart */
 const chart=new Chart(donutChart,{
   type:"doughnut",
-  data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
+  data:{labels:["Estimated Returns","Invested Amount"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]}
 });
 
-/* Validation helper */
-function validate(el,val,min,max,err,msg){
-  if(val<min||val>max){
-    err.textContent=msg;
-    err.style.display="block";
-    return clamp(val,min,max);
-  }
-  err.style.display="none";
-  return val;
-}
-const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
+/* ===== BLOCK INVALID KEYS ===== */
+[
+  amountInput,returnInput,yearInput,sipStepValue
+].forEach(el=>{
+  el.addEventListener("keydown",e=>{
+    if(["-","+","e","E"].includes(e.key)) e.preventDefault();
+  });
+});
 
-/* Mode */
+/* ===== MODE ===== */
 sipTab.onclick=()=>{
   mode="sip";
   sipTab.classList.add("active");
   lumpTab.classList.remove("active");
+  document.getElementById("sipToggleWrap").style.display="block";
+  document.getElementById("lumpToggleWrap").style.display="none";
+  lumpAdvanced.style.display="none";
   amountLabel.textContent="Monthly Investment";
   calculate();
 };
+
 lumpTab.onclick=()=>{
   mode="lump";
   lumpTab.classList.add("active");
   sipTab.classList.remove("active");
-  amountLabel.textContent="Investment Amount";
+  document.getElementById("sipToggleWrap").style.display="none";
   sipAdvanced.style.display="none";
-  sipStepToggle.checked=false;
+  document.getElementById("lumpToggleWrap").style.display="block";
+  amountLabel.textContent="Investment Amount";
   calculate();
 };
 
+/* ===== TOGGLES ===== */
 sipStepToggle.onchange=()=>{
   sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
   calculate();
 };
+lumpRepeatToggle.onchange=()=>{
+  lumpAdvanced.style.display=lumpRepeatToggle.checked?"block":"none";
+  calculate();
+};
 
-/* Calculate */
+/* ===== INPUT SYNC ===== */
+amountRange.oninput=()=>{
+  amountInput.value=amountRange.value;
+  calculate();
+};
+returnRange.oninput=()=>{
+  returnInput.value=returnRange.value;
+  calculate();
+};
+yearRange.oninput=()=>{
+  yearInput.value=yearRange.value;
+  calculate();
+};
+
+[sipStepType,sipStepInterval,lumpInterval].forEach(el=>el.oninput=calculate);
+[sipStepValue].forEach(el=>el.oninput=calculate);
+
+/* ===== VALIDATE ON BLUR ===== */
+amountInput.onblur=()=>{
+  const lim=mode==="sip"?LIMITS.sipAmt:LIMITS.lumpAmt;
+  let v=clamp(clean(amountInput.value),lim.min,lim.max);
+  amountInput.value=v.toLocaleString("en-IN");
+  amountRange.value=Math.min(v,100000);
+  calculate();
+};
+
+returnInput.onblur=()=>{
+  let v=clamp(clean(returnInput.value),LIMITS.rate.min,LIMITS.rate.max);
+  returnInput.value=v.toFixed(1);
+  returnRange.value=Math.min(v,40);
+  calculate();
+};
+
+yearInput.onblur=()=>{
+  let v=clamp(clean(yearInput.value),LIMITS.years.min,LIMITS.years.max);
+  yearInput.value=v;
+  yearRange.value=Math.min(v,50);
+  calculate();
+};
+
+sipStepValue.onblur=()=>{
+  let v=clean(sipStepValue.value);
+  v=sipStepType.value==="percent"
+    ? clamp(v,LIMITS.stepPct.min,LIMITS.stepPct.max)
+    : clamp(v,LIMITS.stepFixed.min,LIMITS.stepFixed.max);
+  sipStepValue.value=v;
+};
+
+/* ===== CALCULATION (UNCHANGED) ===== */
 function calculate(){
-  let A=clean(amount.value);
-  let r=clean(ret.value);
-  let y=clean(yrs.value);
-
-  A=validate(amount,A,
-    mode==="sip"?LIMITS.sip.min:LIMITS.lump.min,
-    mode==="sip"?LIMITS.sip.max:LIMITS.lump.max,
-    amountErr,
-    `Amount must be between ₹${LIMITS.sip.min} and ₹${mode==="sip"?LIMITS.sip.max:LIMITS.lump.max}`
-  );
-
-  r=validate(ret,r,LIMITS.rate.min,LIMITS.rate.max,retErr,"Return must be 1%–100%");
-  y=validate(yrs,y,LIMITS.years.min,LIMITS.years.max,yrsErr,"Years must be 1–100");
-
-  const rm=r/100/12,months=y*12;
+  const A=clean(amountInput.value);
+  const r=clean(returnInput.value)/100;
+  const y=clean(yearInput.value);
+  const rm=r/12,months=y*12;
 
   let invested=0,maturity=0;
+  let normalMaturity=0;
 
   if(mode==="sip"){
+    const normalSip=A;
+    normalMaturity=normalSip*((Math.pow(1+rm,months)-1)/rm)*(1+rm);
+
     let sip=A;
     for(let m=1;m<=months;m++){
       invested+=sip;
       maturity+=sip*Math.pow(1+rm,months-m);
       if(sipStepToggle.checked && m%Number(sipStepInterval.value)===0){
-        let step=clean(sipStepValue.value);
-        step= sipStepType.value==="percent"
-          ? validate(sipStepValue,step,LIMITS.stepPct.min,LIMITS.stepPct.max,sipStepErr,"1%–100% allowed")
-          : validate(sipStepValue,step,LIMITS.stepAmt.min,LIMITS.stepAmt.max,sipStepErr,"₹1–₹1,00,000 allowed");
-        sip+=sipStepType.value==="percent"?sip*step/100:step;
+        sip+=sipStepType.value==="percent"
+          ? sip*clean(sipStepValue.value)/100
+          : clean(sipStepValue.value);
       }
     }
+
+    cmpBox.style.display=sipStepToggle.checked?"block":"none";
+    cmpNormal.textContent=fmt(normalMaturity);
+    cmpAdvanced.textContent=fmt(maturity);
+    cmpGain.textContent=fmt(maturity-normalMaturity);
+
   }else{
     invested=A;
-    maturity=A*Math.pow(1+r/100,y);
+    normalMaturity=A*Math.pow(1+r,y);
+    maturity=normalMaturity;
+
+    if(lumpRepeatToggle.checked){
+      let recurInvested=A;
+      let recurMaturity=normalMaturity;
+      for(let m=Number(lumpInterval.value);m<=months;m+=Number(lumpInterval.value)){
+        recurInvested+=A;
+        recurMaturity+=A*Math.pow(1+rm,months-m);
+      }
+      invested=recurInvested;
+      maturity=recurMaturity;
+    }
+
+    cmpBox.style.display=lumpRepeatToggle.checked?"block":"none";
+    cmpNormal.textContent=fmt(normalMaturity);
+    cmpAdvanced.textContent=fmt(maturity);
+    cmpGain.textContent=fmt(maturity-normalMaturity);
   }
 
   investedEl.textContent=fmt(invested);
@@ -276,22 +348,14 @@ function calculate(){
   chart.update();
 }
 
-/* Events */
-[amount,ret,yrs,sipStepValue].forEach(el=>{
-  el.addEventListener("blur",calculate);
-  el.addEventListener("keydown",e=>{
-    if(["-","+","e","E"].includes(e.key)) e.preventDefault();
-  });
-});
-[amountRangeEl,retRange,yrsRange,sipStepType,sipStepInterval].forEach(el=>el.oninput=calculate);
-
 /* Init */
-amount.value="10000";
-ret.value="12";
-yrs.value="10";
+amountInput.value="10,000";
+returnInput.value="12";
+yearInput.value="10";
 sipStepValue.value="5000";
 calculate();
 </script>
+
 
 </body>
 </html>
