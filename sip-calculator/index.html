@@ -30,11 +30,7 @@ main{max-width:420px;margin:30px auto;padding:0 16px}
 
 input[type=range]{width:100%}
 
-.advanced-toggle{
-  margin:14px 0;
-  font-weight:bold;
-}
-
+.advanced-toggle{margin:14px 0;font-weight:bold}
 .advanced{
   display:none;
   padding:12px;
@@ -67,7 +63,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <span id="amountLabel">Monthly Investment</span>
     <div class="input-box">₹ <input id="amountInput"></div>
   </div>
-  <input type="range" id="amountRange">
+  <input type="range" id="amountRange" min="100" max="1000000" step="100">
 </div>
 
 <!-- Return -->
@@ -76,7 +72,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <span>Expected Return</span>
     <div class="input-box"><input id="returnInput"> %</div>
   </div>
-  <input type="range" id="returnRange">
+  <input type="range" id="returnRange" min="1" max="40" step="0.1">
 </div>
 
 <!-- Years -->
@@ -85,19 +81,15 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <span>Time Period</span>
     <div class="input-box"><input id="yearInput"> Yr</div>
   </div>
-  <input type="range" id="yearRange">
-</div>
-
-<!-- ADVANCED TOGGLE -->
-<div class="advanced-toggle">
-  <label>
-    <input type="checkbox" id="advToggle"> Enable Advanced
-  </label>
+  <input type="range" id="yearRange" min="1" max="50" step="1">
 </div>
 
 <!-- ADVANCED -->
-<div class="advanced" id="advancedBox">
+<div class="advanced-toggle">
+  <label><input type="checkbox" id="advToggle"> Enable Advanced</label>
+</div>
 
+<div class="advanced" id="advancedBox">
   <div id="sipAdvance">
     Increase SIP by
     <input id="sipIncValue" value="0" style="width:60px">
@@ -119,7 +111,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
       <option value="12">1 Year</option>
     </select>
   </div>
-
 </div>
 
 <div class="results">
@@ -135,14 +126,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
 <script>
 let mode="sip";
-
-const LIMITS={
-  sip:{min:100,max:1000000},
-  lump:{min:100,max:10000000},
-  rate:{min:1,max:40},
-  years:{min:1,max:50}
-};
-
 const $=id=>document.getElementById(id);
 
 const chart=new Chart(donutChart,{
@@ -154,18 +137,20 @@ const chart=new Chart(donutChart,{
 const format=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 
 function calculate(){
-  const A=+$("amountInput").value.replace(/\D/g,"");
-  const r=+$("returnInput").value/100;
-  const y=+$("yearInput").value;
+  const A=+$("amountInput").value.replace(/\D/g,"")||0;
+  const r=(+$("returnInput").value||0)/100;
+  const y=+$("yearInput").value||0;
 
-  if(!A||!r||!y) return;
+  if(A<=0||r<=0||y<=0){
+    invested.textContent=returns.textContent=maturity.textContent="₹0";
+    return;
+  }
 
   let invested=0,maturity=0;
   const rm=r/12,n=y*12;
 
   if(mode==="sip"){
     let sip=A;
-
     for(let m=1;m<=n;m++){
       if(advToggle.checked){
         const inc=+$("sipIncValue").value||0;
@@ -177,11 +162,9 @@ function calculate(){
       invested+=sip;
       maturity+=sip*Math.pow(1+rm,n-m+1);
     }
-
   }else{
     invested=A;
     maturity=A*Math.pow(1+r,y);
-
     if(advToggle.checked){
       const int=+$("lumpInterval").value;
       for(let m=int;m<=n;m+=int){
@@ -199,7 +182,7 @@ function calculate(){
   chart.update();
 }
 
-/* MODE SWITCH */
+/* MODE */
 sipTab.onclick=()=>{
   mode="sip";
   sipTab.classList.add("active");
@@ -220,21 +203,24 @@ lumpTab.onclick=()=>{
   calculate();
 };
 
-/* ADVANCED TOGGLE */
+/* ADV TOGGLE */
 advToggle.onchange=()=>{
   advancedBox.style.display=advToggle.checked?"block":"none";
   calculate();
 };
 
-/* INPUT BIND */
-document.querySelectorAll("input,select").forEach(el=>{
-  el.oninput=calculate;
-});
+/* SYNC SLIDERS */
+amountRange.oninput=()=>{amountInput.value=amountRange.value;calculate();}
+returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate();}
+yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate();}
+
+/* INPUT */
+document.querySelectorAll("input,select").forEach(e=>e.oninput=calculate);
 
 /* INIT */
-amountInput.value="10000";
-returnInput.value="12";
-yearInput.value="10";
+amountInput.value=amountRange.value=10000;
+returnInput.value=returnRange.value=12;
+yearInput.value=yearRange.value=10;
 calculate();
 </script>
 </body>
