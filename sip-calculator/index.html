@@ -28,7 +28,14 @@ input[type=range]{width:100%}
 .advanced-toggle{margin:12px 0;font-weight:bold}
 .advanced{display:none;background:#f1f5f9;padding:12px;border-radius:12px}
 
-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
+table{
+  width:100%;
+  table-layout: fixed;
+  border-collapse:collapse;
+  margin-top:16px;
+  font-size:14px;
+}
+
 th,td{padding:6px}
 th{text-align:left}
 td{text-align:right}
@@ -36,15 +43,16 @@ td.diff{font-weight:bold}
 
 canvas{max-width:220px;margin:20px auto 0;display:block}
 /* ---- Prevent big numbers from breaking layout ---- */
-td{
+  td{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .shrink{
-  font-size: 12px;
+  font-size: 11px;
 }
+
 
 </style>
 </head>
