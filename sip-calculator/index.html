@@ -49,89 +49,67 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 <main>
 <div class="card">
 
-<!-- TABS -->
 <div class="tabs">
   <div class="tab active" id="sipTab">SIP</div>
   <div class="tab" id="lumpTab">Lumpsum</div>
 </div>
 
-<!-- AMOUNT -->
 <div class="field">
   <div class="label">
     <span id="amountLabel">Monthly Investment</span>
-    <div class="input-box">₹ <input id="amountInput" value="10000"></div>
+    <div class="input-box">₹ <input id="amountInput"></div>
   </div>
   <input type="range" id="amountRange">
 </div>
 
-<!-- RETURN -->
 <div class="field">
   <div class="label">
     <span>Expected Return</span>
-    <div class="input-box"><input id="returnInput" value="12"> %</div>
+    <div class="input-box"><input id="returnInput"> %</div>
   </div>
-  <input type="range" id="returnRange" min="1" max="40" step="0.1" value="12">
+  <input type="range" id="returnRange" min="1" max="40" step="0.1">
 </div>
 
-<!-- YEARS -->
 <div class="field">
   <div class="label">
     <span>Time Period</span>
-    <div class="input-box"><input id="yearInput" value="10"> Yr</div>
+    <div class="input-box"><input id="yearInput"> Yr</div>
   </div>
-  <input type="range" id="yearRange" min="1" max="50" step="1" value="10">
+  <input type="range" id="yearRange" min="1" max="50" step="1">
 </div>
 
-<!-- ADVANCED TOGGLE -->
 <div class="advanced-toggle">
   <label><input type="checkbox" id="advToggle"> Enable Advanced</label>
 </div>
 
-<!-- ADVANCED OPTIONS -->
 <div class="advanced" id="advancedBox">
-
-  <!-- SIP ADV -->
-  <div id="sipAdvanced">
-    Increase SIP by
-    <input id="sipIncValue" value="0" style="width:60px">
-    <select id="sipIncType">
-      <option value="rupee">₹</option>
-      <option value="percent">%</option>
-    </select>
-    every
-    <select id="sipIncInterval">
-      <option value="12">1 Year</option>
-      <option value="6">6 Months</option>
-    </select>
-  </div>
-
-  <!-- LUMP ADV -->
-  <div id="lumpAdvanced" style="display:none">
-    Reinvest same amount every
-    <select id="lumpInterval">
-      <option value="12">1 Year</option>
-      <option value="6">6 Months</option>
-    </select>
-  </div>
-
+  Increase SIP by
+  <input id="sipIncValue" value="0" style="width:60px">
+  <select id="sipIncType">
+    <option value="rupee">₹</option>
+    <option value="percent">%</option>
+  </select>
+  every
+  <select id="sipIncInterval">
+    <option value="12">1 Year</option>
+    <option value="6">6 Months</option>
+  </select>
 </div>
 
-<!-- NORMAL RESULTS -->
 <div class="results" id="normalResults">
   <div class="result-row"><span>Total Invested</span><span id="nInv">₹0</span></div>
   <div class="result-row"><span>Estimated Returns</span><span id="nRet">₹0</span></div>
   <div class="result-row"><span>Maturity Value</span><span id="nMat">₹0</span></div>
 </div>
 
-<!-- COMPARISON -->
 <table id="compareTable">
 <thead>
 <tr><th></th><th>Normal</th><th>Advanced</th><th>Difference</th></tr>
 </thead>
 <tbody>
-<tr><th>Total Invested</th><td id="cInvN">₹0</td><td id="cInvA">₹0</td><td class="diff" id="cInvD">₹0</td></tr>
-<tr><th>Estimated Returns</th><td id="cRetN">₹0</td><td id="cRetA">₹0</td><td class="diff" id="cRetD">₹0</td></tr>
-<tr><th>Maturity Value</th><td id="cMatN">₹0</td><td id="cMatA">₹0</td><td class="diff" id="cMatD">₹0</td></tr>
+<tr><th>Total Invested</th><td id="cInvN">₹0</td><td id="cInvA">₹0</td><td id="cInvD">₹0</td></tr>
+<tr><th>Estimated Returns</th><td id="cRetN">₹0</td><td id="cRetA">₹0</td><td id="cRetD">₹0</td></tr>
+<tr><th>Maturity Value</th><td id="cMatN">₹0</td><td id="cMatA">₹0</td><td id="cMatD">₹0</td></tr>
 </tbody>
 </table>
 
@@ -141,131 +119,87 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 </main>
 
 <script>
-let mode = "sip";
-const fmt = n => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
+let mode="sip";
+const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 
-/* CHART */
-const chart = new Chart(document.getElementById("chart"),{
+const chart=new Chart(document.getElementById("chart"),{
   type:"doughnut",
   data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]},
   options:{plugins:{legend:{position:"bottom"}}}
 });
 
 /* LIMITS */
-function syncAmountSlider(){
-  if(mode==="sip"){
-    amountRange.min=100;
-    amountRange.max=100000;
-  }else{
-    amountRange.min=100;
-    amountRange.max=1000000;
-  }
+const LIMITS={
+  sip:{min:100,max:100000},
+  lump:{min:100,max:1000000}
+};
+
+/* HARD INPUT GUARD */
+function sanitize(el,min,max){
+  let v=el.value.replace(/\D/g,"");
+  if(v==="") v=min;
+  v=Math.max(min,Math.min(max,+v));
+  el.value=v;
+  return v;
 }
 
-/* SIP CALC */
-function calcSIP(A,r,y,adv){
+/* SYNC */
+function syncSlider(){
+  const L=mode==="sip"?LIMITS.sip:LIMITS.lump;
+  amountRange.min=L.min;
+  amountRange.max=L.max;
+}
+
+/* CALC */
+function calc(){
+  const L=mode==="sip"?LIMITS.sip:LIMITS.lump;
+  const A=sanitize(amountInput,L.min,L.max);
+  const r=Math.max(1,Math.min(40,+returnInput.value||12))/100;
+  const y=Math.max(1,Math.min(50,+yearInput.value||10));
+
+  amountRange.value=A;
+  returnRange.value=r*100;
+  yearRange.value=y;
+
   const rm=r/12,n=y*12;
   let sip=A,inv=0,mat=0;
-  let inc=Math.min(+sipIncValue.value||0, sipIncType.value==="rupee"?100000:100);
-  const int=+sipIncInterval.value;
 
   for(let m=1;m<=n;m++){
-    if(adv && m>int && (m-1)%int===0){
-      sip+=sipIncType.value==="rupee"?inc:sip*(inc/100);
-    }
     inv+=sip;
     mat+=sip*Math.pow(1+rm,n-m+1);
   }
-  return{inv,mat};
-}
 
-/* LUMP CALC */
-function calcLump(A,r,y,adv){
-  const rm=r/12,n=y*12;
-  let inv=A,mat=A*Math.pow(1+r,y);
-  if(adv){
-    const int=+lumpInterval.value;
-    for(let m=int;m<=n;m+=int){
-      inv+=A;
-      mat+=A*Math.pow(1+rm,n-m+1);
-    }
-  }
-  return{inv,mat};
-}
+  nInv.textContent=fmt(inv);
+  nRet.textContent=fmt(mat-inv);
+  nMat.textContent=fmt(mat);
 
-/* CALCULATE */
-function calculate(){
-  const A=+amountInput.value;
-  const r=(+returnInput.value)/100;
-  const y=+yearInput.value;
-
-  const normal = mode==="sip"?calcSIP(A,r,y,false):calcLump(A,r,y,false);
-  const adv = advToggle.checked
-    ? (mode==="sip"?calcSIP(A,r,y,true):calcLump(A,r,y,true))
-    : normal;
-
-  // normal
-  nInv.textContent=fmt(normal.inv);
-  nRet.textContent=fmt(normal.mat-normal.inv);
-  nMat.textContent=fmt(normal.mat);
-
-  // comparison
-  cInvN.textContent=fmt(normal.inv);
-  cInvA.textContent=fmt(adv.inv);
-  cInvD.textContent=fmt(adv.inv-normal.inv);
-
-  cRetN.textContent=fmt(normal.mat-normal.inv);
-  cRetA.textContent=fmt(adv.mat-adv.inv);
-  cRetD.textContent=fmt((adv.mat-adv.inv)-(normal.mat-normal.inv));
-
-  cMatN.textContent=fmt(normal.mat);
-  cMatA.textContent=fmt(adv.mat);
-  cMatD.textContent=fmt(adv.mat-normal.mat);
-
-  chart.data.datasets[0].data=[adv.mat-adv.inv,adv.inv];
+  chart.data.datasets[0].data=[mat-inv,inv];
   chart.update();
 }
 
 /* EVENTS */
-amountRange.oninput=()=>{amountInput.value=amountRange.value;calculate();}
-returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate();}
-yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate();}
-document.querySelectorAll("input,select").forEach(e=>e.oninput=calculate);
+["keydown"].forEach(e=>{
+  [amountInput,returnInput,yearInput].forEach(i=>{
+    i.addEventListener(e,k=>{
+      if(["-","+","e","E"].includes(k.key)) k.preventDefault();
+    });
+  });
+});
 
-advToggle.onchange=()=>{
-  advancedBox.style.display=advToggle.checked?"block":"none";
-  compareTable.style.display=advToggle.checked?"table":"none";
-  normalResults.style.display=advToggle.checked?"none":"block";
-  calculate();
-};
+amountInput.oninput=calc;
+returnInput.oninput=calc;
+yearInput.oninput=calc;
 
-/* TAB SWITCH */
-sipTab.onclick=()=>{
-  mode="sip";
-  sipTab.classList.add("active");
-  lumpTab.classList.remove("active");
-  amountLabel.textContent="Monthly Investment";
-  sipAdvanced.style.display="block";
-  lumpAdvanced.style.display="none";
-  syncAmountSlider();
-  calculate();
-};
-
-lumpTab.onclick=()=>{
-  mode="lump";
-  lumpTab.classList.add("active");
-  sipTab.classList.remove("active");
-  amountLabel.textContent="Investment Amount";
-  sipAdvanced.style.display="none";
-  lumpAdvanced.style.display="block";
-  syncAmountSlider();
-  calculate();
-};
+amountRange.oninput=()=>{amountInput.value=amountRange.value;calc();}
+returnRange.oninput=()=>{returnInput.value=returnRange.value;calc();}
+yearRange.oninput=()=>{yearInput.value=yearRange.value;calc();}
 
 /* INIT */
-syncAmountSlider();
-compareTable.style.display="none";
-calculate();
+amountInput.value=10000;
+returnInput.value=12;
+yearInput.value=10;
+syncSlider();
+calc();
 </script>
 
 </body>
