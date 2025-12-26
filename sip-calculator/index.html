@@ -7,35 +7,39 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f5f7fb}
-.card{max-width:420px;margin:40px auto;background:#fff;padding:20px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.1)}
-.tabs{display:flex;background:#eef2f7;border-radius:30px;padding:4px}
+body{font-family:Arial;background:#f6f7f9;margin:0}
+main{max-width:420px;margin:30px auto;padding:16px}
+.card{background:#fff;padding:20px;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+
+.tabs{display:flex;background:#eef2f7;border-radius:30px;padding:4px;margin-bottom:20px}
 .tab{flex:1;text-align:center;padding:10px;border-radius:30px;font-weight:bold;cursor:pointer}
 .tab.active{background:#2563eb;color:#fff}
 
-.field{margin-top:18px}
+.field{margin-bottom:16px}
 .label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:6px}
-.value{background:#eafff6;padding:6px 10px;border-radius:6px}
-.value input{border:none;background:transparent;width:90px;text-align:right;font-weight:bold}
+
+.input-box{background:#eafff6;padding:6px 10px;border-radius:6px}
+.input-box input{border:none;background:transparent;font-weight:bold;text-align:right;width:100px}
 
 input[type=range]{width:100%}
 
-.advanced-toggle{margin:16px 0;font-weight:bold}
+.advanced-toggle{margin:12px 0;font-weight:bold}
 .advanced{display:none;background:#f1f5f9;padding:12px;border-radius:12px}
 
-.results{margin-top:16px}
-.row{display:flex;justify-content:space-between;margin-bottom:6px;font-weight:bold}
+.error{color:#dc2626;font-size:12px;margin-top:6px}
 
-table{width:100%;margin-top:16px;border-collapse:collapse;font-size:14px;display:none}
-td,th{padding:6px;text-align:right}
-th:first-child,td:first-child{text-align:left}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
+th,td{padding:6px}
+th{text-align:left}
+td{text-align:right}
+td.diff{font-weight:bold}
 
 canvas{max-width:220px;margin:20px auto 0;display:block}
 </style>
 </head>
 
 <body>
-
+<main>
 <div class="card">
 
 <div class="tabs">
@@ -43,184 +47,204 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <div class="tab" id="lumpTab">Lumpsum</div>
 </div>
 
+<!-- Amount -->
 <div class="field">
   <div class="label">
     <span id="amountLabel">Monthly Investment</span>
-    <div class="value">₹ <input id="amountInput"></div>
+    <div class="input-box">₹ <input id="amountInput"></div>
   </div>
   <input type="range" id="amountRange">
 </div>
 
+<!-- Return -->
 <div class="field">
   <div class="label">
     <span>Expected Return</span>
-    <div class="value"><input id="returnInput"> %</div>
+    <div class="input-box"><input id="returnInput"> %</div>
   </div>
   <input type="range" id="returnRange" min="1" max="40" step="0.1">
 </div>
 
+<!-- Years -->
 <div class="field">
   <div class="label">
     <span>Time Period</span>
-    <div class="value"><input id="yearInput"> Yr</div>
+    <div class="input-box"><input id="yearInput"> Yr</div>
   </div>
-  <input type="range" id="yearRange" min="1" max="50">
+  <input type="range" id="yearRange" min="1" max="50" step="1">
 </div>
 
+<!-- Advanced toggle -->
 <div class="advanced-toggle">
   <label><input type="checkbox" id="advToggle"> Enable Advanced</label>
 </div>
 
+<!-- Advanced -->
 <div class="advanced" id="advancedBox">
-  Increase SIP by
-  <input id="advValue" value="0" style="width:70px">
-  <select id="advType">
-    <option value="rupee">₹</option>
-    <option value="percent">%</option>
-  </select>
-  every
-  <select id="advFreq">
-    <option value="12">1 Year</option>
-    <option value="6">6 Months</option>
-  </select>
+
+  <div id="sipAdvance">
+    Increase SIP by
+    <input id="sipIncValue" value="0" style="width:60px">
+    <select id="sipIncType">
+      <option value="rupee">₹</option>
+      <option value="percent">%</option>
+    </select>
+    every
+    <select id="sipIncInterval">
+      <option value="12">1 Year</option>
+      <option value="6">6 Months</option>
+    </select>
+    <div class="error" id="sipError"></div>
+  </div>
+
+  <div id="lumpAdvance" style="display:none">
+    Reinvest same amount every
+    <select id="lumpInterval">
+      <option value="12">1 Year</option>
+      <option value="6">6 Months</option>
+    </select>
+    <div class="error" id="lumpError"></div>
+  </div>
+
 </div>
 
-<div class="results" id="normalResults">
-  <div class="row"><span>Total Invested</span><span id="nInv">₹0</span></div>
-  <div class="row"><span>Estimated Returns</span><span id="nRet">₹0</span></div>
-  <div class="row"><span>Maturity Value</span><span id="nMat">₹0</span></div>
-</div>
-
-<table id="compareTable">
+<!-- Comparison -->
+<table>
+<thead>
 <tr><th></th><th>Normal</th><th>Advanced</th><th>Difference</th></tr>
-<tr><th>Invested</th><td id="cInvN">₹0</td><td id="cInvA">₹0</td><td id="cInvD">₹0</td></tr>
-<tr><th>Returns</th><td id="cRetN">₹0</td><td id="cRetA">₹0</td><td id="cRetD">₹0</td></tr>
-<tr><th>Maturity</th><td id="cMatN">₹0</td><td id="cMatA">₹0</td><td id="cMatD">₹0</td></tr>
+</thead>
+<tbody>
+<tr><th>Total Invested</th><td id="nInv">₹0</td><td id="aInv">₹0</td><td class="diff" id="dInv">₹0</td></tr>
+<tr><th>Estimated Returns</th><td id="nRet">₹0</td><td id="aRet">₹0</td><td class="diff" id="dRet">₹0</td></tr>
+<tr><th>Maturity Value</th><td id="nMat">₹0</td><td id="aMat">₹0</td><td class="diff" id="dMat">₹0</td></tr>
+</tbody>
 </table>
 
 <canvas id="chart"></canvas>
 
 </div>
+</main>
 
 <script>
-let mode="sip";
+/* ========= HELPERS ========= */
+const $ = id => document.getElementById(id);
+const fmt = n => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 
-const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
+let mode = "sip";
 
-const chart=new Chart(chart,{
+/* ========= CHART ========= */
+const chart = new Chart($("chart"),{
   type:"doughnut",
   data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]},
   options:{plugins:{legend:{position:"bottom"}}}
 });
 
-function clamp(v,min,max){return Math.min(Math.max(v,min),max)}
-
-function sync(range,input,min,max){
-  let v=parseFloat(input.value);
-  if(isNaN(v)) v=min;
-  v=clamp(v,min,max);
-  input.value=v;
-  range.value=v;
-  return v;
+/* ========= LIMITS ========= */
+function syncAmountLimits(){
+  if(mode==="sip"){
+    amountRange.min=100;
+    amountRange.max=100000;       // slider
+  }else{
+    amountRange.min=100;
+    amountRange.max=1000000;      // slider
+  }
 }
 
-function calc(){
-  const A=sync(amountRange,amountInput,100,mode==="sip"?1000000:10000000);
-  const r=sync(returnRange,returnInput,1,40)/100;
-  const y=sync(yearRange,yearInput,1,50);
+/* ========= CORE CALCS ========= */
+function calcSIP(A,r,y,adv){
+  const rm=r/12,n=y*12;
+  let sip=A,inv=0,mat=0;
 
-  let nInv,nMat;
+  const inc = Math.min(+sipIncValue.value||0, sipIncType.value==="rupee"?100000:100);
+  const int = +sipIncInterval.value;
 
-  if(mode==="sip"){
-    const rm=r/12,n=y*12;
-    nInv=A*n;
-    nMat=A*((Math.pow(1+rm,n)-1)/rm)*(1+rm);
-  }else{
-    nInv=A;
-    nMat=A*Math.pow(1+r,y);
+  for(let m=1;m<=n;m++){
+    if(adv && m>int && (m-1)%int===0){
+      sip += sipIncType.value==="rupee" ? inc : sip*(inc/100);
+    }
+    inv+=sip;
+    mat+=sip*Math.pow(1+rm,n-m+1);
   }
+  return {inv,mat};
+}
 
-  nInvSpan=nInv;
-  nMatSpan=nMat;
+function calcLump(A,r,y,adv){
+  const rm=r/12,n=y*12;
+  let inv=A,mat=A*Math.pow(1+r,y);
 
-  nInvEl.textContent=fmt(nInv);
-  nMatEl.textContent=fmt(nMat);
-  nRetEl.textContent=fmt(nMat-nInv);
-
-  let aInv=nInv,aMat=nMat;
-
-  if(advToggle.checked && mode==="sip"){
-    let sip=A;
-    aInv=0;aMat=0;
-    const inc=advType.value==="rupee"?Math.min(+advValue.value,100000):Math.min(+advValue.value,100);
-    for(let m=1;m<=y*12;m++){
-      if(m>advFreq.value && (m-1)%advFreq.value===0){
-        sip+=advType.value==="rupee"?inc:sip*(inc/100);
-      }
-      aInv+=sip;
-      aMat+=sip*Math.pow(1+r/12,y*12-m+1);
+  if(adv){
+    const int=+lumpInterval.value;
+    for(let m=int;m<=n;m+=int){
+      inv+=A;
+      mat+=A*Math.pow(1+rm,n-m+1);
     }
   }
+  return {inv,mat};
+}
 
-  if(advToggle.checked){
-    compareTable.style.display="table";
-    normalResults.style.display="none";
+/* ========= CALCULATE ========= */
+function calculate(){
+  const A = +amountInput.value.replace(/\D/g,"") || 0;
+  const r = (+returnInput.value || 0)/100;
+  const y = +yearInput.value || 0;
 
-    cInvN.textContent=fmt(nInv);
-    cInvA.textContent=fmt(aInv);
-    cInvD.textContent=fmt(aInv-nInv);
+  if(A<=0||r<=0||y<=0) return;
 
-    cRetN.textContent=fmt(nMat-nInv);
-    cRetA.textContent=fmt(aMat-aInv);
-    cRetD.textContent=fmt((aMat-aInv)-(nMat-nInv));
+  const normal = mode==="sip" ? calcSIP(A,r,y,false) : calcLump(A,r,y,false);
+  const adv    = advToggle.checked ? (mode==="sip"?calcSIP(A,r,y,true):calcLump(A,r,y,true)) : normal;
 
-    cMatN.textContent=fmt(nMat);
-    cMatA.textContent=fmt(aMat);
-    cMatD.textContent=fmt(aMat-nMat);
-  }else{
-    compareTable.style.display="none";
-    normalResults.style.display="block";
-  }
+  nInv.textContent = fmt(normal.inv);
+  nMat.textContent = fmt(normal.mat);
+  nRet.textContent = fmt(normal.mat-normal.inv);
 
-  chart.data.datasets[0].data=[(advToggle.checked?aMat:nMat)-(advToggle.checked?aInv:nInv),(advToggle.checked?aInv:nInv)];
+  aInv.textContent = fmt(adv.inv);
+  aMat.textContent = fmt(adv.mat);
+  aRet.textContent = fmt(adv.mat-adv.inv);
+
+  dInv.textContent = fmt(adv.inv-normal.inv);
+  dMat.textContent = fmt(adv.mat-normal.mat);
+  dRet.textContent = fmt((adv.mat-adv.inv)-(normal.mat-normal.inv));
+
+  chart.data.datasets[0].data=[adv.mat-adv.inv,adv.inv];
   chart.update();
 }
 
-/* EVENTS */
-amountInput.oninput=calc;
-amountRange.oninput=()=>{amountInput.value=amountRange.value;calc();}
-returnInput.oninput=calc;
-returnRange.oninput=()=>{returnInput.value=returnRange.value;calc();}
-yearInput.oninput=calc;
-yearRange.oninput=()=>{yearInput.value=yearRange.value;calc();}
-advToggle.onchange=()=>{advancedBox.style.display=advToggle.checked?"block":"none";calc();}
+/* ========= EVENTS ========= */
+document.querySelectorAll("input,select").forEach(el=>el.oninput=calculate);
+advToggle.onchange=()=>advancedBox.style.display=advToggle.checked?"block":"none";
 
 sipTab.onclick=()=>{
   mode="sip";
   sipTab.classList.add("active");
   lumpTab.classList.remove("active");
   amountLabel.textContent="Monthly Investment";
-  calc();
+  sipAdvance.style.display="block";
+  lumpAdvance.style.display="none";
+  syncAmountLimits();
+  calculate();
 };
 lumpTab.onclick=()=>{
   mode="lump";
   lumpTab.classList.add("active");
   sipTab.classList.remove("active");
   amountLabel.textContent="Investment Amount";
-  advToggle.checked=false;
-  advancedBox.style.display="none";
-  calc();
+  sipAdvance.style.display="none";
+  lumpAdvance.style.display="block";
+  syncAmountLimits();
+  calculate();
 };
 
-/* INIT */
-amountInput.value=10000;
-returnInput.value=12;
-yearInput.value=10;
-amountRange.value=10000;
-returnRange.value=12;
-yearRange.value=10;
-calc();
-</script>
+/* ========= SLIDERS ========= */
+amountRange.oninput=()=>{amountInput.value=amountRange.value;calculate();}
+returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate();}
+yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate();}
 
+/* ========= INIT ========= */
+syncAmountLimits();
+amountInput.value=amountRange.value=10000;
+returnInput.value=returnRange.value=12;
+yearInput.value=yearRange.value=10;
+calculate();
+</script>
 </body>
 </html>
