@@ -161,8 +161,8 @@ const chart=new Chart($("chart"),{
 });
 
 function syncAmountLimits(){
-  amountRange.min=100;
-  amountRange.max=mode==="sip"?1000000:1000000000;
+  amountRange.min=0;
+  amountRange.max=mode==="sip"?100000:10000000;
   amountInput.max=amountRange.max;
 }
 
