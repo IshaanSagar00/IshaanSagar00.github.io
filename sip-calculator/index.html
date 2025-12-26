@@ -166,9 +166,15 @@ data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#fac
 });
 
 function calculate(){
-  let A = clamp(clean(amountInput.value), 
-              1, 
-              mode==="sip" ? 1000000 : 1000000000);
+ let A = Number(amountInput.value);
+
+if (isNaN(A)) {
+  A = amountRange.min;
+}
+
+A = Math.min(Math.max(A, amountRange.min), amountRange.max);
+
+
 
   let r = clamp(clean(returnInput.value), 1, 40) / 100;
   let y = clamp(clean(yearInput.value), 1, 50);
@@ -257,6 +263,11 @@ amountRange.addEventListener("input", () => {
   amountInput.value = amountRange.value;
   calculate();
 });
+  amountInput.addEventListener("blur", () => {
+  syncSliders();
+  calculate();
+});
+
 
 returnRange.addEventListener("input", () => {
   returnInput.value = returnRange.value;
@@ -298,15 +309,21 @@ sipStepToggle.onchange=()=>sipAdvanced.style.display=sipStepToggle.checked?"bloc
 lumpRepeatToggle.onchange=()=>lumpAdvanced.style.display=lumpRepeatToggle.checked?"block":"none";
 function syncSliders(){
   if(mode==="sip"){
-    amountRange.min = 1;
-    amountRange.max = 1000000;
-    amountRange.step = 1000;
+    amountRange.min = 100;
+    amountRange.max = 1000000;     // 10,00,000
+    amountRange.step = 100;
   }else{
-    amountRange.min = 1;
-    amountRange.max = 1000000000;
-    amountRange.step = 10000;
+    amountRange.min = 100;
+    amountRange.max = 100000000;   // 10,00,00,000
+    amountRange.step = 1000;
   }
+
+  // 🔑 CRITICAL: keep slider value VALID
+  let val = Number(amountInput.value) || amountRange.min;
+  val = Math.min(Math.max(val, amountRange.min), amountRange.max);
+  amountRange.value = val;
 }
+
 
 /* INIT */
 amountInput.value=10000;
