@@ -19,9 +19,18 @@ main{max-width:420px;margin:30px auto;padding:16px}
 .label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:6px}
 
 .input-box{background:#eafff6;padding:6px 10px;border-radius:6px}
-.input-box input{border:none;background:transparent;font-weight:bold;text-align:right;width:90px}
+.input-box input{border:none;background:transparent;font-weight:bold;text-align:right;width:100px}
 
 input[type=range]{width:100%}
+
+.advanced-toggle{margin:14px 0;font-weight:bold}
+.advanced{
+  display:none;
+  background:#f1f5f9;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:20px
+}
 
 .results{margin-top:20px}
 .result{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px}
@@ -45,7 +54,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <span id="amountLabel">Monthly Investment</span>
     <div class="input-box">₹ <input id="amountInput"></div>
   </div>
-  <input type="range" id="amountRange" min="100" max="1000000" step="100">
+  <input type="range" id="amountRange">
 </div>
 
 <!-- Return -->
@@ -64,6 +73,35 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <div class="input-box"><input id="yearInput"> Yr</div>
   </div>
   <input type="range" id="yearRange" min="1" max="50" step="1">
+</div>
+
+<!-- ADVANCED -->
+<div class="advanced-toggle">
+  <label><input type="checkbox" id="advToggle"> Enable Advanced</label>
+</div>
+
+<div class="advanced" id="advancedBox">
+  <div id="sipAdvance">
+    Increase SIP by
+    <input id="sipIncValue" value="0" style="width:60px">
+    <select id="sipIncType">
+      <option value="rupee">₹</option>
+      <option value="percent">%</option>
+    </select>
+    every
+    <select id="sipIncInterval">
+      <option value="6">6 Months</option>
+      <option value="12">1 Year</option>
+    </select>
+  </div>
+
+  <div id="lumpAdvance" style="display:none">
+    Reinvest same amount every
+    <select id="lumpInterval">
+      <option value="6">6 Months</option>
+      <option value="12">1 Year</option>
+    </select>
+  </div>
 </div>
 
 <div class="results">
@@ -104,23 +142,29 @@ const format = n =>
 /* ================= CHART ================= */
 const chart = new Chart(document.getElementById("chart"),{
   type:"doughnut",
-  data:{
-    labels:["Returns","Invested"],
-    datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]
-  },
+  data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]},
   options:{plugins:{legend:{position:"bottom"}}}
 });
 
+/* ================= LIMIT HANDLING ================= */
+function syncAmountLimits(){
+  if(mode==="sip"){
+    amountRange.min = 100;
+    amountRange.max = 100000;       // slider
+  }else{
+    amountRange.min = 100;
+    amountRange.max = 1000000;      // slider
+  }
+}
+
 /* ================= CALC ================= */
 function calculate(){
-  const A = +amountInput.value || 0;
+  const A = +amountInput.value.replace(/\D/g,"") || 0;
   const r = (+returnInput.value || 0) / 100;
   const y = +yearInput.value || 0;
 
   if(A<=0 || r<=0 || y<=0){
-    investedEl.textContent="₹0";
-    returnsEl.textContent="₹0";
-    maturityEl.textContent="₹0";
+    investedEl.textContent=returnsEl.textContent=maturityEl.textContent="₹0";
     return;
   }
 
@@ -128,11 +172,31 @@ function calculate(){
 
   if(mode==="sip"){
     const rm = r/12, n = y*12;
-    invested = A * n;
-    maturity = A * ((Math.pow(1+rm,n)-1)/rm) * (1+rm);
+    let sip = A;
+
+    for(let m=1;m<=n;m++){
+      if(advToggle.checked){
+        const inc = +sipIncValue.value || 0;
+        const int = +sipIncInterval.value;
+        if(m>int && (m-1)%int===0){
+          sip += sipIncType.value==="rupee" ? inc : sip*(inc/100);
+        }
+      }
+      invested += sip;
+      maturity += sip*Math.pow(1+rm,n-m+1);
+    }
   }else{
     invested = A;
-    maturity = A * Math.pow(1+r,y);
+    maturity = A*Math.pow(1+r,y);
+
+    if(advToggle.checked){
+      const n = y*12, rm = r/12;
+      const int = +lumpInterval.value;
+      for(let m=int;m<=n;m+=int){
+        invested += A;
+        maturity += A*Math.pow(1+rm,n-m+1);
+      }
+    }
   }
 
   investedEl.textContent = format(invested);
@@ -167,6 +231,9 @@ sipTab.onclick = ()=>{
   sipTab.classList.add("active");
   lumpTab.classList.remove("active");
   amountLabel.textContent="Monthly Investment";
+  sipAdvance.style.display="block";
+  lumpAdvance.style.display="none";
+  syncAmountLimits();
   calculate();
 };
 
@@ -175,10 +242,20 @@ lumpTab.onclick = ()=>{
   lumpTab.classList.add("active");
   sipTab.classList.remove("active");
   amountLabel.textContent="Investment Amount";
+  sipAdvance.style.display="none";
+  lumpAdvance.style.display="block";
+  syncAmountLimits();
+  calculate();
+};
+
+/* ================= ADVANCED ================= */
+advToggle.onchange = ()=>{
+  advancedBox.style.display = advToggle.checked ? "block" : "none";
   calculate();
 };
 
 /* ================= INIT ================= */
+syncAmountLimits();
 amountInput.value = amountRange.value = 10000;
 returnInput.value = returnRange.value = 12;
 yearInput.value   = yearRange.value   = 10;
