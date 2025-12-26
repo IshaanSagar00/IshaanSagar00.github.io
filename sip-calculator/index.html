@@ -207,7 +207,12 @@ function calcLump(A,r,y,adv){
 }
 
 function calculate(){
-  amountInput.value=clamp(+amountInput.value||0,100,amountRange.max);
+  amountInput.value = clamp(
+  +amountInput.value || 0,
+  0,
+  amountRange.max
+);
+
   returnInput.value=clamp(+returnInput.value||1,1,50);
   yearInput.value=clamp(+yearInput.value||1,1,50);
 
