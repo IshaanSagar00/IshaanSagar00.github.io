@@ -25,8 +25,6 @@ input[type=range]{width:100%}
 
 .advanced{background:#f9fafb;padding:12px;border-radius:10px;margin-bottom:18px;display:none}
 
-.error{font-size:12px;color:#dc2626;margin-top:4px}
-
 .results{margin-top:20px}
 .result{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px}
 
@@ -58,7 +56,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
     <div class="input-box">₹ <input id="amountInput"></div>
   </div>
   <input type="range" id="amountRange">
-  <div class="error" id="amountError"></div>
 </div>
 
 <!-- SIP ADVANCED -->
@@ -67,24 +64,20 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 </div>
 
 <div class="advanced" id="sipAdvanced">
-  <div class="field">
-    <label>Increase Type</label>
-    <select id="sipStepType">
-      <option value="fixed">Fixed (₹)</option>
-      <option value="percent">Percentage (%)</option>
-    </select>
-  </div>
-  <div class="field">
-    <label>Increase Value</label>
-    <input id="sipStepValue">
-  </div>
-  <div class="field">
-    <label>Increase Interval</label>
-    <select id="sipStepInterval">
-      <option value="6">Every 6 Months</option>
-      <option value="12">Every 1 Year</option>
-    </select>
-  </div>
+  <label>Increase Type</label>
+  <select id="sipStepType">
+    <option value="fixed">Fixed (₹)</option>
+    <option value="percent">Percentage (%)</option>
+  </select>
+
+  <label>Increase Value</label>
+  <input id="sipStepValue">
+
+  <label>Increase Interval</label>
+  <select id="sipStepInterval">
+    <option value="6">Every 6 Months</option>
+    <option value="12">Every 1 Year</option>
+  </select>
 </div>
 
 <!-- LUMPSUM ADVANCED -->
@@ -93,13 +86,11 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 </div>
 
 <div class="advanced" id="lumpAdvanced">
-  <div class="field">
-    <label>Frequency</label>
-    <select id="lumpInterval">
-      <option value="6">Every 6 Months</option>
-      <option value="12">Every 1 Year</option>
-    </select>
-  </div>
+  <label>Frequency</label>
+  <select id="lumpInterval">
+    <option value="6">Every 6 Months</option>
+    <option value="12">Every 1 Year</option>
+  </select>
 </div>
 
 <!-- Return -->
@@ -151,7 +142,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
 <script>
 const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
-const clean=v=>Number(String(v).replace(/[^0-9.]/g,""))||0;
+const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
 
 let mode="sip";
 
@@ -161,21 +152,16 @@ data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#fac
 });
 
 function calculate(){
-  let A=clean(amountInput.value);
-  let r=clean(returnInput.value)/100;
-  let y=clean(yearInput.value);
+  let A = clamp(+amountInput.value||0,1,mode==="sip"?1_000_000:1_000_000_000);
+  let r = clamp(+returnInput.value||1,1,40)/100;
+  let y = clamp(+yearInput.value||1,1,50);
+
+  amountInput.value=A;
+  amountRange.value=A;
+  returnRange.value=r*100;
+  yearRange.value=y;
+
   let rm=r/12, months=y*12;
-
-  // Slider limits (FIXED)
-  if(mode==="sip"){
-    amountRange.min=1;
-    amountRange.max=1000000;
-  }else{
-    amountRange.min=1;
-    amountRange.max=1000000000;
-  }
-
-  amountRange.value=Math.min(A,amountRange.max);
 
   let investedN=0,maturityN=0;
   let investedA=0,maturityA=0;
@@ -188,10 +174,10 @@ function calculate(){
     for(let m=1;m<=months;m++){
       investedA+=sip;
       maturityA+=sip*Math.pow(1+rm,months-m);
-      if(sipStepToggle.checked && m%sipStepInterval.value==0){
+      if(sipStepToggle.checked && m%sipStepInterval.value===0){
         sip+=sipStepType.value==="fixed"
-          ? clean(sipStepValue.value)
-          : sip*clean(sipStepValue.value)/100;
+          ? +sipStepValue.value||0
+          : sip*(+sipStepValue.value||0)/100;
       }
     }
   }else{
@@ -202,7 +188,7 @@ function calculate(){
     maturityA=maturityN;
 
     if(lumpRepeatToggle.checked){
-      for(let m=lumpInterval.value;m<=months;m+=+lumpInterval.value){
+      for(let m=+lumpInterval.value;m<=months;m+=+lumpInterval.value){
         investedA+=A;
         maturityA+=A*Math.pow(1+rm,months-m);
       }
@@ -234,7 +220,8 @@ function calculate(){
   }
 }
 
-[sipTab,lumpTab,amountInput,returnInput,yearInput,amountRange,returnRange,yearRange,
+/* EVENTS */
+[sipTab,lumpTab,amountInput,amountRange,returnInput,returnRange,yearInput,yearRange,
  sipStepToggle,sipStepType,sipStepValue,sipStepInterval,lumpRepeatToggle,lumpInterval]
 .forEach(e=>e&&e.addEventListener("input",calculate));
 
@@ -249,14 +236,11 @@ amountLabel.textContent="Investment Amount";calculate();};
 sipStepToggle.onchange=()=>sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
 lumpRepeatToggle.onchange=()=>lumpAdvanced.style.display=lumpRepeatToggle.checked?"block":"none";
 
-amountInput.value="10000";
-returnInput.value="12";
-yearInput.value="10";
-sipStepValue.value="5000";
-amountRange.value=10000;
-returnRange.value=12;
-yearRange.value=10;
-
+/* INIT */
+amountInput.value=10000;
+returnInput.value=12;
+yearInput.value=10;
+sipStepValue.value=5000;
 calculate();
 </script>
 </body>
