@@ -35,6 +35,17 @@ td{text-align:right}
 td.diff{font-weight:bold}
 
 canvas{max-width:220px;margin:20px auto 0;display:block}
+/* ---- Prevent big numbers from breaking layout ---- */
+td{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shrink{
+  font-size: 12px;
+}
+
 </style>
 </head>
 
@@ -126,6 +137,13 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 const $=id=>document.getElementById(id);
 const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
+function autoFit(el){
+  el.classList.remove("shrink");
+  if(el.scrollWidth > el.clientWidth){
+    el.classList.add("shrink");
+  }
+}
+
 let mode="sip";
 
 const chart=new Chart($("chart"),{
@@ -208,6 +226,9 @@ function calculate(){
   dRet.textContent=fmt((adv.mat-adv.inv)-(normal.mat-normal.inv));
 
   chart.data.datasets[0].data=[adv.mat-adv.inv,adv.inv];
+  ["nInv","aInv","dInv","nRet","aRet","dRet","nMat","aMat","dMat"]
+  .forEach(id => autoFit($(id)));
+
   chart.update();
 }
 
