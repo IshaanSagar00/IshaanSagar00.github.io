@@ -148,6 +148,17 @@ const chart = new Chart(donutChart,{
 });
 
 /* ================= CALC ================= */
+  // Sync slider limits with current mode
+function syncLimits(){
+  const A_LIMIT = mode==="sip" ? LIMITS.sip : LIMITS.lump;
+  amountRange.min = A_LIMIT.min;
+  amountRange.max = A_LIMIT.max;
+  returnRange.min = LIMITS.rate.min;
+  returnRange.max = LIMITS.rate.max;
+  yearRange.min   = LIMITS.years.min;
+  yearRange.max   = LIMITS.years.max;
+}
+
 function calculate(){
   const A_LIMIT = mode==="sip"?LIMITS.sip:LIMITS.lump;
 
@@ -181,11 +192,20 @@ function calculate(){
 /* ================= MODE ================= */
 function switchMode(m){
   mode=m;
+
   sipTab.classList.toggle("active",m==="sip");
   lumpTab.classList.toggle("active",m==="lump");
-  amountLabel.textContent=m==="sip"?"Monthly Investment":"Investment Amount";
+
+  amountLabel.textContent =
+    m==="sip" ? "Monthly Investment" : "Investment Amount";
+
+  amountInput.value =
+    m==="sip" ? "10,000" : "1,00,000";
+
+  syncLimits();
   calculate();
 }
+
 
 sipTab.onclick=()=>switchMode("sip");
 lumpTab.onclick=()=>switchMode("lump");
@@ -224,13 +244,14 @@ yearInput.onblur = ()=>{
 
 /* Sliders */
 amountRange.oninput = ()=>{
-  amountInput.value = amountRange.value;
+  amountInput.value = (+amountRange.value).toLocaleString("en-IN");
   calculate();
 };
-returnRange.oninput = ()=>{
-  returnInput.value = returnRange.value;
-  calculate();
+
+returnInput.oninput = ()=>{
+  returnInput.value = decimalOnly(returnInput.value);
 };
+
 yearRange.oninput = ()=>{
   yearInput.value = yearRange.value;
   calculate();
@@ -240,6 +261,8 @@ yearRange.oninput = ()=>{
 amountInput.value = "10000";
 returnInput.value = "12";
 yearInput.value   = "10";
+syncLimits();
+
 calculate();
 </script>
 
