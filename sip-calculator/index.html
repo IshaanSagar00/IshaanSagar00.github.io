@@ -33,6 +33,20 @@ input[type=range]{width:100%}
 .compare th,.compare td{padding:6px;text-align:right}
 .compare th:first-child,.compare td:first-child{text-align:left}
 .compare thead{border-bottom:1px solid #d1d5db}
+.advanced .field{
+  margin-bottom:12px;
+}
+.advanced label{
+  display:block;
+  font-weight:bold;
+  margin-bottom:4px;
+}
+.advanced select,
+.advanced input{
+  width:100%;
+  padding:6px 8px;
+  box-sizing:border-box;
+}
 
 canvas{max-width:220px;margin:20px auto 0;display:block}
 </style>
@@ -152,9 +166,21 @@ data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#fac
 });
 
 function calculate(){
-  let A = clamp(+amountInput.value||0,1,mode==="sip"?1_000_000:1_000_000_000);
-  let r = clamp(+returnInput.value||1,1,40)/100;
-  let y = clamp(+yearInput.value||1,1,50);
+  let A = clamp(clean(amountInput.value), 
+              1, 
+              mode==="sip" ? 1000000 : 1000000000);
+
+  let r = clamp(clean(returnInput.value), 1, 40) / 100;
+  let y = clamp(clean(yearInput.value), 1, 50);
+  amountInput.value = A;
+  amountRange.value = A;
+
+  returnInput.value = (r * 100).toFixed(1);
+  returnRange.value = r * 100;
+
+  yearInput.value = y;
+  yearRange.value = y;
+
 
   amountInput.value=A;
   amountRange.value=A;
@@ -221,26 +247,73 @@ function calculate(){
 }
 
 /* EVENTS */
+
 [sipTab,lumpTab,amountInput,amountRange,returnInput,returnRange,yearInput,yearRange,
  sipStepToggle,sipStepType,sipStepValue,sipStepInterval,lumpRepeatToggle,lumpInterval]
-.forEach(e=>e&&e.addEventListener("input",calculate));
+.forEach(e => e && e.addEventListener("input", calculate));
 
-sipTab.onclick=()=>{mode="sip";sipTab.classList.add("active");lumpTab.classList.remove("active");
-sipToggleWrap.style.display="block";lumpToggleWrap.style.display="none";lumpAdvanced.style.display="none";
-amountLabel.textContent="Monthly Investment";calculate();};
+/* SLIDER → INPUT SYNC (KEEP ONLY ONE) */
+amountRange.addEventListener("input", () => {
+  amountInput.value = amountRange.value;
+  calculate();
+});
 
-lumpTab.onclick=()=>{mode="lump";lumpTab.classList.add("active");sipTab.classList.remove("active");
-sipToggleWrap.style.display="none";sipAdvanced.style.display="none";lumpToggleWrap.style.display="block";
-amountLabel.textContent="Investment Amount";calculate();};
+returnRange.addEventListener("input", () => {
+  returnInput.value = returnRange.value;
+  calculate();
+});
+
+yearRange.addEventListener("input", () => {
+  yearInput.value = yearRange.value;
+  calculate();
+});
+
+
+sipTab.onclick=()=>{
+  mode="sip";
+  sipTab.classList.add("active");
+  lumpTab.classList.remove("active");
+  sipToggleWrap.style.display="block";
+  lumpToggleWrap.style.display="none";
+  lumpAdvanced.style.display="none";
+  amountLabel.textContent="Monthly Investment";
+  syncSliders();
+  calculate();
+};
+
+lumpTab.onclick=()=>{
+  mode="lump";
+  lumpTab.classList.add("active");
+  sipTab.classList.remove("active");
+  sipToggleWrap.style.display="none";
+  sipAdvanced.style.display="none";
+  lumpToggleWrap.style.display="block";
+  amountLabel.textContent="Investment Amount";
+  syncSliders();
+  calculate();
+};
+
 
 sipStepToggle.onchange=()=>sipAdvanced.style.display=sipStepToggle.checked?"block":"none";
 lumpRepeatToggle.onchange=()=>lumpAdvanced.style.display=lumpRepeatToggle.checked?"block":"none";
+function syncSliders(){
+  if(mode==="sip"){
+    amountRange.min = 1;
+    amountRange.max = 1000000;
+    amountRange.step = 1000;
+  }else{
+    amountRange.min = 1;
+    amountRange.max = 1000000000;
+    amountRange.step = 10000;
+  }
+}
 
 /* INIT */
 amountInput.value=10000;
 returnInput.value=12;
 yearInput.value=10;
 sipStepValue.value=5000;
+syncSliders();
 calculate();
 </script>
 </body>
