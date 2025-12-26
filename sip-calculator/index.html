@@ -151,12 +151,10 @@ const chart = new Chart(donutChart,{
   // Sync slider limits with current mode
 function syncLimits(){
   const A_LIMIT = mode==="sip" ? LIMITS.sip : LIMITS.lump;
-  amountRange.min = A_LIMIT.min;
-  amountRange.max = A_LIMIT.max;
-  returnRange.min = LIMITS.rate.min;
-  returnRange.max = LIMITS.rate.max;
-  yearRange.min   = LIMITS.years.min;
-  yearRange.max   = LIMITS.years.max;
+  amountRange.value = Math.min(A,100000);
+returnRange.value = Math.min(r*100,40);
+yearRange.value   = Math.min(y,50);
+
 }
 
 function calculate(){
