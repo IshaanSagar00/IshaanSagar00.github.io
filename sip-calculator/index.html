@@ -177,15 +177,24 @@ function calcSIP(A,r,y,adv){
   const rm=r/12,n=y*12;
   let sip=A,inv=0,mat=0;
 
-  let inc=+sipIncValue.value||0;
-  if(sipIncType.value==="percent"){
-    inc=clamp(inc,1,20);
-    sipIncValue.max=20;
+ let inc = sipIncValue.value;
+
+if(inc !== ""){
+  inc = +inc;
+
+  if(sipIncType.value === "percent"){
+    inc = clamp(inc, 1, 20);
+    sipIncValue.max = 20;
   }else{
-    inc=clamp(inc,0,100000);
-    sipIncValue.max=100000;
+    inc = clamp(inc, 0, 100000);
+    sipIncValue.max = 100000;
   }
-  sipIncValue.value=inc;
+
+  sipIncValue.value = inc;
+}else{
+  inc = 0;
+}
+
 
   const int=+sipIncInterval.value;
 
