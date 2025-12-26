@@ -8,17 +8,8 @@
 
 <style>
 body{font-family:Arial;background:#f6f7f9;margin:0}
-header{
-  padding:14px 20px;
-  background:#fff;
-  border-bottom:1px solid #e5e7eb;
-}
-header a{
-  font-size:20px;
-  font-weight:bold;
-  color:#2563eb;
-  text-decoration:none;
-}
+header{padding:14px 20px;background:#fff;border-bottom:1px solid #e5e7eb}
+header a{font-size:20px;font-weight:bold;color:#2563eb;text-decoration:none}
 main{max-width:420px;margin:30px auto;padding:16px}
 .card{background:#fff;padding:20px;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
 
@@ -30,7 +21,7 @@ main{max-width:420px;margin:30px auto;padding:16px}
 .label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:6px}
 
 .input-box{background:#eafff6;padding:6px 10px;border-radius:6px}
-.input-box input{border:none;background:transparent;font-weight:bold;text-align:right;width:100px}
+.input-box input{border:none;background:transparent;font-weight:bold;text-align:right;width:110px}
 
 input[type=range]{width:100%}
 
@@ -49,7 +40,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
 <body>
 
-<!-- BRAND HEADER -->
 <header>
   <a href="https://calcworld.in/">CalcWorld</a>
 </header>
@@ -94,7 +84,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 
   <div id="sipAdvance">
     Increase SIP by
-    <input id="sipIncValue" type="number" value="10" style="width:60px">
+    <input id="sipIncValue" type="number" value="10" min="1" max="20" style="width:70px">
     <select id="sipIncType">
       <option value="percent" selected>%</option>
       <option value="rupee">₹</option>
@@ -146,7 +136,8 @@ const chart=new Chart($("chart"),{
 
 function syncAmountLimits(){
   amountRange.min=100;
-  amountRange.max=mode==="sip"?100000:1000000;
+  amountRange.max=mode==="sip"?1000000:1000000000;
+  amountInput.max=amountRange.max;
 }
 
 function calcSIP(A,r,y,adv){
@@ -154,8 +145,14 @@ function calcSIP(A,r,y,adv){
   let sip=A,inv=0,mat=0;
 
   let inc=+sipIncValue.value||0;
-  if(sipIncType.value==="percent") inc=clamp(inc,1,20);
-  else inc=clamp(inc,0,100000);
+  if(sipIncType.value==="percent"){
+    inc=clamp(inc,1,20);
+    sipIncValue.max=20;
+  }else{
+    inc=clamp(inc,0,100000);
+    sipIncValue.max=100000;
+  }
+  sipIncValue.value=inc;
 
   const int=+sipIncInterval.value;
 
@@ -184,7 +181,7 @@ function calcLump(A,r,y,adv){
 }
 
 function calculate(){
-  amountInput.value=Math.max(0,+amountInput.value||0);
+  amountInput.value=clamp(+amountInput.value||0,100,amountRange.max);
   returnInput.value=clamp(+returnInput.value||1,1,50);
   yearInput.value=clamp(+yearInput.value||1,1,50);
 
