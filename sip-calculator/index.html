@@ -148,15 +148,6 @@ const chart = new Chart(donutChart,{
 });
 
 /* ================= CALC ================= */
-  // Sync slider limits with current mode
-function syncLimits(){
-  const A_LIMIT = mode==="sip" ? LIMITS.sip : LIMITS.lump;
-  amountRange.value = Math.min(A,100000);
-returnRange.value = Math.min(r*100,40);
-yearRange.value   = Math.min(y,50);
-
-}
-
 function calculate(){
   const A_LIMIT = mode==="sip"?LIMITS.sip:LIMITS.lump;
 
@@ -190,20 +181,11 @@ function calculate(){
 /* ================= MODE ================= */
 function switchMode(m){
   mode=m;
-
   sipTab.classList.toggle("active",m==="sip");
   lumpTab.classList.toggle("active",m==="lump");
-
-  amountLabel.textContent =
-    m==="sip" ? "Monthly Investment" : "Investment Amount";
-
-  amountInput.value =
-    m==="sip" ? "10,000" : "1,00,000";
-
-  syncLimits();
+  amountLabel.textContent=m==="sip"?"Monthly Investment":"Investment Amount";
   calculate();
 }
-
 
 sipTab.onclick=()=>switchMode("sip");
 lumpTab.onclick=()=>switchMode("lump");
@@ -242,14 +224,13 @@ yearInput.onblur = ()=>{
 
 /* Sliders */
 amountRange.oninput = ()=>{
-  amountInput.value = (+amountRange.value).toLocaleString("en-IN");
+  amountInput.value = amountRange.value;
   calculate();
 };
-
-returnInput.oninput = ()=>{
-  returnInput.value = decimalOnly(returnInput.value);
+returnRange.oninput = ()=>{
+  returnInput.value = returnRange.value;
+  calculate();
 };
-
 yearRange.oninput = ()=>{
   yearInput.value = yearRange.value;
   calculate();
@@ -259,8 +240,6 @@ yearRange.oninput = ()=>{
 amountInput.value = "10000";
 returnInput.value = "12";
 yearInput.value   = "10";
-syncLimits();
-
 calculate();
 </script>
 
