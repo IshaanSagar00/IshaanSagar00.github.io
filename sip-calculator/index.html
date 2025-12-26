@@ -2,12 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SIP & Lumpsum Calculator</title>
+<title>SIP & Lumpsum Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{font-family:Arial;background:#f6f7f9;margin:0}
+
+/* HEADER */
+header{
+  background:#fff;
+  padding:14px 20px;
+  border-bottom:1px solid #e5e7eb;
+}
+header a{
+  text-decoration:none;
+  font-size:20px;
+  font-weight:bold;
+  color:#2563eb;
+}
+
 main{max-width:420px;margin:30px auto;padding:16px}
 .card{background:#fff;padding:20px;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
 
@@ -26,6 +40,10 @@ input[type=range]{width:100%}
 .advanced-toggle{margin:12px 0;font-weight:bold}
 .advanced{display:none;background:#f1f5f9;padding:12px;border-radius:12px}
 
+/* RESULTS */
+.results{margin-top:16px}
+.result{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px}
+
 table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
 th,td{padding:6px}
 th{text-align:left}
@@ -37,6 +55,12 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 </head>
 
 <body>
+
+<!-- HEADER / LOGO -->
+<header>
+  <a href="https://calcworld.in/">CalcWorld</a>
+</header>
+
 <main>
 <div class="card">
 
@@ -77,7 +101,7 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <label><input type="checkbox" id="advToggle"> Enable Advanced</label>
 </div>
 
-<!-- ADVANCED -->
+<!-- ADVANCED OPTIONS -->
 <div class="advanced" id="advancedBox">
   Increase SIP by
   <input id="sipIncValue" value="0" style="width:60px">
@@ -92,15 +116,22 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   </select>
 </div>
 
-<!-- COMPARISON -->
+<!-- NORMAL RESULTS -->
+<div class="results" id="normalResults">
+  <div class="result"><span>Total Invested</span><span id="nInv">₹0</span></div>
+  <div class="result"><span>Estimated Returns</span><span id="nRet">₹0</span></div>
+  <div class="result"><span>Maturity Value</span><span id="nMat">₹0</span></div>
+</div>
+
+<!-- COMPARISON TABLE -->
 <table id="compareTable">
 <thead>
 <tr><th></th><th>Normal</th><th>Advanced</th><th>Difference</th></tr>
 </thead>
 <tbody>
-<tr><th>Total Invested</th><td id="nInv">₹0</td><td id="aInv">₹0</td><td class="diff" id="dInv">₹0</td></tr>
-<tr><th>Estimated Returns</th><td id="nRet">₹0</td><td id="aRet">₹0</td><td class="diff" id="dRet">₹0</td></tr>
-<tr><th>Maturity Value</th><td id="nMat">₹0</td><td id="aMat">₹0</td><td class="diff" id="dMat">₹0</td></tr>
+<tr><th>Total Invested</th><td id="cInvN">₹0</td><td id="cInvA">₹0</td><td class="diff" id="cInvD">₹0</td></tr>
+<tr><th>Estimated Returns</th><td id="cRetN">₹0</td><td id="cRetA">₹0</td><td class="diff" id="cRetD">₹0</td></tr>
+<tr><th>Maturity Value</th><td id="cMatN">₹0</td><td id="cMatA">₹0</td><td class="diff" id="cMatD">₹0</td></tr>
 </tbody>
 </table>
 
@@ -110,34 +141,31 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 </main>
 
 <script>
-const $ = id => document.getElementById(id);
-const fmt = n => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
+const $=id=>document.getElementById(id);
+const fmt=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 
-/* CHART */
-const chart = new Chart($("chart"),{
+const chart=new Chart(chart,{
   type:"doughnut",
   data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]},
   options:{plugins:{legend:{position:"bottom"}}}
 });
 
-/* CALC SIP */
 function calcSIP(A,r,y,adv){
   const rm=r/12,n=y*12;
   let sip=A,inv=0,mat=0;
   let inc=Math.min(+sipIncValue.value||0, sipIncType.value==="rupee"?100000:100);
-  const interval=+sipIncInterval.value;
+  const int=+sipIncInterval.value;
 
   for(let m=1;m<=n;m++){
-    if(adv && m>interval && (m-1)%interval===0){
+    if(adv && m>int && (m-1)%int===0){
       sip+=sipIncType.value==="rupee"?inc:sip*(inc/100);
     }
     inv+=sip;
     mat+=sip*Math.pow(1+rm,n-m+1);
   }
-  return {inv,mat};
+  return{inv,mat};
 }
 
-/* CALCULATE */
 function calculate(){
   const A=+amountInput.value;
   const r=(+returnInput.value)/100;
@@ -146,40 +174,38 @@ function calculate(){
   const normal=calcSIP(A,r,y,false);
   const adv=advToggle.checked?calcSIP(A,r,y,true):normal;
 
+  /* Normal */
   nInv.textContent=fmt(normal.inv);
   nRet.textContent=fmt(normal.mat-normal.inv);
   nMat.textContent=fmt(normal.mat);
 
-  aInv.textContent=fmt(adv.inv);
-  aRet.textContent=fmt(adv.mat-adv.inv);
-  aMat.textContent=fmt(adv.mat);
+  /* Comparison */
+  cInvN.textContent=fmt(normal.inv);
+  cInvA.textContent=fmt(adv.inv);
+  cInvD.textContent=fmt(adv.inv-normal.inv);
 
-  dInv.textContent=fmt(adv.inv-normal.inv);
-  dRet.textContent=fmt((adv.mat-adv.inv)-(normal.mat-normal.inv));
-  dMat.textContent=fmt(adv.mat-normal.mat);
+  cRetN.textContent=fmt(normal.mat-normal.inv);
+  cRetA.textContent=fmt(adv.mat-adv.inv);
+  cRetD.textContent=fmt((adv.mat-adv.inv)-(normal.mat-normal.inv));
+
+  cMatN.textContent=fmt(normal.mat);
+  cMatA.textContent=fmt(adv.mat);
+  cMatD.textContent=fmt(adv.mat-normal.mat);
 
   chart.data.datasets[0].data=[adv.mat-adv.inv,adv.inv];
   chart.update();
 }
 
-/* SYNC SLIDERS */
+/* EVENTS */
 amountRange.oninput=()=>{amountInput.value=amountRange.value;calculate();}
 returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate();}
 yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate();}
+document.querySelectorAll("input,select").forEach(e=>e.oninput=calculate);
 
-/* HARD LIMITS */
-sipIncValue.oninput=()=>{
-  let v=+sipIncValue.value||0;
-  v=Math.min(v, sipIncType.value==="rupee"?100000:100);
-  sipIncValue.value=v;
-  calculate();
-};
-sipIncType.onchange=()=>{sipIncValue.value=0;calculate();};
-
-/* ADV TOGGLE */
 advToggle.onchange=()=>{
   advancedBox.style.display=advToggle.checked?"block":"none";
   compareTable.style.display=advToggle.checked?"table":"none";
+  normalResults.style.display=advToggle.checked?"none":"block";
   calculate();
 };
 
