@@ -220,8 +220,14 @@ function calculate(){
   amountRange.max
 );
 
-  returnInput.value=clamp(+returnInput.value||1,1,50);
-  yearInput.value=clamp(+yearInput.value||1,1,50);
+  if(returnInput.value !== ""){
+  returnInput.value = clamp(+returnInput.value, 1, 50);
+}
+
+if(yearInput.value !== ""){
+  yearInput.value = clamp(+yearInput.value, 1, 50);
+}
+
 
   amountRange.value=amountInput.value;
   returnRange.value=returnInput.value;
