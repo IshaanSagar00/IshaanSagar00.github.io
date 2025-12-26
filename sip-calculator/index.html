@@ -26,8 +26,6 @@ input[type=range]{width:100%}
 .advanced-toggle{margin:12px 0;font-weight:bold}
 .advanced{display:none;background:#f1f5f9;padding:12px;border-radius:12px}
 
-.error{color:#dc2626;font-size:12px;margin-top:6px}
-
 table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
 th,td{padding:6px}
 th{text-align:left}
@@ -47,7 +45,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <div class="tab" id="lumpTab">Lumpsum</div>
 </div>
 
-<!-- Amount -->
 <div class="field">
   <div class="label">
     <span id="amountLabel">Monthly Investment</span>
@@ -56,7 +53,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <input type="range" id="amountRange">
 </div>
 
-<!-- Return -->
 <div class="field">
   <div class="label">
     <span>Expected Return</span>
@@ -65,7 +61,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <input type="range" id="returnRange" min="1" max="40" step="0.1">
 </div>
 
-<!-- Years -->
 <div class="field">
   <div class="label">
     <span>Time Period</span>
@@ -74,14 +69,11 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
   <input type="range" id="yearRange" min="1" max="50" step="1">
 </div>
 
-<!-- Advanced toggle -->
 <div class="advanced-toggle">
   <label><input type="checkbox" id="advToggle"> Enable Advanced</label>
 </div>
 
-<!-- Advanced -->
 <div class="advanced" id="advancedBox">
-
   <div id="sipAdvance">
     Increase SIP by
     <input id="sipIncValue" value="0" style="width:60px">
@@ -94,7 +86,6 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
       <option value="12">1 Year</option>
       <option value="6">6 Months</option>
     </select>
-    <div class="error" id="sipError"></div>
   </div>
 
   <div id="lumpAdvance" style="display:none">
@@ -103,13 +94,10 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
       <option value="12">1 Year</option>
       <option value="6">6 Months</option>
     </select>
-    <div class="error" id="lumpError"></div>
   </div>
-
 </div>
 
-<!-- Comparison -->
-<table>
+<table id="compareTable">
 <thead>
 <tr><th></th><th>Normal</th><th>Advanced</th><th>Difference</th></tr>
 </thead>
@@ -126,41 +114,40 @@ canvas{max-width:220px;margin:20px auto 0;display:block}
 </main>
 
 <script>
-/* ========= HELPERS ========= */
 const $ = id => document.getElementById(id);
 const fmt = n => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
 
 let mode = "sip";
 
-/* ========= CHART ========= */
-const chart = new Chart($("chart"),{
+/* Chart */
+const chart = new Chart(chart,{
   type:"doughnut",
   data:{labels:["Returns","Invested"],datasets:[{data:[0,0],backgroundColor:["#facc15","#2563eb"]}]},
   options:{plugins:{legend:{position:"bottom"}}}
 });
 
-/* ========= LIMITS ========= */
+/* Slider limits */
 function syncAmountLimits(){
   if(mode==="sip"){
-    amountRange.min=100;
-    amountRange.max=100000;       // slider
+    amountRange.min=100; amountRange.max=100000;
   }else{
-    amountRange.min=100;
-    amountRange.max=1000000;      // slider
+    amountRange.min=100; amountRange.max=1000000;
   }
 }
 
-/* ========= CORE CALCS ========= */
+/* SIP calculation */
 function calcSIP(A,r,y,adv){
   const rm=r/12,n=y*12;
   let sip=A,inv=0,mat=0;
 
-  const inc = Math.min(+sipIncValue.value||0, sipIncType.value==="rupee"?100000:100);
-  const int = +sipIncInterval.value;
+  const interval=+sipIncInterval.value;
+  let inc=+sipIncValue.value||0;
+  if(sipIncType.value==="rupee") inc=Math.min(inc,100000);
+  else inc=Math.min(inc,100);
 
   for(let m=1;m<=n;m++){
-    if(adv && m>int && (m-1)%int===0){
-      sip += sipIncType.value==="rupee" ? inc : sip*(inc/100);
+    if(adv && m>interval && (m-1)%interval===0){
+      sip+=sipIncType.value==="rupee"?inc:sip*(inc/100);
     }
     inv+=sip;
     mat+=sip*Math.pow(1+rm,n-m+1);
@@ -168,10 +155,10 @@ function calcSIP(A,r,y,adv){
   return {inv,mat};
 }
 
+/* Lumpsum calculation */
 function calcLump(A,r,y,adv){
   const rm=r/12,n=y*12;
   let inv=A,mat=A*Math.pow(1+r,y);
-
   if(adv){
     const int=+lumpInterval.value;
     for(let m=int;m<=n;m+=int){
@@ -182,64 +169,81 @@ function calcLump(A,r,y,adv){
   return {inv,mat};
 }
 
-/* ========= CALCULATE ========= */
+/* Calculate */
 function calculate(){
-  const A = +amountInput.value.replace(/\D/g,"") || 0;
-  const r = (+returnInput.value || 0)/100;
-  const y = +yearInput.value || 0;
+  const A=+amountInput.value||0;
+  const r=(+returnInput.value||0)/100;
+  const y=+yearInput.value||0;
+  if(!A||!r||!y) return;
 
-  if(A<=0||r<=0||y<=0) return;
+  const normal=mode==="sip"?calcSIP(A,r,y,false):calcLump(A,r,y,false);
+  const adv=advToggle.checked?(mode==="sip"?calcSIP(A,r,y,true):calcLump(A,r,y,true)):normal;
 
-  const normal = mode==="sip" ? calcSIP(A,r,y,false) : calcLump(A,r,y,false);
-  const adv    = advToggle.checked ? (mode==="sip"?calcSIP(A,r,y,true):calcLump(A,r,y,true)) : normal;
+  nInv.textContent=fmt(normal.inv);
+  nMat.textContent=fmt(normal.mat);
+  nRet.textContent=fmt(normal.mat-normal.inv);
 
-  nInv.textContent = fmt(normal.inv);
-  nMat.textContent = fmt(normal.mat);
-  nRet.textContent = fmt(normal.mat-normal.inv);
+  aInv.textContent=fmt(adv.inv);
+  aMat.textContent=fmt(adv.mat);
+  aRet.textContent=fmt(adv.mat-adv.inv);
 
-  aInv.textContent = fmt(adv.inv);
-  aMat.textContent = fmt(adv.mat);
-  aRet.textContent = fmt(adv.mat-adv.inv);
-
-  dInv.textContent = fmt(adv.inv-normal.inv);
-  dMat.textContent = fmt(adv.mat-normal.mat);
-  dRet.textContent = fmt((adv.mat-adv.inv)-(normal.mat-normal.inv));
+  dInv.textContent=fmt(adv.inv-normal.inv);
+  dMat.textContent=fmt(adv.mat-normal.mat);
+  dRet.textContent=fmt((adv.mat-adv.inv)-(normal.mat-normal.inv));
 
   chart.data.datasets[0].data=[adv.mat-adv.inv,adv.inv];
   chart.update();
 }
 
-/* ========= EVENTS ========= */
-document.querySelectorAll("input,select").forEach(el=>el.oninput=calculate);
-advToggle.onchange=()=>advancedBox.style.display=advToggle.checked?"block":"none";
-
-sipTab.onclick=()=>{
-  mode="sip";
-  sipTab.classList.add("active");
-  lumpTab.classList.remove("active");
-  amountLabel.textContent="Monthly Investment";
-  sipAdvance.style.display="block";
-  lumpAdvance.style.display="none";
-  syncAmountLimits();
-  calculate();
-};
-lumpTab.onclick=()=>{
-  mode="lump";
-  lumpTab.classList.add("active");
-  sipTab.classList.remove("active");
-  amountLabel.textContent="Investment Amount";
-  sipAdvance.style.display="none";
-  lumpAdvance.style.display="block";
-  syncAmountLimits();
+/* Hard limits */
+amountInput.oninput=()=>{
+  let v=+amountInput.value.replace(/\D/g,"")||0;
+  if(mode==="sip") v=Math.min(v,1000000);
+  else v=Math.min(v,10000000);
+  amountInput.value=v;
   calculate();
 };
 
-/* ========= SLIDERS ========= */
+sipIncValue.oninput=()=>{
+  let v=+sipIncValue.value||0;
+  if(sipIncType.value==="rupee") v=Math.min(v,100000);
+  else v=Math.min(v,100);
+  sipIncValue.value=v;
+  calculate();
+};
+
+sipIncType.onchange=()=>{sipIncValue.value=0;calculate();};
+
+/* Events */
 amountRange.oninput=()=>{amountInput.value=amountRange.value;calculate();}
 returnRange.oninput=()=>{returnInput.value=returnRange.value;calculate();}
 yearRange.oninput=()=>{yearInput.value=yearRange.value;calculate();}
+document.querySelectorAll("select").forEach(e=>e.onchange=calculate);
 
-/* ========= INIT ========= */
+advToggle.onchange=()=>{
+  advancedBox.style.display=advToggle.checked?"block":"none";
+  compareTable.style.display=advToggle.checked?"table":"none";
+  calculate();
+};
+
+sipTab.onclick=()=>{
+  mode="sip";
+  sipTab.classList.add("active"); lumpTab.classList.remove("active");
+  amountLabel.textContent="Monthly Investment";
+  sipAdvance.style.display="block"; lumpAdvance.style.display="none";
+  syncAmountLimits(); calculate();
+};
+
+lumpTab.onclick=()=>{
+  mode="lump";
+  lumpTab.classList.add("active"); sipTab.classList.remove("active");
+  amountLabel.textContent="Investment Amount";
+  sipAdvance.style.display="none"; lumpAdvance.style.display="block";
+  syncAmountLimits(); calculate();
+};
+
+/* Init */
+compareTable.style.display="none";
 syncAmountLimits();
 amountInput.value=amountRange.value=10000;
 returnInput.value=returnRange.value=12;
