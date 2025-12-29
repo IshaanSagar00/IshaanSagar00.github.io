@@ -54,8 +54,17 @@ input[type=range]{padding:0;height:6px}
 .result strong{font-size:18px}
 .chart{
   max-width:200px;
-  margin:14px auto 0;
+  margin:14px auto 6px;
+  text-align:center;
 }
+.fd-link{
+  display:inline-block;
+  margin-top:6px;
+  font-size:13px;
+  color:#2563eb;
+  text-decoration:none;
+}
+.fd-link:hover{text-decoration:underline}
 </style>
 </head>
 
@@ -81,7 +90,7 @@ input[type=range]{padding:0;height:6px}
 <!-- Tenure -->
 <label>Tenure</label>
 <div class="tenure">
-  <input id="tenureValue" type="number">
+  <input id="tenureValue" type="number" inputmode="numeric">
   <select id="tenureType">
     <option value="years">Years</option>
     <option value="months">Months</option>
@@ -110,9 +119,14 @@ Most Indian banks compound quarterly, giving slightly higher returns.
   <strong id="interest">₹0</strong>
 </div>
 
+<!-- Chart + FD link -->
 <div class="chart">
-  <canvas id="donut"></canvas>
+  <canvas id="donut"></canvas><br>
+  <a class="fd-link" href="/fd-calculator/fd-rates/">
+    📊 Check FD rates
+  </a>
 </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -128,6 +142,7 @@ const ctx=document.getElementById("donut").getContext("2d");
 
 const MAX_AMOUNT=100000000;
 
+/* ₹ helpers */
 function formatINR(n){
   return "₹"+Math.round(n).toLocaleString("en-IN");
 }
@@ -135,13 +150,16 @@ function parseINR(v){
   return parseInt(v.replace(/,/g,""))||0;
 }
 
-/* 🔒 HARD CLAMP TENURE */
+/* 🔒 HARD CLAMP TENURE (UPDATED) */
 function clampTenure(){
   let v=parseInt(tenureValue.value)||1;
-  if(tenureType.value==="years") v=Math.min(v,20);
-  if(tenureType.value==="months") v=Math.min(v,12);
-  if(tenureType.value==="days") v=Math.min(v,31);
+
+  if(tenureType.value==="years") v=Math.min(Math.max(v,1),20);
+  if(tenureType.value==="months") v=Math.min(Math.max(v,1),12);
+  if(tenureType.value==="days") v=Math.min(Math.max(v,1),500);
+
   tenureValue.value=v;
+
   if(tenureType.value==="years") return v;
   if(tenureType.value==="months") return v/12;
   return v/365;
@@ -172,8 +190,7 @@ function calculate(){
   amountRange.value=P;
 
   let r=parseFloat(rate.value)||7;
-  if(r>15) r=15;
-  if(r<0.1) r=0.1;
+  r=Math.min(Math.max(r,0.1),15);
   rate.value=r;
   rateRange.value=r;
 
