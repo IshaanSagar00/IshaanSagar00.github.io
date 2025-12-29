@@ -1,1 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FD Calculator – Fixed Deposit Calculator India | CalcWorld</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Calculate Fixed Deposit maturity amount with accurate interest. Supports years, months, days tenure with quarterly compounding.">
+
+<link rel="canonical" href="https://calcworld.in/fd-calculator/">
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f6f7fb;
+  margin:0;
+  padding:20px;
+}
+.card{
+  max-width:520px;
+  margin:auto;
+  background:#fff;
+  padding:22px;
+  border-radius:14px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+h1{
+  font-size:22px;
+  margin-bottom:20px;
+}
+label{
+  font-size:14px;
+  font-weight:600;
+  display:block;
+  margin-top:16px;
+}
+input, select{
+  width:100%;
+  padding:10px;
+  font-size:15px;
+  margin-top:6px;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+}
+.tenure-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+}
+.result{
+  margin-top:22px;
+  background:#f1f5ff;
+  padding:16px;
+  border-radius:10px;
+}
+.result div{
+  margin:8px 0;
+  font-size:15px;
+}
+.amount{
+  font-size:20px;
+  font-weight:bold;
+}
+.note{
+  font-size:12px;
+  color:#555;
+  margin-top:6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>📌 Fixed Deposit Calculator</h1>
+
+  <label>Deposit Amount (₹)</label>
+  <input type="number" id="amount" min="1000" value="100000">
+
+  <label>Interest Rate (% p.a.)</label>
+  <input type="number" id="rate" step="0.01" value="7">
+
+  <label>Tenure</label>
+  <div class="tenure-grid">
+    <input type="number" id="years" min="0" max="20" value="1" placeholder="Years">
+    <input type="number" id="months" min="0" max="12" value="0" placeholder="Months">
+    <input type="number" id="days" min="0" max="31" value="0" placeholder="Days">
+  </div>
+  <div class="note">Max tenure: 20 years • 12 months • 31 days</div>
+
+  <label>Compounding Frequency</label>
+  <select id="compound">
+    <option value="4">Quarterly (Recommended)</option>
+    <option value="12">Monthly</option>
+    <option value="1">Yearly</option>
+  </select>
+
+  <div class="result">
+    <div>💰 Maturity Amount</div>
+    <div class="amount" id="maturity">₹0</div>
+
+    <div>📈 Interest Earned</div>
+    <div class="amount" id="interest">₹0</div>
+  </div>
+</div>
+
+<script>
+const amountEl = document.getElementById("amount");
+const rateEl = document.getElementById("rate");
+const yearsEl = document.getElementById("years");
+const monthsEl = document.getElementById("months");
+const daysEl = document.getElementById("days");
+const compoundEl = document.getElementById("compound");
+
+function formatINR(num){
+  return "₹" + Math.round(num).toLocaleString("en-IN");
+}
+
+function clamp(el, max){
+  if(el.value < 0) el.value = 0;
+  if(el.value > max) el.value = max;
+}
+
+function calculateFD(){
+  clamp(yearsEl, 20);
+  clamp(monthsEl, 12);
+  clamp(daysEl, 31);
+
+  const P = parseFloat(amountEl.value) || 0;
+  const r = (parseFloat(rateEl.value) || 0) / 100;
+  const n = parseInt(compoundEl.value);
+
+  const t =
+    (parseInt(yearsEl.value) || 0) +
+    (parseInt(monthsEl.value) || 0) / 12 +
+    (parseInt(daysEl.value) || 0) / 365;
+
+  if(P <= 0 || t <= 0){
+    document.getElementById("maturity").innerText = "₹0";
+    document.getElementById("interest").innerText = "₹0";
+    return;
+  }
+
+  const A = P * Math.pow(1 + r / n, n * t);
+  const interest = A - P;
+
+  document.getElementById("maturity").innerText = formatINR(A);
+  document.getElementById("interest").innerText = formatINR(interest);
+}
+
+document.querySelectorAll("input, select").forEach(el=>{
+  el.addEventListener("input", calculateFD);
+});
+
+calculateFD();
+</script>
+
+</body>
+</html>
 
