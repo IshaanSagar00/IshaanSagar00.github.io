@@ -11,8 +11,6 @@ body{
   font-family:Arial,sans-serif;
   background:#f6f7f9;
 }
-
-/* Header */
 header{
   background:#fff;
   padding:12px 16px;
@@ -24,49 +22,39 @@ header a{
   font-weight:700;
   color:#2563eb;
 }
-
-/* Card */
 .card{
-  max-width:480px;
-  margin:20px auto;
+  max-width:460px;
+  margin:16px auto;
   background:#fff;
-  padding:18px;
+  padding:16px;
   border-radius:12px;
   box-shadow:0 8px 20px rgba(0,0,0,.08);
 }
-
-h1{font-size:20px;margin-bottom:14px}
-label{font-size:13px;font-weight:600;margin-top:14px;display:block}
-
+h1{font-size:20px;margin-bottom:12px}
+label{font-size:13px;font-weight:600;margin-top:12px;display:block}
 input,select{
   width:100%;
-  padding:9px;
+  padding:8px;
   font-size:14px;
   margin-top:6px;
   border:1px solid #d1d5db;
   border-radius:7px;
 }
-
 input[type=range]{padding:0;height:6px}
-
 .tenure{
   display:flex;
   gap:8px;
 }
-
-/* Result */
 .result{
   background:#f1f5ff;
   padding:14px;
   border-radius:10px;
-  margin-top:18px;
+  margin-top:16px;
 }
 .result strong{font-size:18px}
-
-/* Chart */
 .chart{
-  max-width:220px;
-  margin:16px auto 0;
+  max-width:200px;
+  margin:14px auto 0;
 }
 </style>
 </head>
@@ -82,18 +70,18 @@ input[type=range]{padding:0;height:6px}
 
 <!-- Deposit -->
 <label>Deposit Amount (₹)</label>
-<input id="amount" inputmode="numeric" value="10,00,000">
+<input id="amount" value="10,00,000" inputmode="numeric">
 <input type="range" id="amountRange" min="1000" max="100000000" step="1000">
 
 <!-- Interest -->
 <label>Interest Rate (% per year)</label>
-<input id="rate" type="number" step="0.1" min="0.1" max="15" value="7">
+<input id="rate" type="number" step="0.1">
 <input type="range" id="rateRange" min="0.1" max="15" step="0.1">
 
 <!-- Tenure -->
 <label>Tenure</label>
 <div class="tenure">
-  <input id="tenureValue" type="number" min="1" value="1">
+  <input id="tenureValue" type="number">
   <select id="tenureType">
     <option value="years">Years</option>
     <option value="months">Months</option>
@@ -139,7 +127,6 @@ const compound=document.getElementById("compound");
 const ctx=document.getElementById("donut").getContext("2d");
 
 const MAX_AMOUNT=100000000;
-const MAX_RATE=15;
 
 function formatINR(n){
   return "₹"+Math.round(n).toLocaleString("en-IN");
@@ -148,20 +135,16 @@ function parseINR(v){
   return parseInt(v.replace(/,/g,""))||0;
 }
 
-function clampInput(el,min,max){
-  let v=parseFloat(el.value)||min;
-  if(v<min) v=min;
-  if(v>max) v=max;
-  el.value=v;
-  return v;
-}
-
-function tenureYears(){
+/* 🔒 HARD CLAMP TENURE */
+function clampTenure(){
   let v=parseInt(tenureValue.value)||1;
-  if(tenureType.value==="years") return Math.min(v,20);
-  if(tenureType.value==="months") return Math.min(v,12)/12;
-  if(tenureType.value==="days") return Math.min(v,31)/365;
-  return 0;
+  if(tenureType.value==="years") v=Math.min(v,20);
+  if(tenureType.value==="months") v=Math.min(v,12);
+  if(tenureType.value==="days") v=Math.min(v,31);
+  tenureValue.value=v;
+  if(tenureType.value==="years") return v;
+  if(tenureType.value==="months") return v/12;
+  return v/365;
 }
 
 let chart;
@@ -172,10 +155,13 @@ function drawChart(p,i){
     data:{
       datasets:[{
         data:[p,i],
-        backgroundColor:["#2563eb","#93c5fd"]
+        backgroundColor:["#2563eb","#facc15"]
       }]
     },
-    options:{cutout:"65%",plugins:{legend:{display:false}}}
+    options:{
+      cutout:"65%",
+      plugins:{legend:{display:false}}
+    }
   });
 }
 
@@ -185,13 +171,16 @@ function calculate(){
   amount.value=P.toLocaleString("en-IN");
   amountRange.value=P;
 
-  let r=clampInput(rate,0.1,MAX_RATE)/100;
-  rateRange.value=rate.value;
+  let r=parseFloat(rate.value)||7;
+  if(r>15) r=15;
+  if(r<0.1) r=0.1;
+  rate.value=r;
+  rateRange.value=r;
 
-  let t=tenureYears();
+  let t=clampTenure();
   let n=parseInt(compound.value);
 
-  let A=P*Math.pow(1+r/n,n*t);
+  let A=P*Math.pow(1+r/100/n,n*t);
   let I=A-P;
 
   maturity.innerText=formatINR(A);
@@ -199,11 +188,20 @@ function calculate(){
   drawChart(P,I);
 }
 
-amount.oninput=calculate;
-amountRange.oninput=()=>{amount.value=parseInt(amountRange.value).toLocaleString("en-IN");calculate();}
-rate.oninput=calculate;
-rateRange.oninput=()=>{rate.value=rateRange.value;calculate();}
-document.querySelectorAll("select,input").forEach(e=>e.oninput=calculate);
+/* 🔄 Sync sliders */
+amountRange.oninput=()=>{
+  amount.value=parseInt(amountRange.value).toLocaleString("en-IN");
+  calculate();
+};
+rateRange.oninput=()=>{
+  rate.value=rateRange.value;
+  calculate();
+};
+
+/* 🔄 All inputs */
+document.querySelectorAll("input,select").forEach(el=>{
+  el.addEventListener("input",calculate);
+});
 
 calculate();
 </script>
