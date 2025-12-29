@@ -5,9 +5,6 @@
 <title>FD Calculator – Fixed Deposit Calculator India | CalcWorld</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Calculate Fixed Deposit maturity amount easily. Supports years, months or days tenure with quarterly compounding as per Indian banks.">
-
-<link rel="canonical" href="https://calcworld.in/fd-calculator/">
 
 <style>
 body{
@@ -31,26 +28,18 @@ header a{
 
 /* Card */
 .card{
-  max-width:520px;
+  max-width:560px;
   margin:40px auto;
   background:#fff;
   padding:24px;
   border-radius:14px;
   box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
-h1{
-  font-size:22px;
-  margin-bottom:20px;
-}
 
-/* Inputs */
-label{
-  font-size:14px;
-  font-weight:600;
-  display:block;
-  margin-top:16px;
-}
-input, select{
+h1{font-size:22px;margin-bottom:20px}
+label{font-size:14px;font-weight:600;display:block;margin-top:16px}
+
+input,select{
   width:100%;
   padding:10px;
   font-size:15px;
@@ -59,11 +48,10 @@ input, select{
   border-radius:8px;
 }
 
-/* Tenure layout */
-.tenure-box{
-  display:flex;
-  gap:10px;
-}
+input[type=range]{padding:0}
+
+/* Tenure */
+.tenure-box{display:flex;gap:10px}
 
 /* Result */
 .result{
@@ -72,138 +60,155 @@ input, select{
   padding:16px;
   border-radius:10px;
 }
-.result-title{
-  font-size:14px;
-  color:#555;
-}
 .result-amount{
   font-size:22px;
   font-weight:bold;
-  margin-top:4px;
 }
 
-/* Info text */
-.info{
-  font-size:13px;
-  color:#555;
-  margin-top:8px;
-  line-height:1.5;
+/* Chart */
+.chart-box{
+  margin-top:20px;
+  text-align:center;
 }
 </style>
 </head>
 
 <body>
 
-<!-- Header -->
 <header>
   <a href="https://calcworld.in/">CalcWorld</a>
 </header>
 
-<!-- FD Calculator -->
 <div class="card">
-  <h1>📌 Fixed Deposit Calculator</h1>
+<h1>📌 Fixed Deposit Calculator</h1>
 
-  <label>Deposit Amount (₹)</label>
-  <input type="number" id="amount" min="1000" value="100000">
+<!-- Deposit -->
+<label>Deposit Amount (₹)</label>
+<input id="amount" value="10,00,000">
+<input type="range" id="amountRange" min="1000" max="100000000" step="1000">
 
-  <label>Interest Rate (% per year)</label>
-  <input type="number" id="rate" step="0.01" value="7">
+<!-- Interest -->
+<label>Interest Rate (% per year)</label>
+<input type="number" id="rate" value="7" max="15" step="0.1">
+<input type="range" id="rateRange" min="1" max="15" step="0.1">
 
-  <label>Tenure</label>
-  <div class="tenure-box">
-    <input type="number" id="tenureValue" min="1" value="1">
-    <select id="tenureType">
-      <option value="years">Years</option>
-      <option value="months">Months</option>
-      <option value="days">Days</option>
-    </select>
-  </div>
-  <div class="info">
-    Maximum tenure: 20 years • 240 months • 7300 days
-  </div>
-
-  <label>Compounding Frequency</label>
-  <select id="compound">
-    <option value="4">Quarterly (Recommended)</option>
-    <option value="12">Monthly</option>
-    <option value="1">Yearly</option>
+<!-- Tenure -->
+<label>Tenure</label>
+<div class="tenure-box">
+  <input type="number" id="tenureValue" value="1">
+  <select id="tenureType">
+    <option value="years">Years</option>
+    <option value="months">Months</option>
+    <option value="days">Days</option>
   </select>
+</div>
 
-  <!-- Explanation -->
-  <div class="info">
-    <strong>What is compounding frequency?</strong><br>
-    Compounding means how often your FD interest is added back to your deposit.
-    <br><br>
-    <strong>Quarterly compounding</strong> means interest is added every 3 months.
-    Most Indian banks use quarterly compounding, which gives slightly higher returns
-    because interest starts earning interest sooner.
-  </div>
+<!-- Compounding -->
+<label>Compounding Frequency</label>
+<select id="compound">
+  <option value="4">Quarterly (Recommended)</option>
+  <option value="12">Monthly</option>
+  <option value="1">Yearly</option>
+</select>
 
-  <!-- Result -->
-  <div class="result">
-    <div class="result-title">💰 Maturity Amount</div>
-    <div class="result-amount" id="maturity">₹0</div>
+<p style="font-size:13px;color:#555">
+<strong>What is compounding?</strong><br>
+It means how often interest is added back to your FD.
+Most Indian banks compound interest quarterly, which gives slightly higher returns.
+</p>
 
-    <div class="result-title" style="margin-top:10px;">📈 Interest Earned</div>
-    <div class="result-amount" id="interest">₹0</div>
-  </div>
+<!-- Result -->
+<div class="result">
+  <div>💰 Maturity Amount</div>
+  <div class="result-amount" id="maturity">₹0</div>
+
+  <div style="margin-top:8px">📈 Interest Earned</div>
+  <div class="result-amount" id="interest">₹0</div>
+</div>
+
+<!-- Chart -->
+<div class="chart-box">
+  <canvas id="donut" width="220" height="220"></canvas>
+</div>
+
 </div>
 
 <script>
-const amountEl = document.getElementById("amount");
-const rateEl = document.getElementById("rate");
-const tenureValueEl = document.getElementById("tenureValue");
-const tenureTypeEl = document.getElementById("tenureType");
-const compoundEl = document.getElementById("compound");
+const amountEl=document.getElementById("amount");
+const amountRange=document.getElementById("amountRange");
+const rateEl=document.getElementById("rate");
+const rateRange=document.getElementById("rateRange");
+const tenureValue=document.getElementById("tenureValue");
+const tenureType=document.getElementById("tenureType");
+const compound=document.getElementById("compound");
+const ctx=document.getElementById("donut").getContext("2d");
 
-function formatINR(num){
-  return "₹" + Math.round(num).toLocaleString("en-IN");
+function formatINR(n){
+  return "₹"+Math.round(n).toLocaleString("en-IN");
 }
-
-function getTenureInYears(){
-  let value = parseFloat(tenureValueEl.value) || 0;
-  const type = tenureTypeEl.value;
-
-  if(type === "years"){
-    value = Math.min(value, 20);
-    return value;
-  }
-  if(type === "months"){
-    value = Math.min(value, 240);
-    return value / 12;
-  }
-  if(type === "days"){
-    value = Math.min(value, 7300);
-    return value / 365;
-  }
+function parseINR(v){
+  return parseInt(v.replace(/,/g,""))||0;
+}
+function getTenureYears(){
+  let v=parseFloat(tenureValue.value)||0;
+  if(tenureType.value==="years") return Math.min(v,20);
+  if(tenureType.value==="months") return Math.min(v,12)/12;
+  if(tenureType.value==="days") return Math.min(v,31)/365;
   return 0;
 }
 
-function calculateFD(){
-  const P = parseFloat(amountEl.value) || 0;
-  const r = (parseFloat(rateEl.value) || 0) / 100;
-  const n = parseInt(compoundEl.value);
-  const t = getTenureInYears();
-
-  if(P <= 0 || t <= 0){
-    document.getElementById("maturity").innerText = "₹0";
-    document.getElementById("interest").innerText = "₹0";
-    return;
-  }
-
-  const A = P * Math.pow(1 + r / n, n * t);
-  const interest = A - P;
-
-  document.getElementById("maturity").innerText = formatINR(A);
-  document.getElementById("interest").innerText = formatINR(interest);
+let chart;
+function drawChart(p,i){
+  if(chart) chart.destroy();
+  chart=new Chart(ctx,{
+    type:"doughnut",
+    data:{
+      labels:["Principal","Interest"],
+      datasets:[{
+        data:[p,i],
+        backgroundColor:["#2563eb","#93c5fd"]
+      }]
+    },
+    options:{plugins:{legend:{display:false}}}
+  });
 }
 
-document.querySelectorAll("input, select").forEach(el=>{
-  el.addEventListener("input", calculateFD);
-});
+function calculate(){
+  let P=parseINR(amountEl.value);
+  if(P>100000000) P=100000000;
 
-calculateFD();
+  let r=Math.min(parseFloat(rateEl.value)||0,15)/100;
+  let n=parseInt(compound.value);
+  let t=getTenureYears();
+
+  if(P<=0||t<=0) return;
+
+  let A=P*Math.pow(1+r/n,n*t);
+  let I=A-P;
+
+  maturity.innerText=formatINR(A);
+  interest.innerText=formatINR(I);
+  drawChart(P,I);
+}
+
+amountEl.oninput=()=>{
+  let v=parseINR(amountEl.value);
+  amountRange.value=v;
+  amountEl.value=v.toLocaleString("en-IN");
+  calculate();
+};
+amountRange.oninput=()=>{
+  amountEl.value=parseInt(amountRange.value).toLocaleString("en-IN");
+  calculate();
+};
+
+rateEl.oninput=()=>{rateRange.value=rateEl.value;calculate();}
+rateRange.oninput=()=>{rateEl.value=rateRange.value;calculate();}
+document.querySelectorAll("select,input").forEach(e=>e.oninput=calculate);
+
+calculate();
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
