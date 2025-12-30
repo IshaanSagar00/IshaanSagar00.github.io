@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SWP Calculator | CalcWorld</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="SWP Calculator to estimate monthly withdrawals, total withdrawn and remaining corpus with accurate compounding logic.">
+
+<link rel="canonical" href="https://calcworld.in/swp-calculator/">
+
+<style>
+body{
+  font-family:Arial, sans-serif;
+  background:#f6f7fb;
+  margin:0;
+  padding:20px;
+}
+.container{
+  max-width:900px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+h1{
+  text-align:center;
+  margin-bottom:20px;
+}
+.group{
+  margin-bottom:18px;
+}
+label{
+  font-weight:bold;
+  display:block;
+  margin-bottom:6px;
+}
+input[type="number"]{
+  width:100%;
+  padding:10px;
+  font-size:16px;
+}
+input[type="range"]{
+  width:100%;
+}
+.result{
+  margin-top:25px;
+  background:#f1f5f9;
+  padding:18px;
+  border-radius:10px;
+}
+.result p{
+  font-size:17px;
+  margin:8px 0;
+}
+.warning{
+  margin-top:15px;
+  padding:12px;
+  border-radius:8px;
+  font-weight:bold;
+}
+.warning.danger{
+  background:#fee2e2;
+  color:#991b1b;
+}
+.warning.safe{
+  background:#dcfce7;
+  color:#166534;
+}
+@media(max-width:600px){
+  body{padding:12px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>SWP Calculator</h1>
+
+<div class="group">
+<label>Total Investment (₹)</label>
+<input type="number" id="investment" value="1000000" min="10000" max="100000000">
+<input type="range" id="investmentRange" min="10000" max="100000000" step="10000" value="1000000">
+</div>
+
+<div class="group">
+<label>Expected Annual Return (%)</label>
+<input type="number" id="return" value="8" min="2" max="15" step="0.1">
+<input type="range" id="returnRange" min="2" max="15" step="0.1" value="8">
+</div>
+
+<div class="group">
+<label>Monthly Withdrawal (₹)</label>
+<input type="number" id="withdrawal" value="10000" min="1000" max="1000000">
+<input type="range" id="withdrawalRange" min="1000" max="1000000" step="500" value="10000">
+</div>
+
+<div class="group">
+<label>Time Period (Years)</label>
+<input type="number" id="years" value="20" min="1" max="40">
+<input type="range" id="yearsRange" min="1" max="40" value="20">
+</div>
+
+<div class="result">
+<p><strong>Total Withdrawn:</strong> ₹ <span id="totalWithdrawn">0</span></p>
+<p><strong>Remaining Corpus:</strong> ₹ <span id="remaining">0</span></p>
+<p><strong>Months Sustained:</strong> <span id="months">0</span></p>
+<div id="status" class="warning"></div>
+</div>
+
+</div>
+
+<script>
+const investmentInput = document.getElementById("investment");
+const investmentRange = document.getElementById("investmentRange");
+
+const returnInput = document.getElementById("return");
+const returnRange = document.getElementById("returnRange");
+
+const withdrawalInput = document.getElementById("withdrawal");
+const withdrawalRange = document.getElementById("withdrawalRange");
+
+const yearsInput = document.getElementById("years");
+const yearsRange = document.getElementById("yearsRange");
+
+function sync(input, range){
+  input.oninput = () => { range.value = input.value; calculate(); };
+  range.oninput = () => { input.value = range.value; calculate(); };
+}
+
+sync(investmentInput, investmentRange);
+sync(returnInput, returnRange);
+sync(withdrawalInput, withdrawalRange);
+sync(yearsInput, yearsRange);
+
+function formatINR(num){
+  return Math.round(num).toLocaleString("en-IN");
+}
+
+function calculate(){
+  let principal = parseFloat(investmentInput.value);
+  let annualReturn = parseFloat(returnInput.value);
+  let withdrawal = parseFloat(withdrawalInput.value);
+  let years = parseInt(yearsInput.value);
+
+  let monthlyRate = annualReturn / 12 / 100;
+  let totalMonths = years * 12;
+
+  let balance = principal;
+  let totalWithdrawn = 0;
+  let monthsCompleted = 0;
+
+  for(let i=1;i<=totalMonths;i++){
+    balance += balance * monthlyRate;
+    balance -= withdrawal;
+
+    if(balance <= 0){
+      monthsCompleted = i;
+      break;
+    }
+
+    totalWithdrawn += withdrawal;
+    monthsCompleted = i;
+  }
+
+  document.getElementById("totalWithdrawn").innerText = formatINR(totalWithdrawn);
+  document.getElementById("remaining").innerText = formatINR(Math.max(balance,0));
+  document.getElementById("months").innerText = monthsCompleted;
+
+  const statusBox = document.getElementById("status");
+
+  if(balance <= 0){
+    statusBox.className = "warning danger";
+    statusBox.innerText = "⚠️ Withdrawal too high. Corpus exhausted early.";
+  } else {
+    statusBox.className = "warning safe";
+    statusBox.innerText = "✅ Sustainable SWP. Corpus lasts full duration.";
+  }
+}
+
+calculate();
+</script>
+
+</body>
+</html>
