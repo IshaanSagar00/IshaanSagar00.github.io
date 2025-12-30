@@ -186,37 +186,45 @@ function formatDuration(periods, freq){
 function calculate(){
   let principal = parseINR(inv.value);
   let withdraw = parseINR(wd.value);
-  let annual = Number(ret.value)/100;
+  let annual = Number(ret.value) / 100;
   let years = Number(yrs.value);
   let f = Number(freq.value);
 
-  let rate = annual/f;
-  let totalPeriods = years*f;
+  let rate = annual / f;           // per-period return
+  let totalPeriods = years * f;
 
   let bal = principal;
   let totalW = 0;
   let done = 0;
 
-  for(let i=1;i<=totalPeriods;i++){
-    bal += bal*rate;
+  for(let i = 1; i <= totalPeriods; i++){
+    // 1️⃣ Interest for the period
+    bal += bal * rate;
+
+    // 2️⃣ Check if withdrawal is possible AFTER interval
+    if(bal < withdraw){
+      break; // corpus exhausted before next withdrawal
+    }
+
+    // 3️⃣ Withdraw
     bal -= withdraw;
-    if(bal<=0){ done=i; break; }
     totalW += withdraw;
-    done=i;
+    done = i;
   }
 
   document.getElementById("totalWithdrawn").innerText = formatINR(totalW);
-  document.getElementById("remaining").innerText = formatINR(Math.max(bal,0));
-  document.getElementById("duration").innerText = formatDuration(done,f);
+  document.getElementById("remaining").innerText = formatINR(Math.max(bal, 0));
+  document.getElementById("duration").innerText = formatDuration(done, f);
 
   const st = document.getElementById("status");
-  if(bal<=0){
-    st.className="status danger";
-    st.innerText="⚠️ Withdrawal too high. Corpus exhausted early.";
-  }else{
-    st.className="status safe";
-    st.innerText="✅ Sustainable SWP. Corpus lasts full duration.";
+  if(done < totalPeriods){
+    st.className = "status danger";
+    st.innerText = "⚠️ Withdrawal too high. Corpus exhausted early.";
+  } else {
+    st.className = "status safe";
+    st.innerText = "✅ Sustainable SWP. Corpus lasts full duration.";
   }
+
 }
 
 updateWithdrawalLimit();
