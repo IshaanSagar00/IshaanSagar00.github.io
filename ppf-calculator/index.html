@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PPF Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="description" content="Calculate Public Provident Fund (PPF) returns with fixed 7.10% interest. Know maturity amount, total investment and interest earned.">
+
+<link rel="canonical" href="https://calcworld.in/ppf-calculator/">
+
+<style>
+body{
+  font-family:Arial,sans-serif;
+  background:#f4f6f9;
+  margin:0;
+}
+header{
+  background:#fff;
+  padding:14px 24px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.06);
+}
+header a{
+  font-size:20px;
+  font-weight:bold;
+  color:#2563eb;
+  text-decoration:none;
+}
+.card{
+  max-width:420px;
+  margin:40px auto;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+h1{text-align:center;font-size:22px;margin-bottom:18px}
+.group{margin-bottom:14px}
+label{font-weight:600;display:block;margin-bottom:6px}
+input{
+  width:100%;
+  padding:8px 10px;
+  font-size:14px;
+}
+input[type=range]{margin-top:6px}
+.results{
+  margin-top:18px;
+  background:#f8fafc;
+  padding:14px;
+  border-radius:10px;
+}
+.results p{margin:6px 0;font-size:14px}
+.info-link{
+  margin-top:14px;
+  text-align:center;
+}
+.info-link a{
+  color:#2563eb;
+  font-weight:600;
+  text-decoration:none;
+}
+.badge{
+  background:#e0f2fe;
+  color:#0369a1;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:13px;
+  margin-bottom:12px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <a href="https://calcworld.in/">CalcWorld</a>
+</header>
+
+<div class="card">
+<h1>PPF Calculator</h1>
+
+<div class="badge">
+  Interest Rate: <strong>7.10% p.a.</strong> (Compounded Annually)
+</div>
+
+<div class="group">
+<label>Yearly Investment (₹)</label>
+<input type="text" id="amount" value="1,50,000">
+<input type="range" id="amountRange" min="500" max="150000" step="500" value="150000">
+</div>
+
+<div class="group">
+<label>Investment Duration (Years)</label>
+<input type="number" id="years" min="15" max="50" value="15">
+<input type="range" id="yearsRange" min="15" max="50" value="15">
+</div>
+
+<div class="results">
+<p><strong>Total Invested:</strong> ₹ <span id="invested">0</span></p>
+<p><strong>Interest Earned:</strong> ₹ <span id="interest">0</span></p>
+<p><strong>Maturity Amount:</strong> ₹ <span id="maturity">0</span></p>
+<p style="font-size:13px;color:#374151;">
+  PPF is an <strong>EEE tax-free</strong> investment backed by the Government of India.
+</p>
+</div>
+
+<div class="info-link">
+  <a href="/ppf-information/">👉 Learn everything about PPF (rules, limits, withdrawals)</a>
+</div>
+
+</div>
+
+<script>
+const rate = 0.071;
+const amt = document.getElementById("amount");
+const amtR = document.getElementById("amountRange");
+const yrs = document.getElementById("years");
+const yrsR = document.getElementById("yearsRange");
+
+const parseINR = v => Number(v.replace(/,/g,'')) || 0;
+const formatINR = n => Math.round(n).toLocaleString("en-IN");
+
+amtR.oninput = ()=>{ amt.value=formatINR(amtR.value); calculate(); };
+amt.onblur = ()=>{
+  let v=Math.min(Math.max(parseINR(amt.value),500),150000);
+  amt.value=formatINR(v);
+  amtR.value=v;
+  calculate();
+};
+
+yrsR.oninput = ()=>{ yrs.value=yrsR.value; calculate(); };
+yrs.onblur = ()=>{
+  let v=Math.min(Math.max(yrs.value,15),50);
+  yrs.value=v;
+  yrsR.value=v;
+  calculate();
+};
+
+function calculate(){
+  let P=parseINR(amt.value);
+  let n=Number(yrs.value);
+  let maturity=0;
+
+  for(let i=1;i<=n;i++){
+    maturity=(maturity+P)*(1+rate);
+  }
+
+  let invested=P*n;
+  let interest=maturity-invested;
+
+  document.getElementById("invested").innerText=formatINR(invested);
+  document.getElementById("interest").innerText=formatINR(interest);
+  document.getElementById("maturity").innerText=formatINR(maturity);
+}
+
+calculate();
+</script>
+
+</body>
+</html>
