@@ -63,21 +63,25 @@ input[type=range]{margin-top:6px}
 <div class="card">
 <h1>RD Calculator</h1>
 
+<!-- Monthly Investment -->
 <div class="group">
 <label>Monthly Investment (₹)</label>
 <input type="text" id="amount" value="5,000">
 <input type="range" id="amountRange" min="500" max="100000" step="500" value="5000">
 </div>
 
+<!-- Interest -->
 <div class="group">
 <label>Interest Rate (% p.a.)</label>
-<input type="number" id="rate" min="1" max="15" step="0.1" value="7">
-<input type="range" id="rateRange" min="1" max="15" step="0.1" value="7">
+<input type="number" id="rate" min="1" max="8" step="0.1" value="7">
+<input type="range" id="rateRange" min="1" max="8" step="0.1" value="7">
 </div>
 
+<!-- Time Period -->
 <div class="group">
 <label>Time Period</label>
-<input type="number" id="tenure" min="6" max="120" value="36">
+<input type="number" id="tenure" min="1" max="120" value="36">
+<input type="range" id="tenureRange" min="1" max="120" value="36">
 <select id="tenureType">
   <option value="months">Months</option>
   <option value="years">Years</option>
@@ -98,12 +102,17 @@ const amtR = document.getElementById("amountRange");
 const rate = document.getElementById("rate");
 const rateR = document.getElementById("rateRange");
 const tenure = document.getElementById("tenure");
+const tenureR = document.getElementById("tenureRange");
 const tenureType = document.getElementById("tenureType");
 
 const parseINR = v => Number(v.replace(/,/g,'')) || 0;
 const formatINR = n => Math.round(n).toLocaleString("en-IN");
 
-amtR.oninput = () => { amt.value = formatINR(amtR.value); calculate(); };
+/* Amount */
+amtR.oninput = () => {
+  amt.value = formatINR(amtR.value);
+  calculate();
+};
 amt.onblur = () => {
   let v = Math.min(parseINR(amt.value),100000);
   amtR.value = v;
@@ -111,30 +120,59 @@ amt.onblur = () => {
   calculate();
 };
 
-rateR.oninput = () => { rate.value = rateR.value; calculate(); };
-rate.oninput = () => {
-  let v = Math.min(Math.max(rate.value,1),15);
+/* Rate */
+rateR.oninput = () => {
+  rate.value = rateR.value;
+  calculate();
+};
+rate.onblur = () => {
+  let v = Math.min(Math.max(rate.value,1),8);
   rate.value = v;
   rateR.value = v;
   calculate();
 };
 
-document.querySelectorAll("input,select").forEach(el=>{
-  el.oninput = calculate;
-});
+/* Tenure */
+tenureR.oninput = () => {
+  tenure.value = tenureR.value;
+  calculate();
+};
+tenure.onblur = () => {
+  let max = tenureType.value==="years" ? 10 : 120;
+  let v = Math.min(Math.max(tenure.value,1),max);
+  tenure.value = v;
+  tenureR.value = v;
+  calculate();
+};
+
+tenureType.onchange = () => {
+  if(tenureType.value==="years"){
+    tenure.max = 10;
+    tenureR.max = 10;
+    tenure.value = Math.min(tenure.value,10);
+    tenureR.value = tenure.value;
+  }else{
+    tenure.max = 120;
+    tenureR.max = 120;
+    tenure.value = Math.min(tenure.value,120);
+    tenureR.value = tenure.value;
+  }
+  calculate();
+};
 
 function calculate(){
   let P = parseINR(amt.value);
-  let r = Number(rate.value)/100/4;   // quarterly compounding
+  let r = Number(rate.value)/100/4; // quarterly compounding
   let n = Number(tenure.value);
-  if(tenureType.value==="years") n*=12;
+
+  if(tenureType.value==="years") n *= 12;
 
   let maturity = 0;
   for(let i=1;i<=n;i++){
     maturity += P * Math.pow(1+r, (n-i+1)/3);
   }
 
-  let invested = P*n;
+  let invested = P * n;
   let interest = maturity - invested;
 
   document.getElementById("invested").innerText = formatINR(invested);
