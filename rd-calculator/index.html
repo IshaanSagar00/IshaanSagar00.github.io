@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RD Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  font-family:Arial,sans-serif;
+  background:#f4f6f9;
+  margin:0;
+  padding:0;
+}
+header{
+  background:#fff;
+  padding:14px 24px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.06);
+}
+header a{
+  font-size:20px;
+  font-weight:bold;
+  color:#2563eb;
+  text-decoration:none;
+}
+.card{
+  max-width:420px;
+  margin:40px auto;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+h1{
+  text-align:center;
+  font-size:22px;
+  margin-bottom:18px;
+}
+.group{margin-bottom:14px}
+label{font-weight:600;display:block;margin-bottom:6px}
+input,select{
+  width:100%;
+  padding:8px 10px;
+  font-size:14px;
+}
+input[type=range]{margin-top:6px}
+.results{
+  margin-top:20px;
+  background:#f8fafc;
+  padding:14px;
+  border-radius:10px;
+}
+.results p{margin:6px 0;font-size:14px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <a href="https://calcworld.in/">CalcWorld</a>
+</header>
+
+<div class="card">
+<h1>RD Calculator</h1>
+
+<div class="group">
+<label>Monthly Investment (₹)</label>
+<input type="text" id="amount" value="5,000">
+<input type="range" id="amountRange" min="500" max="100000" step="500" value="5000">
+</div>
+
+<div class="group">
+<label>Interest Rate (% p.a.)</label>
+<input type="number" id="rate" min="1" max="15" step="0.1" value="7">
+<input type="range" id="rateRange" min="1" max="15" step="0.1" value="7">
+</div>
+
+<div class="group">
+<label>Time Period</label>
+<input type="number" id="tenure" min="6" max="120" value="36">
+<select id="tenureType">
+  <option value="months">Months</option>
+  <option value="years">Years</option>
+</select>
+</div>
+
+<div class="results">
+<p><strong>Total Invested:</strong> ₹ <span id="invested">0</span></p>
+<p><strong>Interest Earned:</strong> ₹ <span id="interest">0</span></p>
+<p><strong>Maturity Amount:</strong> ₹ <span id="maturity">0</span></p>
+</div>
+
+</div>
+
+<script>
+const amt = document.getElementById("amount");
+const amtR = document.getElementById("amountRange");
+const rate = document.getElementById("rate");
+const rateR = document.getElementById("rateRange");
+const tenure = document.getElementById("tenure");
+const tenureType = document.getElementById("tenureType");
+
+const parseINR = v => Number(v.replace(/,/g,'')) || 0;
+const formatINR = n => Math.round(n).toLocaleString("en-IN");
+
+amtR.oninput = () => { amt.value = formatINR(amtR.value); calculate(); };
+amt.onblur = () => {
+  let v = Math.min(parseINR(amt.value),100000);
+  amtR.value = v;
+  amt.value = formatINR(v);
+  calculate();
+};
+
+rateR.oninput = () => { rate.value = rateR.value; calculate(); };
+rate.oninput = () => {
+  let v = Math.min(Math.max(rate.value,1),15);
+  rate.value = v;
+  rateR.value = v;
+  calculate();
+};
+
+document.querySelectorAll("input,select").forEach(el=>{
+  el.oninput = calculate;
+});
+
+function calculate(){
+  let P = parseINR(amt.value);
+  let r = Number(rate.value)/100/4;   // quarterly compounding
+  let n = Number(tenure.value);
+  if(tenureType.value==="years") n*=12;
+
+  let maturity = 0;
+  for(let i=1;i<=n;i++){
+    maturity += P * Math.pow(1+r, (n-i+1)/3);
+  }
+
+  let invested = P*n;
+  let interest = maturity - invested;
+
+  document.getElementById("invested").innerText = formatINR(invested);
+  document.getElementById("interest").innerText = formatINR(interest);
+  document.getElementById("maturity").innerText = formatINR(maturity);
+}
+
+calculate();
+</script>
+
+</body>
+</html>
