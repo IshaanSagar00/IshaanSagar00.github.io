@@ -50,10 +50,25 @@
   </url>
 
   <url>
+   <loc>https://calcworld.in/ppf-calculator/</loc>
+   <lastmod>2025-01-02</lastmod>
+   <priority>0.9</priority>
+  </url>
+
+  <url>
+   <loc>https://calcworld.in/ppf-interest-rates/</loc>
+   <lastmod>2025-01-02</lastmod>
+   <priority>0.8</priority>
+  </url>
+
+
+
+  <url>
     <loc>https://calcworld.in/emi-calculator/emi-breakdown.html</loc>
     <lastmod>2025-01-02</lastmod>
     <priority>0.8</priority>
   </url>
+  
 
   <url>
     <loc>https://calcworld.in/privacy-policy.html</loc>
