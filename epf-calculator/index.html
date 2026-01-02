@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EPF Calculator | Calculate EPF Maturity Amount</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Calculate your EPF maturity amount using current EPF interest rate of 8.25%. Includes employee and employer contribution with EPS split.">
+<link rel="canonical" href="https://calcworld.in/epf-calculator/">
+
+<style>
+body{font-family:Arial;background:#f6f7f9;margin:0}
+header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+header a{font-size:20px;font-weight:bold;color:#2563eb;text-decoration:none}
+.card{max-width:380px;margin:40px auto;background:#fff;padding:22px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.1)}
+label{font-weight:600;display:block;margin-top:14px}
+input,select{width:100%;padding:10px;margin-top:6px}
+.result{background:#f8fafc;padding:14px;border-radius:8px;margin-top:18px;font-size:14px}
+.note{font-size:12px;color:#555;margin-top:10px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <a href="https://calcworld.in/">CalcWorld</a>
+</header>
+
+<div class="card">
+  <h2 style="text-align:center">EPF Calculator</h2>
+
+  <label>Basic Monthly Salary (₹)</label>
+  <input type="number" id="salary" value="30000" min="5000" max="200000">
+
+  <label>Annual Salary Growth (%)</label>
+  <input type="number" id="growth" value="5" min="0" max="15">
+
+  <label>Current Age</label>
+  <input type="number" id="age" value="25" min="18" max="57">
+
+  <label>Retirement Age</label>
+  <input type="number" id="retire" value="58" min="50" max="60">
+
+  <div class="result" id="output"></div>
+
+  <div class="note">
+    • EPF interest rate fixed at <b>8.25%</b><br>
+    • EPS portion does NOT earn EPF interest<br>
+    • Interest credited yearly by EPFO
+  </div>
+</div>
+
+<script>
+function calculateEPF(){
+  const salary = +salaryInput.value;
+  const growth = +growthInput.value/100;
+  const years = retireInput.value - ageInput.value;
+  const rate = 0.0825;
+
+  let epfBalance = 0;
+  let totalEmp = 0;
+  let totalEr = 0;
+
+  for(let y=1;y<=years;y++){
+    let monthlySalary = salary * Math.pow(1+growth,y-1);
+    let emp = monthlySalary * 0.12 * 12;
+    let erEPF = monthlySalary * 0.0367 * 12;
+    let erEPS = Math.min(15000, monthlySalary) * 0.0833 * 12;
+
+    totalEmp += emp;
+    totalEr += erEPF;
+    epfBalance = (epfBalance + emp + erEPF) * (1+rate);
+  }
+
+  output.innerHTML = `
+    <b>Total Employee Contribution:</b> ₹${totalEmp.toLocaleString()}<br>
+    <b>Total Employer EPF:</b> ₹${totalEr.toLocaleString()}<br>
+    <b>Total EPF Corpus:</b> ₹${Math.round(epfBalance).toLocaleString()}
+  `;
+}
+
+const salaryInput=document.getElementById("salary");
+const growthInput=document.getElementById("growth");
+const ageInput=document.getElementById("age");
+const retireInput=document.getElementById("retire");
+const output=document.getElementById("output");
+
+[salaryInput,growthInput,ageInput,retireInput].forEach(i=>i.oninput=calculateEPF);
+calculateEPF();
+</script>
+
+</body>
+</html>
