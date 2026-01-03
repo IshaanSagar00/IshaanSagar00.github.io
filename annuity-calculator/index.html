@@ -3,19 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <title>Annuity Calculator | CalcWorld</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Calculate annuity income based on investment amount, annuity rate, payout frequency and duration.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{
   font-family:Arial, sans-serif;
-  background:#f6f7f9;
+  background:#f5f7fb;
   margin:0;
 }
 header{
   background:#fff;
-  padding:14px 22px;
-  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  padding:14px 24px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
 }
 header a{
   font-size:20px;
@@ -28,55 +27,46 @@ header a{
   margin:40px auto;
   background:#fff;
   padding:26px;
-  border-radius:14px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.12);
 }
 h1{
   text-align:center;
-  margin-bottom:25px;
+  margin-bottom:24px;
 }
 label{
   font-weight:bold;
+  margin-top:14px;
   display:block;
-  margin-top:18px;
 }
-input, select{
+input[type=range], select{
   width:100%;
-  padding:10px;
-  margin-top:6px;
-  font-size:16px;
-}
-input[type=range]{
-  padding:0;
+  margin-top:8px;
 }
 .value{
   float:right;
+  color:#16a34a;
   font-weight:bold;
-  color:#059669;
 }
 .result{
+  margin-top:24px;
   background:#f8fafc;
-  padding:18px;
+  padding:16px;
   border-radius:10px;
-  margin-top:22px;
-}
-.big{
-  font-size:26px;
-  font-weight:bold;
   text-align:center;
-  margin:12px 0;
 }
-.note{
-  font-size:13px;
-  margin-top:12px;
+.result h2{
+  margin:0;
 }
 ul{
+  margin-top:14px;
   padding-left:18px;
-  margin-top:12px;
   font-size:14px;
 }
-.clear{
-  clear:both;
+.info{
+  margin-top:10px;
+  font-size:13px;
+  color:#2563eb;
 }
 </style>
 </head>
@@ -88,95 +78,84 @@ ul{
 </header>
 
 <div class="card">
-  <h1>Annuity Calculator</h1>
+<h1>Annuity Calculator</h1>
 
-  <!-- Investment -->
-  <label>
-    Investment Amount
-    <span class="value" id="invVal">₹10,00,000</span>
-  </label>
-  <input type="range" id="investment" min="100000" max="50000000" step="50000" value="1000000">
+<label>
+Investment Amount
+<span class="value" id="invVal"></span>
+</label>
+<input type="range" id="investment" min="100000" max="10000000" step="50000" value="1000000">
 
-  <!-- Rate -->
-  <label>
-    Annuity Rate (% p.a.)
-    <span class="value" id="rateVal">6.75%</span>
-  </label>
-  <input type="range" id="rate" min="3" max="10" step="0.25" value="6.75">
+<label>
+Annuity Rate (% p.a.)
+<span class="value" id="rateVal"></span>
+</label>
+<input type="range" id="rate" min="4" max="10" step="0.25" value="6.75">
 
-  <!-- Frequency -->
-  <label>Payout Frequency</label>
-  <select id="frequency">
-    <option value="12">Monthly</option>
-    <option value="4">Quarterly</option>
-    <option value="1">Yearly</option>
-  </select>
+<label>Payout Frequency</label>
+<select id="frequency">
+  <option value="12">Monthly</option>
+  <option value="4">Quarterly</option>
+  <option value="1">Yearly</option>
+</select>
 
-  <!-- Duration -->
-  <label>
-    Payout Duration (Years)
-    <span class="value" id="yearVal">20 years</span>
-  </label>
-  <input type="range" id="years" min="5" max="40" step="1" value="20">
+<label>
+Payout Duration (Years)
+<span class="value" id="yearVal"></span>
+</label>
+<input type="range" id="years" min="5" max="30" step="1" value="10">
 
-  <div class="clear"></div>
+<div class="result">
+  <h2 id="income"></h2>
+  <div>Income per payout</div>
+  <hr>
+  <div id="totalIncome"></div>
+  <div class="info">ⓘ Payouts start after the first payout period</div>
+</div>
 
-  <!-- Results -->
-  <div class="result">
-    <div class="big" id="income">₹5,625</div>
-    <div style="text-align:center">Income per payout</div>
+<ul>
+  <li>Fixed income for selected period</li>
+  <li>No compounding – income based on principal</li>
+  <li>Annuity rate decided by insurer</li>
+  <li>Best suited for retirement income</li>
+  <li>Income taxable as per slab</li>
+</ul>
 
-    <hr style="margin:14px 0">
-
-    <div>Total Income Received: <b id="totalIncome">₹13,50,000</b></div>
-    <div>Payout Duration: <b id="durationText">20 years</b></div>
-
-    <div class="note">
-      ℹ️ Payouts start <b>after the first payout period</b>, not immediately.
-    </div>
-
-    <ul>
-      <li>Annuity provides fixed income for a chosen period</li>
-      <li>No compounding – income is based on invested amount</li>
-      <li>Annuity rate decided by insurer / provider</li>
-      <li>Returns may be taxable as per income slab</li>
-    </ul>
-
-    <div class="note">
-      <a href="/annuity-information/">Learn more about annuity rules →</a>
-    </div>
-  </div>
+<a href="/annuity-information/" class="info">Learn more about annuity rules →</a>
 </div>
 
 <script>
-function formatINR(num){
-  return "₹" + Math.round(num).toLocaleString("en-IN");
+const investment = document.getElementById("investment");
+const rate = document.getElementById("rate");
+const frequency = document.getElementById("frequency");
+const years = document.getElementById("years");
+
+function formatINR(n){
+  return "₹" + n.toLocaleString("en-IN",{maximumFractionDigits:0});
 }
 
 function calculate(){
-  const investment = +document.getElementById("investment").value;
-  const rate = +document.getElementById("rate").value;
-  const freq = +document.getElementById("frequency").value;
-  const years = +document.getElementById("years").value;
+  const P = +investment.value;
+  const annualRate = +rate.value / 100;
+  const freq = +frequency.value;
+  const yrs = +years.value;
 
-  document.getElementById("invVal").innerText = formatINR(investment);
-  document.getElementById("rateVal").innerText = rate + "%";
-  document.getElementById("yearVal").innerText = years + " years";
+  const r = annualRate / freq;
+  const n = freq * yrs;
 
-  const annualIncome = investment * rate / 100;
-  const payout = annualIncome / freq;
-  const totalPeriods = freq * years;
-  const totalIncome = payout * totalPeriods;
+  const payout = P * r / (1 - Math.pow(1 + r, -n));
+  const total = payout * n;
 
-  document.getElementById("income").innerText = formatINR(payout);
-  document.getElementById("totalIncome").innerText = formatINR(totalIncome);
-  document.getElementById("durationText").innerText = years + " years";
+  document.getElementById("invVal").innerText = formatINR(P);
+  document.getElementById("rateVal").innerText = rate.value + "%";
+  document.getElementById("yearVal").innerText = yrs + " years";
+
+  document.getElementById("income").innerText = formatINR(Math.round(payout));
+  document.getElementById("totalIncome").innerText =
+    "Total Income Received: " + formatINR(Math.round(total));
 }
 
-document.querySelectorAll("input, select").forEach(el=>{
-  el.addEventListener("input", calculate);
-});
-
+[investment, rate, frequency, years].forEach(e => e.oninput = calculate);
 calculate();
 </script>
 
