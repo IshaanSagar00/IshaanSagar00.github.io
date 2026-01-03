@@ -160,7 +160,7 @@ Payout Duration (Years)
 </div>
 
 <script>
-const investment = document.getElementById("investment");
+const investmentInput = document.getElementById("investment");
 const invRange = document.getElementById("invRange");
 const rate = document.getElementById("rate");
 const frequency = document.getElementById("frequency");
@@ -173,60 +173,82 @@ const invLabel = document.getElementById("invLabel");
 const rateLabel = document.getElementById("rateLabel");
 const yearsLabel = document.getElementById("yearsLabel");
 
-function formatINR(n){
-  return "₹" + Math.round(n).toLocaleString("en-IN");
+const MIN_INVEST = 100000;
+const MAX_INVEST = 100000000; // ₹10 Cr
+
+/* ---------- helpers ---------- */
+function formatINR(num){
+  return "₹" + Math.round(num).toLocaleString("en-IN");
 }
-function parseINR(v){
-  return Number(v.replace(/,/g,"")) || 0;
+function cleanNumber(val){
+  return Number(val.replace(/[^\d]/g,"")) || 0;
 }
 function clamp(v,min,max){
   return Math.min(Math.max(v,min),max);
 }
 
-investment.addEventListener("input",()=>{
-  let v = clamp(parseINR(investment.value),100000,100000000);
-  invRange.value = v;
-  investment.value = v.toLocaleString("en-IN");
+/* ---------- INPUT HANDLING (FIX) ---------- */
+
+// While typing → NO formatting
+investmentInput.addEventListener("input", () => {
+  let raw = cleanNumber(investmentInput.value);
+  if(raw > MAX_INVEST) raw = MAX_INVEST;
+  invRange.value = raw || MIN_INVEST;
   calculate();
 });
 
-invRange.addEventListener("input",()=>{
-  investment.value = Number(invRange.value).toLocaleString("en-IN");
+// On blur → format nicely
+investmentInput.addEventListener("blur", () => {
+  let val = clamp(cleanNumber(investmentInput.value), MIN_INVEST, MAX_INVEST);
+  investmentInput.value = val.toLocaleString("en-IN");
+  invRange.value = val;
   calculate();
 });
 
-[rate,frequency,years].forEach(el=>el.addEventListener("input",calculate));
-modeRadios.forEach(r=>r.addEventListener("change",calculate));
+// Slider → always formatted
+invRange.addEventListener("input", () => {
+  investmentInput.value = Number(invRange.value).toLocaleString("en-IN");
+  calculate();
+});
 
+[rate, frequency, years].forEach(el => el.addEventListener("input", calculate));
+modeRadios.forEach(r => r.addEventListener("change", calculate));
+
+/* ---------- CALCULATION ---------- */
 function calculate(){
-  let P = parseINR(investment.value);
-  let r = rate.value/100;
-  let n = frequency.value;
-  let y = years.value;
-  let periods = n*y;
+  let P = clamp(cleanNumber(investmentInput.value), MIN_INVEST, MAX_INVEST);
+  let r = rate.value / 100;
+  let n = Number(frequency.value);
+  let y = Number(years.value);
+  let periods = n * y;
 
   invLabel.textContent = formatINR(P);
-  rateLabel.textContent = rate.value+"%";
-  yearsLabel.textContent = y+" years";
+  rateLabel.textContent = rate.value + "%";
+  yearsLabel.textContent = y + " years";
 
   let payout = 0;
   let total = 0;
 
-  if(document.querySelector("input[name=mode]:checked").value==="fixed"){
-    payout = (P*r)/n;
-    total = payout*periods;
-  }else{
-    let pr = r/n;
-    payout = P*(pr*Math.pow(1+pr,periods))/(Math.pow(1+pr,periods)-1);
-    total = payout*periods;
+  const mode = document.querySelector("input[name=mode]:checked").value;
+
+  if(mode === "fixed"){
+    // Interest only
+    payout = (P * r) / n;
+    total = payout * periods;
+  } else {
+    // Capital drawdown (true annuity)
+    let pr = r / n;
+    payout = P * (pr * Math.pow(1 + pr, periods)) / (Math.pow(1 + pr, periods) - 1);
+    total = payout * periods;
   }
 
   payoutEl.textContent = formatINR(payout);
-  totalEl.innerHTML = "Total Income Received: <b>"+formatINR(total)+"</b>";
+  totalEl.innerHTML = `Total Income Received: <b>${formatINR(total)}</b>`;
 }
 
 calculate();
 </script>
+
 
 </body>
 </html>
