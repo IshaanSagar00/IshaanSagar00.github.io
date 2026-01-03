@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Annuity Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb}
+header{background:#fff;padding:14px 22px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+header a{font-size:20px;font-weight:bold;color:#2563eb;text-decoration:none}
+.card{max-width:460px;margin:40px auto;background:#fff;padding:28px;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.08)}
+h1{text-align:center;margin-bottom:24px}
+.group{margin-bottom:22px}
+.label{display:flex;justify-content:space-between;font-weight:600;margin-bottom:6px}
+.value{background:#ecfdf5;color:#047857;padding:4px 10px;border-radius:6px;font-size:14px}
+input[type=range],select{width:100%}
+.big{text-align:center;font-size:28px;font-weight:bold;margin-top:20px}
+.sub{text-align:center;color:#374151;font-size:14px}
+.rules{margin-top:20px;font-size:13px;color:#374151}
+.rules li{margin-bottom:6px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <a href="/">CalcWorld</a>
+</header>
+
+<div class="card">
+<h1>Annuity Calculator</h1>
+
+<div class="group">
+  <div class="label">
+    <span>Investment Amount</span>
+    <span class="value">₹ <span id="amountVal">5000000</span></span>
+  </div>
+  <input type="range" min="100000" max="50000000" step="50000" value="5000000" id="amount">
+</div>
+
+<div class="group">
+  <div class="label">
+    <span>Annuity Rate (% p.a.)</span>
+    <span class="value"><span id="rateVal">6</span>%</span>
+  </div>
+  <input type="range" min="3" max="10" step="0.25" value="6" id="rate">
+</div>
+
+<div class="group">
+  <div class="label">
+    <span>Payout Frequency</span>
+  </div>
+  <select id="frequency">
+    <option value="12">Monthly</option>
+    <option value="4">Quarterly</option>
+    <option value="1">Yearly</option>
+  </select>
+</div>
+
+<div class="big">
+₹ <span id="income">0</span>
+</div>
+<div class="sub">
+Income per payout period
+</div>
+
+<ul class="rules">
+<li>Annuity provides <b>fixed income</b> for life or chosen period</li>
+<li>No compounding – income is based on invested amount</li>
+<li>Annuity rate decided by insurer / provider</li>
+<li>Best suited for <b>post-retirement income</b></li>
+<li>Returns may be taxable as per income slab</li>
+</ul>
+
+</div>
+
+<script>
+const amount=document.getElementById("amount");
+const rate=document.getElementById("rate");
+const frequency=document.getElementById("frequency");
+
+const fmt=n=>Number(n).toLocaleString("en-IN");
+
+function calc(){
+  amountVal.textContent=fmt(amount.value);
+  rateVal.textContent=rate.value;
+
+  let annualIncome = amount.value * (rate.value/100);
+  let payout = annualIncome / frequency.value;
+
+  income.textContent = fmt(payout.toFixed(0));
+}
+
+[amount,rate,frequency].forEach(e=>e.oninput=calc);
+calc();
+</script>
+
+</body>
+</html>
