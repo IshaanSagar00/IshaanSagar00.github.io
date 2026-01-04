@@ -74,6 +74,12 @@
    <priority>0.8</priority>
   </url>
 
+  <!-- ✅ Annuity Calculator -->
+<url>
+  <loc>https://calcworld.in/annuity-calculator/</loc>
+  <lastmod>2026-01-04</lastmod>
+  <priority>0.9</priority>
+</url>
 
 
 
