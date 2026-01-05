@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Trading Compounding Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Calculate trading profit by daily, weekly, monthly or yearly compounding. See how fast trading profits grow over time.">
+
+<style>
+body{
+  font-family:Arial, sans-serif;
+  background:#f6f7fb;
+  padding:20px;
+}
+.container{
+  max-width:520px;
+  margin:auto;
+  background:#fff;
+  padding:22px;
+  border-radius:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+h1{
+  font-size:22px;
+  margin-bottom:5px;
+}
+p.sub{
+  font-size:14px;
+  color:#555;
+  margin-bottom:20px;
+}
+label{
+  font-size:14px;
+  margin-top:14px;
+  display:block;
+}
+input, select{
+  width:100%;
+  padding:10px;
+  font-size:16px;
+  margin-top:6px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+button{
+  width:100%;
+  margin-top:18px;
+  padding:12px;
+  font-size:16px;
+  border:none;
+  border-radius:10px;
+  background:#2563eb;
+  color:#fff;
+  cursor:pointer;
+}
+button:hover{background:#1e4fd6}
+
+.result{
+  margin-top:22px;
+  background:#f1f5ff;
+  padding:16px;
+  border-radius:10px;
+}
+.result h2{
+  font-size:18px;
+  margin-bottom:10px;
+}
+.result div{
+  margin:6px 0;
+  font-size:15px;
+}
+.green{color:#16a34a;font-weight:bold}
+.small{
+  font-size:12px;
+  color:#666;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Trading Compounding Calculator</h1>
+  <p class="sub">See how your trading profits grow with compounding.</p>
+
+  <label>Starting Capital (₹)</label>
+  <input type="number" id="capital" value="100000" min="1">
+
+  <label>Profit Percentage (%)</label>
+  <input type="number" id="rate" value="3" step="0.01" min="0">
+
+  <label>Profit Applied</label>
+  <select id="period">
+    <option value="daily">Daily</option>
+    <option value="weekly">Weekly</option>
+    <option value="monthly">Monthly</option>
+    <option value="yearly">Yearly</option>
+  </select>
+
+  <label>Duration</label>
+  <input type="number" id="duration" value="250" min="1">
+
+  <button onclick="calculate()">Calculate Growth</button>
+
+  <div class="result" id="result" style="display:none">
+    <h2>Result</h2>
+    <div>Final Capital: <span class="green" id="final"></span></div>
+    <div>Total Profit: <span class="green" id="profit"></span></div>
+    <div>Total Return: <span id="return"></span></div>
+    <div>Growth Multiple: <span id="multiple"></span></div>
+    <p class="small">* Results are illustrative. Markets are not linear.</p>
+  </div>
+</div>
+
+<script>
+function formatINR(num){
+  return "₹" + Math.round(num).toLocaleString("en-IN");
+}
+
+function calculate(){
+  let capital = parseFloat(document.getElementById("capital").value);
+  let rate = parseFloat(document.getElementById("rate").value) / 100;
+  let duration = parseInt(document.getElementById("duration").value);
+  let period = document.getElementById("period").value;
+
+  let multiplier = 1;
+
+  if(period === "daily") multiplier = duration;
+  if(period === "weekly") multiplier = duration;
+  if(period === "monthly") multiplier = duration;
+  if(period === "yearly") multiplier = duration;
+
+  let finalValue = capital * Math.pow((1 + rate), multiplier);
+  let profit = finalValue - capital;
+  let returnPct = (profit / capital) * 100;
+
+  document.getElementById("final").innerText = formatINR(finalValue);
+  document.getElementById("profit").innerText = formatINR(profit);
+  document.getElementById("return").innerText = returnPct.toFixed(2) + "%";
+  document.getElementById("multiple").innerText = (finalValue / capital).toFixed(2) + "×";
+
+  document.getElementById("result").style.display = "block";
+}
+</script>
+
+</body>
+</html>
