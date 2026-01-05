@@ -6,71 +6,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-  font-family:Arial, sans-serif;
-  background:#f6f7fb;
-  margin:0;
-}
-
-header{
-  background:#fff;
-  padding:14px 24px;
-  box-shadow:0 2px 4px rgba(0,0,0,0.05);
-}
-header a{
-  text-decoration:none;
-  color:#2563eb;
-  font-size:20px;
-  font-weight:bold;
-}
-
-.container{
-  max-width:520px;
-  margin:40px auto;
-  background:#fff;
-  padding:22px;
-  border-radius:12px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
-}
-
+body{font-family:Arial,sans-serif;background:#f6f7fb;margin:0}
+header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
+.container{max-width:520px;margin:40px auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
 h1{font-size:22px}
-p.sub{font-size:14px;color:#555;margin-bottom:20px}
-
+p.sub{font-size:14px;color:#555}
 label{font-size:14px;margin-top:14px;display:block}
-
-input,select{
-  width:100%;
-  padding:10px;
-  font-size:16px;
-  margin-top:6px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
+input,select{width:100%;padding:10px;font-size:16px;margin-top:6px;border-radius:8px;border:1px solid #ccc}
 input[type=range]{padding:0}
-
-button{
-  width:100%;
-  margin-top:18px;
-  padding:12px;
-  font-size:16px;
-  border:none;
-  border-radius:10px;
-  background:#2563eb;
-  color:#fff;
-  cursor:pointer;
-}
-
-.result{
-  margin-top:22px;
-  background:#f1f5ff;
-  padding:16px;
-  border-radius:10px;
-  display:none;
-}
-
+button{width:100%;margin-top:18px;padding:12px;font-size:16px;border:none;border-radius:10px;background:#2563eb;color:#fff;cursor:pointer}
+.secondary{background:#e5e7eb;color:#111827}
+.result{margin-top:22px;background:#f1f5ff;padding:16px;border-radius:10px;display:none}
 .green{color:#16a34a;font-weight:bold}
-.small{font-size:12px;color:#666;margin-top:10px}
+.small{font-size:12px;color:#555;margin-top:10px}
+.disclaimer{margin-top:18px;padding:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:12px;color:#7c2d12}
+.hidden{display:none}
 </style>
 </head>
 
@@ -86,7 +37,7 @@ button{
 
   <!-- Capital -->
   <label>Starting Capital (₹)</label>
-  <input type="number" id="capital" min="0" max="1000000" step="1000" value="100000">
+  <input type="text" id="capitalDisplay" value="₹1,00,000">
   <input type="range" id="capitalRange" min="0" max="1000000" step="1000" value="100000">
 
   <!-- Profit -->
@@ -102,10 +53,11 @@ button{
   </select>
 
   <button onclick="calculate()">Calculate Growth</button>
+  <button class="secondary" onclick="toggleReality()">Reality-Check Mode</button>
 
+  <!-- Normal Results -->
   <div class="result" id="result">
     <h3>Results</h3>
-
     <p><strong>After 1 Week</strong><br>
     Capital: <span class="green" id="weekFinal"></span><br>
     Profit: <span class="green" id="weekProfit"></span></p>
@@ -118,62 +70,106 @@ button{
     Capital: <span class="green" id="yearFinal"></span><br>
     Profit: <span class="green" id="yearProfit"></span><br>
     Growth Multiple: <span id="multiple"></span></p>
+  </div>
 
-    <p class="small">
-      * Uses real trading days (5 / 21 / 250)<br>
-      * Weekends & holidays excluded
-    </p>
+  <!-- Reality Mode -->
+  <div class="result hidden" id="reality">
+    <h3>Reality-Check Mode</h3>
+
+    <label>Win Rate (%)</label>
+    <input type="number" id="winRate" value="55">
+
+    <label>Avg Win (%)</label>
+    <input type="number" id="avgWin" value="2">
+
+    <label>Avg Loss (%)</label>
+    <input type="number" id="avgLoss" value="1">
+
+    <label>Trades per Month</label>
+    <input type="number" id="trades" value="20">
+
+    <button onclick="calculateReality()">Simulate Realistic Growth</button>
+
+    <p class="small" id="realityResult"></p>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This calculator is for educational purposes only.
+    It does not constitute investment advice. Trading involves risk and past
+    performance does not guarantee future results. This tool is not affiliated
+    with or endorsed by SEBI.
   </div>
 </div>
 
 <script>
-const capInput = document.getElementById("capital");
-const capRange = document.getElementById("capitalRange");
-const rateInput = document.getElementById("rate");
-const rateRange = document.getElementById("rateRange");
-
-capInput.oninput = () => {
-  capInput.value = Math.min(1000000, Math.max(0, capInput.value));
-  capRange.value = capInput.value;
-};
-
-capRange.oninput = () => capInput.value = capRange.value;
-
-rateInput.oninput = () => {
-  rateInput.value = Math.min(20, Math.max(0, rateInput.value));
-  rateRange.value = rateInput.value;
-};
-
-rateRange.oninput = () => rateInput.value = rateRange.value;
+let capitalValue = 100000;
 
 function formatINR(n){
   return "₹" + Math.round(n).toLocaleString("en-IN");
 }
 
+const capDisplay = document.getElementById("capitalDisplay");
+const capRange = document.getElementById("capitalRange");
+const rateInput = document.getElementById("rate");
+const rateRange = document.getElementById("rateRange");
+
+capRange.oninput = () => {
+  capitalValue = parseInt(capRange.value);
+  capDisplay.value = formatINR(capitalValue);
+};
+
+capDisplay.onblur = () => {
+  capitalValue = Math.min(1000000, Math.max(0,
+    parseInt(capDisplay.value.replace(/[^0-9]/g,"")) || 0));
+  capRange.value = capitalValue;
+  capDisplay.value = formatINR(capitalValue);
+};
+
+rateInput.oninput = ()=>rateRange.value = rateInput.value;
+rateRange.oninput = ()=>rateInput.value = rateRange.value;
+
 function calculate(){
-  let capital = parseFloat(capInput.value);
-  let rate = parseFloat(rateInput.value) / 100;
+  let rate = parseFloat(rateInput.value)/100;
   let freq = document.getElementById("frequency").value;
 
-  let dailyRate = rate;
-  if(freq === "weekly") dailyRate = Math.pow(1 + rate, 1/5) - 1;
-  if(freq === "monthly") dailyRate = Math.pow(1 + rate, 1/21) - 1;
+  let daily = rate;
+  if(freq==="weekly") daily=Math.pow(1+rate,1/5)-1;
+  if(freq==="monthly") daily=Math.pow(1+rate,1/21)-1;
 
-  let week = capital * Math.pow(1 + dailyRate, 5);
-  let month = capital * Math.pow(1 + dailyRate, 21);
-  let year = capital * Math.pow(1 + dailyRate, 250);
+  let w=capitalValue*Math.pow(1+daily,5);
+  let m=capitalValue*Math.pow(1+daily,21);
+  let y=capitalValue*Math.pow(1+daily,250);
 
-  document.getElementById("weekFinal").innerText = formatINR(week);
-  document.getElementById("weekProfit").innerText = formatINR(week - capital);
+  weekFinal.innerText=formatINR(w);
+  weekProfit.innerText=formatINR(w-capitalValue);
+  monthFinal.innerText=formatINR(m);
+  monthProfit.innerText=formatINR(m-capitalValue);
+  yearFinal.innerText=formatINR(y);
+  yearProfit.innerText=formatINR(y-capitalValue);
+  multiple.innerText=(y/capitalValue).toFixed(2)+"×";
 
-  document.getElementById("monthFinal").innerText = formatINR(month);
-  document.getElementById("monthProfit").innerText = formatINR(month - capital);
+  result.style.display="block";
+  reality.classList.add("hidden");
+}
 
-  document.getElementById("yearFinal").innerText = formatINR(year);
-  document.getElementById("yearProfit").innerText = formatINR(year - capital);
-  document.getElementById("multiple").innerText = (year / capital).toFixed(2) + "×";
+function toggleReality(){
+  result.style.display="none";
+  reality.classList.toggle("hidden");
+}
 
-  document.getElementById("result").style.display = "block";
+function calculateReality(){
+  let win=winRate.value/100;
+  let aw=avgWin.value/100;
+  let al=avgLoss.value/100;
+  let t=trades.value;
+
+  let expectancy=(win*aw)-((1-win)*al);
+  let monthly=capitalValue*Math.pow(1+expectancy,t);
+
+  realityResult.innerText =
+    "Estimated Capital after 1 Month: " + formatINR(monthly) +
+    " (based on statistical expectancy)";
 }
 </script>
 
