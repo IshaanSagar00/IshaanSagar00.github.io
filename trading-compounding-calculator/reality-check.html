@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Reality Check Trading Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Reality check trading calculator using win rate, risk-reward and brokerage to simulate realistic growth.">
+
+<style>
+body{font-family:Arial,sans-serif;background:#f6f7fb;margin:0}
+header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
+.container{max-width:560px;margin:40px auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+h1{font-size:22px}
+p.sub{font-size:14px;color:#555}
+label{font-size:14px;margin-top:14px;display:block}
+input{width:100%;padding:10px;font-size:16px;margin-top:6px;border-radius:8px;border:1px solid #ccc}
+button{width:100%;margin-top:18px;padding:12px;font-size:16px;border:none;border-radius:10px;background:#2563eb;color:#fff;cursor:pointer}
+.small{font-size:12px;color:#555;margin-top:10px}
+.green{color:#16a34a;font-weight:bold}
+.red{color:#dc2626;font-weight:bold}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:16px}
+th,td{padding:6px;border-bottom:1px solid #ddd}
+th{text-align:left}
+td{text-align:right}
+.disclaimer{margin-top:20px;padding:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:12px;color:#7c2d12}
+</style>
+</head>
+
+<body>
+
+<header>
+  <a href="/trading-calculator/">← Trading Calculator</a>
+</header>
+
+<div class="container">
+  <h1>Reality-Check Trading Calculator</h1>
+  <p class="sub">
+    Simulate realistic trading results using probability, not hype.
+  </p>
+
+  <label>Starting Capital (₹)</label>
+  <input type="number" id="capital" value="100000" min="1000" max="1000000" step="1000">
+
+  <label>Win Rate (%)</label>
+  <input type="number" id="winRate" value="55" min="30" max="80">
+
+  <label>Average Win (%)</label>
+  <input type="number" id="avgWin" value="2" min="0.5" max="5" step="0.1">
+
+  <label>Average Loss (%)</label>
+  <input type="number" id="avgLoss" value="1" min="0.5" max="5" step="0.1">
+
+  <label>Trades per Month</label>
+  <input type="number" id="trades" value="20" min="5" max="60">
+
+  <label>
+    <input type="checkbox" id="brokerToggle" checked>
+    Include Brokerage per Trade
+  </label>
+
+  <input type="number" id="brokerage" value="40" min="0" max="500">
+
+  <button onclick="calculateReality()">Run Reality Check</button>
+
+  <div id="output" class="small"></div>
+
+  <table id="curve" style="display:none">
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th>Capital (₹)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This calculator is for educational purposes only.
+    Trading involves risk. This is not investment advice and is not SEBI endorsed.
+  </div>
+</div>
+
+<script>
+function inr(n){
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+
+function calculateReality(){
+  let capital = parseFloat(capitalInput = document.getElementById("capital").value);
+  let win = winRate.value / 100;
+  let avgWin = document.getElementById("avgWin").value / 100;
+  let avgLoss = document.getElementById("avgLoss").value / 100;
+  let trades = tradesInput = document.getElementById("trades").value;
+  let brokerageCost = brokerToggle.checked ? brokerage.value / capital : 0;
+
+  let expectancy =
+    (win * avgWin) -
+    ((1 - win) * avgLoss) -
+    brokerageCost;
+
+  let oneMonth = capital * Math.pow(1 + expectancy, trades);
+  let cap = capital;
+
+  let tbody = document.querySelector("#curve tbody");
+  tbody.innerHTML = "";
+
+  for(let i=1;i<=12;i++){
+    cap = cap * Math.pow(1 + expectancy, trades);
+    tbody.innerHTML += `<tr>
+      <td>Month ${i}</td>
+      <td>${inr(cap)}</td>
+    </tr>`;
+  }
+
+  let verdict = expectancy > 0
+    ? `<span class="green">Positive Expectancy</span>`
+    : `<span class="red">Negative Expectancy (Capital Decay)</span>`;
+
+  output.innerHTML = `
+    After 1 Month: <b>${inr(oneMonth)}</b><br>
+    After 1 Year: <b>${inr(cap)}</b><br>
+    Expectancy per Trade: ${(expectancy*100).toFixed(2)}%<br>
+    Verdict: ${verdict}
+  `;
+
+  curve.style.display = "table";
+}
+</script>
+
+</body>
+</html>
