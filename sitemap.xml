@@ -75,17 +75,23 @@
   </url>
 
   <!-- ✅ Annuity Calculator -->
-<url>
-  <loc>https://calcworld.in/annuity-calculator/</loc>
-  <lastmod>2026-01-04</lastmod>
-  <priority>0.9</priority>
-</url>
+  <url>
+   <loc>https://calcworld.in/annuity-calculator/</loc>
+   <lastmod>2026-01-04</lastmod>
+   <priority>0.9</priority>
+  </url>
   <!-- ✅ Inflation Calculator -->
-<url>
-  <loc>https://calcworld.in/inflation-calculator/</loc>
-  <lastmod>2026-01-04</lastmod>
-  <priority>0.9</priority>
-</url>
+  <url>
+   <loc>https://calcworld.in/inflation-calculator/</loc>
+   <lastmod>2026-01-04</lastmod>
+   <priority>0.9</priority>
+  </url>
+  
+  <url>
+   <loc>https://calcworld.in/trading-compounding-calculator/</loc>
+   <lastmod>2026-01-06</lastmod>
+   <priority>0.9</priority>
+  </url>
 
 
 
