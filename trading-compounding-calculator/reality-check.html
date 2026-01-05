@@ -11,80 +11,28 @@ header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
 header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
 
 .container{
-  max-width:560px;
-  margin:40px auto;
-  background:#fff;
-  padding:22px;
-  border-radius:12px;
+  max-width:560px;margin:40px auto;background:#fff;
+  padding:22px;border-radius:12px;
   box-shadow:0 10px 25px rgba(0,0,0,.08)
 }
 
-h1{font-size:22px;margin-bottom:6px}
-p.sub{font-size:14px;color:#555;margin-bottom:18px}
-
-label{font-size:14px;margin-top:14px;display:block}
-input,select{
-  width:100%;
-  padding:10px;
-  font-size:15px;
-  margin-top:6px;
-  border-radius:8px;
-  border:1px solid #ccc
-}
+label{margin-top:14px;display:block;font-size:14px}
+input,select{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #ccc}
 input[type=range]{padding:0}
 
-.segment{
-  display:flex;
-  gap:8px;
-  margin-top:10px
-}
-.segment button{
-  flex:1;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #ddd;
-  background:#fff;
-  cursor:pointer
-}
-.segment button.active{
-  background:#e0f2fe;
-  border-color:#2563eb;
-  color:#2563eb;
-  font-weight:bold
-}
+.segment{display:flex;gap:8px;margin-top:10px}
+.segment button{flex:1;padding:10px;border-radius:8px;border:1px solid #ddd;background:#fff}
+.segment button.active{background:#e0f2fe;border-color:#2563eb;color:#2563eb;font-weight:bold}
 
-button.main{
-  width:100%;
-  margin-top:20px;
-  padding:12px;
-  font-size:16px;
-  border:none;
-  border-radius:10px;
-  background:#2563eb;
-  color:#fff;
-  cursor:pointer
-}
+button.main{width:100%;margin-top:20px;padding:12px;font-size:16px;
+border:none;border-radius:10px;background:#2563eb;color:#fff}
 
-.result{
-  margin-top:22px;
-  background:#f1f5ff;
-  padding:16px;
-  border-radius:10px;
-  display:none
-}
+.result{margin-top:22px;background:#f1f5ff;padding:16px;border-radius:10px;display:none}
 .green{color:#16a34a;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
-.small{font-size:12px;color:#555;margin-top:10px}
 
-.disclaimer{
-  margin-top:20px;
-  padding:12px;
-  background:#fff7ed;
-  border:1px solid #fed7aa;
-  border-radius:8px;
-  font-size:12px;
-  color:#7c2d12
-}
+.disclaimer{margin-top:20px;padding:12px;background:#fff7ed;border:1px solid #fed7aa;
+border-radius:8px;font-size:12px;color:#7c2d12}
 </style>
 </head>
 
@@ -95,184 +43,118 @@ button.main{
 </header>
 
 <div class="container">
-  <h1>Reality-Check Trading Calculator</h1>
-  <p class="sub">Simulate realistic trading outcomes using probability and real charges.</p>
+<h2>Reality-Check Trading Calculator</h2>
 
-  <!-- CAPITAL -->
-  <label>Starting Capital (₹)</label>
-  <input type="text" id="capitalDisplay" value="₹1,00,000">
-  <input type="range" id="capitalRange" min="1000" max="1000000" step="1000" value="100000">
+<label>Starting Capital (₹)</label>
+<input type="text" id="capitalDisplay" value="₹1,00,000">
+<input type="range" id="capitalRange" min="1000" max="1000000" step="1000" value="100000">
 
-  <!-- SEGMENT -->
-  <label>Trading Segment</label>
-  <div class="segment">
-    <button id="deliveryBtn" class="active" onclick="setSegment('delivery')">Equity – Delivery</button>
-    <button id="intradayBtn" onclick="setSegment('intraday')">Equity – Intraday</button>
-    <button id="fnoBtn" onclick="setSegment('fno')">F&O – Intraday</button>
-  </div>
+<label>Trading Segment</label>
+<div class="segment">
+  <button id="deliveryBtn" class="active" onclick="setSegment('delivery')">Equity – Delivery</button>
+  <button id="intradayBtn" onclick="setSegment('intraday')">Equity – Intraday</button>
+  <button id="fnoBtn" onclick="setSegment('fno')">F&O – Intraday</button>
+</div>
 
-  <!-- FREQUENCY -->
-  <label>Profit / Loss Frequency</label>
-  <select id="frequency">
-    <option value="daily">Daily</option>
-    <option value="weekly">Weekly</option>
-    <option value="monthly">Monthly</option>
-  </select>
+<label>Profit / Loss Frequency</label>
+<select id="frequency">
+  <option value="daily">Daily</option>
+  <option value="weekly">Weekly</option>
+  <option value="monthly">Monthly</option>
+</select>
 
-  <!-- PROFIT -->
-  <label>Average Profit per Trade (%)</label>
-  <input type="number" id="avgProfit" min="0" max="20" step="0.1" value="2">
-  <input type="range" id="avgProfitRange" min="0" max="20" step="0.1" value="2">
+<label>Average Profit per Trade (%)</label>
+<input type="number" id="avgProfit" min="0" max="20" step="0.1" value="3">
 
-  <label>Average Loss per Trade (%)</label>
-  <input type="number" id="avgLoss" min="0" max="20" step="0.1" value="1">
-  <input type="range" id="avgLossRange" min="0" max="20" step="0.1" value="1">
+<label>Average Loss per Trade (%)</label>
+<input type="number" id="avgLoss" min="0" max="20" step="0.1" value="1">
 
-  <label>Win Rate (%)</label>
-  <input type="number" id="winRate" min="0" max="100" step="1" value="55">
-  <input type="range" id="winRateRange" min="0" max="100" step="1" value="55">
+<label>Win Rate (%)</label>
+<input type="number" id="winRate" min="0" max="100" step="1" value="50">
 
-  <label>
-    <input type="checkbox" id="includeCharges" checked>
-    Include brokerage & statutory charges
-  </label>
+<label><input type="checkbox" id="includeCharges" checked> Include charges</label>
+<label><input type="checkbox" id="compoundToggle"> Apply Compounding</label>
 
-  <label>
-    <input type="checkbox" id="compoundToggle">
-    Apply Compounding
-  </label>
+<button class="main" onclick="calculate()">Run Reality Check</button>
 
-  <button class="main" onclick="calculate()">Run Reality Check</button>
+<div class="result" id="resultBox"></div>
 
-  <div class="result" id="resultBox"></div>
-
-  <div class="disclaimer">
-    <strong>Disclaimer:</strong> This calculator is for educational purposes only.
-    Trading involves risk. This is not investment advice and is not endorsed by SEBI.
-  </div>
+<div class="disclaimer">
+This tool is for educational purposes only. Trading involves risk. Not SEBI endorsed.
+</div>
 </div>
 
 <script>
-let capital = 100000;
-let segment = "delivery";
+let capital=100000,segment="delivery";
 
-function formatINR(n){
-  return "₹" + Math.round(n).toLocaleString("en-IN");
-}
+function formatINR(n){return "₹"+Math.round(n).toLocaleString("en-IN")}
 
-/* CAPITAL SYNC */
-capitalRange.oninput = () => {
-  capital = parseInt(capitalRange.value);
-  capitalDisplay.value = formatINR(capital);
-};
-capitalDisplay.onblur = () => {
-  capital = Math.min(1000000, Math.max(1000,
-    parseInt(capitalDisplay.value.replace(/[^0-9]/g,"")) || 1000));
-  capitalRange.value = capital;
-  capitalDisplay.value = formatINR(capital);
-};
+capitalRange.oninput=()=>{capital=parseInt(capitalRange.value);capitalDisplay.value=formatINR(capital)}
+capitalDisplay.onblur=()=>{capital=parseInt(capitalDisplay.value.replace(/[^0-9]/g,""))||1000;capitalRange.value=capital;capitalDisplay.value=formatINR(capital)}
 
-/* SEGMENT */
 function setSegment(s){
-  segment = s;
-  ["deliveryBtn","intradayBtn","fnoBtn"].forEach(id =>
-    document.getElementById(id).classList.remove("active"));
-  document.getElementById(s+"Btn").classList.add("active");
+segment=s;
+["deliveryBtn","intradayBtn","fnoBtn"].forEach(i=>document.getElementById(i).classList.remove("active"));
+document.getElementById(s+"Btn").classList.add("active");
 }
 
-/* SLIDER SYNC */
-function syncPair(input, range, min, max){
-  input.oninput = () => {
-    input.value = Math.min(max, Math.max(min, input.value));
-    range.value = input.value;
-  };
-  range.oninput = () => input.value = range.value;
-}
-syncPair(avgProfit, avgProfitRange, 0, 20);
-syncPair(avgLoss, avgLossRange, 0, 20);
-syncPair(winRate, winRateRange, 0, 100);
-
-/* CHARGES ENGINE */
 function chargesPerTrade(turnover){
-  let exchange=0, sebi=0, gst=0, stamp=0, stt=0, brokerage=0;
-
-  if(segment==="delivery"){
-    stt = 0.001 * turnover;
-    exchange = 0.0000325 * turnover;
-    sebi = (10/10000000) * turnover;
-    stamp = 0.00015 * (turnover/2);
-    gst = 0.18 * (exchange + sebi);
-  }
-
-  if(segment==="intraday"){
-    brokerage = Math.min(0.0003 * turnover, 40);
-    stt = 0.00025 * (turnover/2);
-    exchange = 0.0000325 * turnover;
-    sebi = (10/10000000) * turnover;
-    stamp = 0.00003 * (turnover/2);
-    gst = 0.18 * (brokerage + exchange + sebi);
-  }
-
-  if(segment==="fno"){
-    brokerage = 40;
-    stt = 0.0001 * (turnover/2);
-    exchange = 0.00002 * turnover;
-    sebi = (10/10000000) * turnover;
-    stamp = 0.00002 * (turnover/2);
-    gst = 0.18 * (brokerage + exchange + sebi);
-  }
-
-  return brokerage + stt + exchange + sebi + stamp + gst;
+let stt=0,ex=0,sebi=0,stamp=0,broker=0,gst=0;
+if(segment==="delivery"){
+stt=0.001*turnover;
+ex=0.0000325*turnover;
+sebi=(10/10000000)*turnover;
+stamp=0.00015*(turnover/2);
+gst=0.18*(ex+sebi);
+}
+if(segment==="intraday"){
+broker=Math.min(0.0003*turnover,40);
+stt=0.00025*(turnover/2);
+ex=0.0000325*turnover;
+sebi=(10/10000000)*turnover;
+stamp=0.00003*(turnover/2);
+gst=0.18*(broker+ex+sebi);
+}
+if(segment==="fno"){
+broker=40;
+stt=0.0001*(turnover/2);
+ex=0.00002*turnover;
+sebi=(10/10000000)*turnover;
+stamp=0.00002*(turnover/2);
+gst=0.18*(broker+ex+sebi);
+}
+return broker+stt+ex+sebi+stamp+gst;
 }
 
-/* MAIN CALCULATION */
 function calculate(){
-  const freq = frequency.value;
-  const p = avgProfit.value/100;
-  const l = avgLoss.value/100;
-  const w = winRate.value/100;
-  const include = includeCharges.checked;
-  const compound = compoundToggle.checked;
+let p=avgProfit.value/100,l=avgLoss.value/100,w=winRate.value/100;
+let E=(w*p)-((1-w)*l);
 
-  let tradesPerPeriod, periods;
+let trades=frequency.value==="daily"?20:frequency.value==="weekly"?8:2;
+let periods=12;
 
-  if(freq==="daily"){ tradesPerPeriod=20; periods=12; }
-  if(freq==="weekly"){ tradesPerPeriod=8; periods=12; }
-  if(freq==="monthly"){ tradesPerPeriod=2; periods=12; }
+let periodReturnRate=E*trades;
+let turnover=capital*2;
+let charges=includeCharges.checked?chargesPerTrade(turnover)*trades:0;
 
-  let expectancy = (w*p) - ((1-w)*l);
-  let turnover = capital * 2;
-  let chargePerPeriod = include
-    ? chargesPerTrade(turnover) * tradesPerPeriod
-    : 0;
+let finalCap;
+if(compoundToggle.checked){
+finalCap=capital*Math.pow(1+periodReturnRate,periods)-(charges*periods);
+}else{
+finalCap=capital+(capital*periodReturnRate*periods)-(charges*periods);
+}
 
-  let finalCap = capital;
+let yearlyNet=finalCap-capital;
+let verdict=yearlyNet>0?"<span class='green'>Positive Expectancy</span>":"<span class='red'>Negative Expectancy</span>";
 
-  if(compound){
-    for(let i=0;i<periods;i++){
-      finalCap += (finalCap * expectancy * tradesPerPeriod) - chargePerPeriod;
-    }
-  } else {
-    finalCap += ((capital * expectancy * tradesPerPeriod) - chargePerPeriod) * periods;
-  }
-
-  let yearlyProfit = finalCap - capital;
-  let monthlyProfit = yearlyProfit / 12;
-
-  let verdict = yearlyProfit > 0
-    ? "<span class='green'>Positive Expectancy</span>"
-    : "<span class='red'>Negative Expectancy</span>";
-
-  resultBox.innerHTML = `
-    ${freq!=="monthly" ? `<p><strong>Monthly Net Profit:</strong> ${formatINR(monthlyProfit)}</p>` : ""}
-    <p><strong>Yearly Net Profit:</strong> ${formatINR(yearlyProfit)}</p>
-    <p><strong>Final Capital:</strong> ${formatINR(finalCap)}</p>
-    <p><strong>Total Charges Paid:</strong> ${formatINR(chargePerPeriod * periods)}</p>
-    <p><strong>Mode:</strong> ${compound ? "Compounded" : "Non-Compounded"}</p>
-    <p><strong>Verdict:</strong> ${verdict}</p>
-  `;
-
-  resultBox.style.display = "block";
+resultBox.innerHTML=`
+<p><strong>Yearly Net Profit:</strong> ${formatINR(yearlyNet)}</p>
+<p><strong>Final Capital:</strong> ${formatINR(finalCap)}</p>
+<p><strong>Total Charges Paid:</strong> ${formatINR(charges*periods)}</p>
+<p><strong>Mode:</strong> ${compoundToggle.checked?"Compounded":"Non-Compounded"}</p>
+<p><strong>Verdict:</strong> ${verdict}</p>
+`;
+resultBox.style.display="block";
 }
 </script>
 
