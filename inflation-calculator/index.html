@@ -4,85 +4,78 @@
 <meta charset="UTF-8">
 <title>Inflation Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Calculate how inflation reduces purchasing power and how much money you will need in future. Free Inflation Calculator for India.">
+<link rel="canonical" href="https://calcworld.in/inflation-calculator/">
 
 <style>
 body{
-  margin:0;
-  font-family:Arial, sans-serif;
+  font-family: Arial, sans-serif;
   background:#f6f7fb;
+  margin:0;
 }
 header{
   background:#fff;
-  padding:14px 22px;
-  border-bottom:1px solid #e5e7eb;
+  padding:14px 20px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
 }
 header a{
+  text-decoration:none;
   font-size:20px;
   font-weight:bold;
   color:#2563eb;
-  text-decoration:none;
-}
-.container{
-  max-width:420px;
-  margin:40px auto;
 }
 .card{
+  max-width:420px;
   background:#fff;
-  padding:26px;
-  border-radius:14px;
-  box-shadow:0 12px 30px rgba(0,0,0,0.08);
+  margin:40px auto;
+  padding:25px;
+  border-radius:12px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.08);
 }
 h1{
   text-align:center;
-  margin-top:0;
+  margin-bottom:25px;
 }
 label{
   font-weight:bold;
   display:block;
   margin-top:18px;
 }
+input[type="number"], input[type="range"]{
+  width:100%;
+  margin-top:6px;
+}
 .value{
   float:right;
-  color:#059669;
-}
-input[type=text]{
-  width:100%;
-  padding:10px;
-  margin-top:6px;
-  font-size:16px;
-}
-input[type=range]{
-  width:100%;
-}
-.result{
-  background:#f8fafc;
-  padding:16px;
-  border-radius:10px;
-  margin-top:20px;
-}
-.result div{
-  margin-bottom:8px;
-}
-.big{
-  font-size:22px;
+  color:#16a34a;
   font-weight:bold;
 }
-.note{
-  font-size:13px;
-  color:#555;
-  margin-top:10px;
+.result{
+  background:#f9fafb;
+  margin-top:25px;
+  padding:18px;
+  border-radius:10px;
+}
+.result h2{
+  margin:0;
+  color:#111;
+}
+hr{
+  margin:14px 0;
 }
 ul{
   padding-left:18px;
-  font-size:13px;
-}
-footer{
-  text-align:center;
-  margin-top:14px;
-}
-footer a{
-  color:#2563eb;
   font-size:14px;
+}
+a.link{
+  display:block;
+  margin-top:14px;
+  text-align:center;
+  color:#2563eb;
+  text-decoration:none;
+}
+small{
+  color:#555;
 }
 </style>
 </head>
@@ -93,127 +86,95 @@ footer a{
   <a href="/">CalcWorld</a>
 </header>
 
-<div class="container">
 <div class="card">
-
 <h1>Inflation Calculator</h1>
 
 <label>
 Amount Today (₹)
 <span class="value" id="amtLabel"></span>
 </label>
-<input type="text" id="amount" value="1,00,000">
-<input type="range" id="amtRange" min="1000" max="100000000" step="1000" value="100000">
+<input type="number" id="amount" min="100" max="10000000" step="100" value="100000">
+<input type="range" id="amountRange" min="100" max="10000000" step="100" value="100000">
 
 <label>
 Inflation Rate (% p.a.)
 <span class="value" id="rateLabel"></span>
 </label>
-<input type="range" id="rate" min="1" max="15" step="0.25" value="6">
+<input type="range" id="rate" min="1" max="15" step="0.1" value="6">
 
 <label>
 Time Period (Years)
 <span class="value" id="yearsLabel"></span>
 </label>
-<input type="range" id="years" min="1" max="50" value="20">
+<input type="range" id="years" min="1" max="50" step="1" value="20">
 
 <div class="result">
-  <div class="big">Future Value Needed</div>
-  <div class="big" id="futureValue">₹0</div>
-
+  <small>Amount needed in future to match today’s value</small>
+  <h2 id="futureValue"></h2>
   <hr>
-
-  <div>Loss of Purchasing Power:</div>
-  <div id="lossValue"></div>
-
-  <div class="note">
-    This means ₹<span id="todayVal"></span> today will feel like
-    ₹<span id="realVal"></span> after <span id="yrsTxt"></span> years.
-  </div>
+  <small>Purchasing Power Lost</small>
+  <h3 id="lossValue"></h3>
+  <small id="explain"></small>
 </div>
 
 <ul>
   <li>Inflation reduces purchasing power over time</li>
-  <li>Higher inflation → more money needed in future</li>
-  <li>This calculator shows <b>real value erosion</b></li>
+  <li>Higher inflation = more money needed in future</li>
+  <li>This calculator shows real value erosion</li>
 </ul>
 
-<footer>
-  <a href="/sip-calculator/">Check SIP needed to beat inflation →</a>
-</footer>
-
-</div>
+<a class="link" href="/sip-calculator/">Check SIP needed to beat inflation →</a>
 </div>
 
 <script>
+function formatINR(num){
+  return "₹" + Math.round(num).toLocaleString("en-IN");
+}
+
+function calculate(){
+  let amount = Number(amountInput.value);
+  let rate = Number(rateInput.value)/100;
+  let years = Number(yearsInput.value);
+
+  let future = amount * Math.pow(1+rate, years);
+  let loss = future - amount;
+
+  amtLabel.textContent = formatINR(amount);
+  rateLabel.textContent = (rate*100).toFixed(1) + "%";
+  yearsLabel.textContent = years + " years";
+
+  futureValue.textContent = formatINR(future);
+  lossValue.textContent = formatINR(loss);
+
+  explain.textContent =
+    `₹${amount.toLocaleString("en-IN")} today will feel like ${formatINR(future)} after ${years} years due to inflation.`;
+}
+
+/* Elements */
 const amountInput = document.getElementById("amount");
-const amtRange = document.getElementById("amtRange");
-const rate = document.getElementById("rate");
-const years = document.getElementById("years");
+const amountRange = document.getElementById("amountRange");
+const rateInput = document.getElementById("rate");
+const yearsInput = document.getElementById("years");
 
 const amtLabel = document.getElementById("amtLabel");
 const rateLabel = document.getElementById("rateLabel");
 const yearsLabel = document.getElementById("yearsLabel");
+const futureValue = document.getElementById("futureValue");
+const lossValue = document.getElementById("lossValue");
+const explain = document.getElementById("explain");
 
-const futureValueEl = document.getElementById("futureValue");
-const lossValueEl = document.getElementById("lossValue");
-const todayValEl = document.getElementById("todayVal");
-const realValEl = document.getElementById("realVal");
-const yrsTxtEl = document.getElementById("yrsTxt");
-
-function parseINR(v){
-  return Number(v.replace(/[^\d]/g,"")) || 0;
-}
-function formatINR(n){
-  return "₹" + Math.round(n).toLocaleString("en-IN");
-}
-function clamp(v,min,max){
-  return Math.min(Math.max(v,min),max);
-}
-
-/* typing: no formatting */
-amountInput.addEventListener("input",()=>{
-  let raw = parseINR(amountInput.value);
-  raw = clamp(raw,1000,100000000);
-  amtRange.value = raw;
+/* Sync inputs */
+amountInput.oninput = () => {
+  if(amountInput.value > 10000000) amountInput.value = 10000000;
+  amountRange.value = amountInput.value;
   calculate();
-});
-
-/* format on blur */
-amountInput.addEventListener("blur",()=>{
-  let v = clamp(parseINR(amountInput.value),1000,100000000);
-  amountInput.value = v.toLocaleString("en-IN");
-  amtRange.value = v;
+};
+amountRange.oninput = () => {
+  amountInput.value = amountRange.value;
   calculate();
-});
-
-/* slider */
-amtRange.addEventListener("input",()=>{
-  amountInput.value = Number(amtRange.value).toLocaleString("en-IN");
-  calculate();
-});
-
-[rate,years].forEach(el=>el.addEventListener("input",calculate));
-
-function calculate(){
-  const P = parseINR(amountInput.value);
-  const r = rate.value/100;
-  const y = years.value;
-
-  const future = P * Math.pow(1+r,y);
-  const loss = future - P;
-
-  amtLabel.textContent = formatINR(P);
-  rateLabel.textContent = rate.value + "%";
-  yearsLabel.textContent = y + " years";
-
-  futureValueEl.textContent = formatINR(future);
-  lossValueEl.textContent = formatINR(loss);
-
-  todayValEl.textContent = P.toLocaleString("en-IN");
-  realValEl.textContent = future.toLocaleString("en-IN");
-  yrsTxtEl.textContent = y;
-}
+};
+rateInput.oninput = calculate;
+yearsInput.oninput = calculate;
 
 calculate();
 </script>
