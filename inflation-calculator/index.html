@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Inflation Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#f6f7fb;
+}
+header{
+  background:#fff;
+  padding:14px 22px;
+  border-bottom:1px solid #e5e7eb;
+}
+header a{
+  font-size:20px;
+  font-weight:bold;
+  color:#2563eb;
+  text-decoration:none;
+}
+.container{
+  max-width:420px;
+  margin:40px auto;
+}
+.card{
+  background:#fff;
+  padding:26px;
+  border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.08);
+}
+h1{
+  text-align:center;
+  margin-top:0;
+}
+label{
+  font-weight:bold;
+  display:block;
+  margin-top:18px;
+}
+.value{
+  float:right;
+  color:#059669;
+}
+input[type=text]{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  font-size:16px;
+}
+input[type=range]{
+  width:100%;
+}
+.result{
+  background:#f8fafc;
+  padding:16px;
+  border-radius:10px;
+  margin-top:20px;
+}
+.result div{
+  margin-bottom:8px;
+}
+.big{
+  font-size:22px;
+  font-weight:bold;
+}
+.note{
+  font-size:13px;
+  color:#555;
+  margin-top:10px;
+}
+ul{
+  padding-left:18px;
+  font-size:13px;
+}
+footer{
+  text-align:center;
+  margin-top:14px;
+}
+footer a{
+  color:#2563eb;
+  font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <a href="/">CalcWorld</a>
+</header>
+
+<div class="container">
+<div class="card">
+
+<h1>Inflation Calculator</h1>
+
+<label>
+Amount Today (₹)
+<span class="value" id="amtLabel"></span>
+</label>
+<input type="text" id="amount" value="1,00,000">
+<input type="range" id="amtRange" min="1000" max="100000000" step="1000" value="100000">
+
+<label>
+Inflation Rate (% p.a.)
+<span class="value" id="rateLabel"></span>
+</label>
+<input type="range" id="rate" min="1" max="15" step="0.25" value="6">
+
+<label>
+Time Period (Years)
+<span class="value" id="yearsLabel"></span>
+</label>
+<input type="range" id="years" min="1" max="50" value="20">
+
+<div class="result">
+  <div class="big">Future Value Needed</div>
+  <div class="big" id="futureValue">₹0</div>
+
+  <hr>
+
+  <div>Loss of Purchasing Power:</div>
+  <div id="lossValue"></div>
+
+  <div class="note">
+    This means ₹<span id="todayVal"></span> today will feel like
+    ₹<span id="realVal"></span> after <span id="yrsTxt"></span> years.
+  </div>
+</div>
+
+<ul>
+  <li>Inflation reduces purchasing power over time</li>
+  <li>Higher inflation → more money needed in future</li>
+  <li>This calculator shows <b>real value erosion</b></li>
+</ul>
+
+<footer>
+  <a href="/sip-calculator/">Check SIP needed to beat inflation →</a>
+</footer>
+
+</div>
+</div>
+
+<script>
+const amountInput = document.getElementById("amount");
+const amtRange = document.getElementById("amtRange");
+const rate = document.getElementById("rate");
+const years = document.getElementById("years");
+
+const amtLabel = document.getElementById("amtLabel");
+const rateLabel = document.getElementById("rateLabel");
+const yearsLabel = document.getElementById("yearsLabel");
+
+const futureValueEl = document.getElementById("futureValue");
+const lossValueEl = document.getElementById("lossValue");
+const todayValEl = document.getElementById("todayVal");
+const realValEl = document.getElementById("realVal");
+const yrsTxtEl = document.getElementById("yrsTxt");
+
+function parseINR(v){
+  return Number(v.replace(/[^\d]/g,"")) || 0;
+}
+function formatINR(n){
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+function clamp(v,min,max){
+  return Math.min(Math.max(v,min),max);
+}
+
+/* typing: no formatting */
+amountInput.addEventListener("input",()=>{
+  let raw = parseINR(amountInput.value);
+  raw = clamp(raw,1000,100000000);
+  amtRange.value = raw;
+  calculate();
+});
+
+/* format on blur */
+amountInput.addEventListener("blur",()=>{
+  let v = clamp(parseINR(amountInput.value),1000,100000000);
+  amountInput.value = v.toLocaleString("en-IN");
+  amtRange.value = v;
+  calculate();
+});
+
+/* slider */
+amtRange.addEventListener("input",()=>{
+  amountInput.value = Number(amtRange.value).toLocaleString("en-IN");
+  calculate();
+});
+
+[rate,years].forEach(el=>el.addEventListener("input",calculate));
+
+function calculate(){
+  const P = parseINR(amountInput.value);
+  const r = rate.value/100;
+  const y = years.value;
+
+  const future = P * Math.pow(1+r,y);
+  const loss = future - P;
+
+  amtLabel.textContent = formatINR(P);
+  rateLabel.textContent = rate.value + "%";
+  yearsLabel.textContent = y + " years";
+
+  futureValueEl.textContent = formatINR(future);
+  lossValueEl.textContent = formatINR(loss);
+
+  todayValEl.textContent = P.toLocaleString("en-IN");
+  realValEl.textContent = future.toLocaleString("en-IN");
+  yrsTxtEl.textContent = y;
+}
+
+calculate();
+</script>
+
+</body>
+</html>
