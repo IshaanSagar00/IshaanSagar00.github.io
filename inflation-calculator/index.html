@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Inflation Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Calculate how inflation reduces purchasing power and how much money you will need in future. Free Inflation Calculator for India.">
+<meta name="description" content="Check how inflation reduces the value of money over time. See real purchasing power after inflation.">
 <link rel="canonical" href="https://calcworld.in/inflation-calculator/">
 
 <style>
@@ -34,7 +34,6 @@ header a{
 }
 h1{
   text-align:center;
-  margin-bottom:25px;
 }
 label{
   font-weight:bold;
@@ -58,7 +57,6 @@ input[type="number"], input[type="range"]{
 }
 .result h2{
   margin:0;
-  color:#111;
 }
 hr{
   margin:14px 0;
@@ -109,21 +107,21 @@ Time Period (Years)
 <input type="range" id="years" min="1" max="50" step="1" value="20">
 
 <div class="result">
-  <small>Amount needed in future to match today’s value</small>
+  <small>Future value of today’s money</small>
   <h2 id="futureValue"></h2>
   <hr>
-  <small>Purchasing Power Lost</small>
+  <small>Value lost due to inflation</small>
   <h3 id="lossValue"></h3>
   <small id="explain"></small>
 </div>
 
 <ul>
-  <li>Inflation reduces purchasing power over time</li>
-  <li>Higher inflation = more money needed in future</li>
-  <li>This calculator shows real value erosion</li>
+  <li>Inflation reduces purchasing power</li>
+  <li>Same money buys less in future</li>
+  <li>This shows real value, not returns</li>
 </ul>
 
-<a class="link" href="/sip-calculator/">Check SIP needed to beat inflation →</a>
+<a class="link" href="/sip-calculator/">See how SIP beats inflation →</a>
 </div>
 
 <script>
@@ -133,21 +131,21 @@ function formatINR(num){
 
 function calculate(){
   let amount = Number(amountInput.value);
-  let rate = Number(rateInput.value)/100;
+  let rate = Number(rateInput.value) / 100;
   let years = Number(yearsInput.value);
 
-  let future = amount * Math.pow(1+rate, years);
-  let loss = future - amount;
+  let futureRealValue = amount / Math.pow(1 + rate, years);
+  let valueLost = amount - futureRealValue;
 
   amtLabel.textContent = formatINR(amount);
-  rateLabel.textContent = (rate*100).toFixed(1) + "%";
+  rateLabel.textContent = (rate * 100).toFixed(1) + "%";
   yearsLabel.textContent = years + " years";
 
-  futureValue.textContent = formatINR(future);
-  lossValue.textContent = formatINR(loss);
+  futureValue.textContent = formatINR(futureRealValue);
+  lossValue.textContent = formatINR(valueLost);
 
   explain.textContent =
-    `₹${amount.toLocaleString("en-IN")} today will feel like ${formatINR(future)} after ${years} years due to inflation.`;
+    `₹${amount.toLocaleString("en-IN")} today will have the purchasing power of ${formatINR(futureRealValue)} after ${years} years.`;
 }
 
 /* Elements */
