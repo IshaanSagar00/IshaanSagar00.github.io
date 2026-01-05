@@ -5,8 +5,6 @@
 <title>Reality-Check Trading Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="description" content="Reality-check your trading strategy with realistic brokerage, charges and expectancy. Educational purpose only.">
-
 <style>
 body{font-family:Arial,sans-serif;background:#f6f7fb;margin:0}
 header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
@@ -93,7 +91,7 @@ button.main{
 <body>
 
 <header>
-  <a href="/trading-compounding-calculator/">← Trading Calculator</a>
+  <a href="/trading-calculator/">← Trading Calculator</a>
 </header>
 
 <div class="container">
@@ -121,29 +119,36 @@ button.main{
     <option value="monthly">Monthly</option>
   </select>
 
-  <!-- STATS -->
+  <!-- PROFIT -->
   <label>Average Profit per Trade (%)</label>
-  <input type="number" id="avgProfit" min="0.1" max="20" step="0.1" value="2">
+  <input type="number" id="avgProfit" min="0" max="20" step="0.1" value="2">
+  <input type="range" id="avgProfitRange" min="0" max="20" step="0.1" value="2">
 
   <label>Average Loss per Trade (%)</label>
-  <input type="number" id="avgLoss" min="0.1" max="20" step="0.1" value="1">
+  <input type="number" id="avgLoss" min="0" max="20" step="0.1" value="1">
+  <input type="range" id="avgLossRange" min="0" max="20" step="0.1" value="1">
 
   <label>Win Rate (%)</label>
-  <input type="number" id="winRate" min="30" max="80" step="1" value="55">
+  <input type="number" id="winRate" min="0" max="100" step="1" value="55">
+  <input type="range" id="winRateRange" min="0" max="100" step="1" value="55">
 
   <label>
     <input type="checkbox" id="includeCharges" checked>
     Include brokerage & statutory charges
   </label>
 
+  <label>
+    <input type="checkbox" id="compoundToggle">
+    Apply Compounding
+  </label>
+
   <button class="main" onclick="calculate()">Run Reality Check</button>
 
-  <!-- RESULT -->
   <div class="result" id="resultBox"></div>
 
   <div class="disclaimer">
-    <strong>Disclaimer:</strong> This calculator is for educational purposes only. Trading involves risk.
-    This is not investment advice and is not endorsed by SEBI.
+    <strong>Disclaimer:</strong> This calculator is for educational purposes only.
+    Trading involves risk. This is not investment advice and is not endorsed by SEBI.
   </div>
 </div>
 
@@ -155,29 +160,41 @@ function formatINR(n){
   return "₹" + Math.round(n).toLocaleString("en-IN");
 }
 
-const capDisplay = document.getElementById("capitalDisplay");
-const capRange = document.getElementById("capitalRange");
-
-capRange.oninput = () => {
-  capital = parseInt(capRange.value);
-  capDisplay.value = formatINR(capital);
+/* CAPITAL SYNC */
+capitalRange.oninput = () => {
+  capital = parseInt(capitalRange.value);
+  capitalDisplay.value = formatINR(capital);
 };
-
-capDisplay.onblur = () => {
+capitalDisplay.onblur = () => {
   capital = Math.min(1000000, Math.max(1000,
-    parseInt(capDisplay.value.replace(/[^0-9]/g,"")) || 1000));
-  capRange.value = capital;
-  capDisplay.value = formatINR(capital);
+    parseInt(capitalDisplay.value.replace(/[^0-9]/g,"")) || 1000));
+  capitalRange.value = capital;
+  capitalDisplay.value = formatINR(capital);
 };
 
+/* SEGMENT */
 function setSegment(s){
   segment = s;
-  ["deliveryBtn","intradayBtn","fnoBtn"].forEach(id=>document.getElementById(id).classList.remove("active"));
+  ["deliveryBtn","intradayBtn","fnoBtn"].forEach(id =>
+    document.getElementById(id).classList.remove("active"));
   document.getElementById(s+"Btn").classList.add("active");
 }
 
+/* SLIDER SYNC */
+function syncPair(input, range, min, max){
+  input.oninput = () => {
+    input.value = Math.min(max, Math.max(min, input.value));
+    range.value = input.value;
+  };
+  range.oninput = () => input.value = range.value;
+}
+syncPair(avgProfit, avgProfitRange, 0, 20);
+syncPair(avgLoss, avgLossRange, 0, 20);
+syncPair(winRate, winRateRange, 0, 100);
+
+/* CHARGES ENGINE */
 function chargesPerTrade(turnover){
-  let exchange, sebi, gst, stamp, stt, brokerage=0;
+  let exchange=0, sebi=0, gst=0, stamp=0, stt=0, brokerage=0;
 
   if(segment==="delivery"){
     stt = 0.001 * turnover;
@@ -208,40 +225,53 @@ function chargesPerTrade(turnover){
   return brokerage + stt + exchange + sebi + stamp + gst;
 }
 
+/* MAIN CALCULATION */
 function calculate(){
-  const freq = document.getElementById("frequency").value;
+  const freq = frequency.value;
   const p = avgProfit.value/100;
   const l = avgLoss.value/100;
   const w = winRate.value/100;
   const include = includeCharges.checked;
+  const compound = compoundToggle.checked;
 
-  let trades;
-  if(freq==="daily") trades = 20;
-  if(freq==="weekly") trades = 8;
-  if(freq==="monthly") trades = 12;
+  let tradesPerPeriod, periods;
+
+  if(freq==="daily"){ tradesPerPeriod=20; periods=12; }
+  if(freq==="weekly"){ tradesPerPeriod=8; periods=12; }
+  if(freq==="monthly"){ tradesPerPeriod=2; periods=12; }
 
   let expectancy = (w*p) - ((1-w)*l);
-  let gross = capital * expectancy * trades;
   let turnover = capital * 2;
-  let charges = include ? chargesPerTrade(turnover) * trades : 0;
+  let chargePerPeriod = include
+    ? chargesPerTrade(turnover) * tradesPerPeriod
+    : 0;
 
-  let net = gross - charges;
-  let yearlyNet = freq==="monthly" ? net : net * (freq==="weekly"?4:12);
-  let finalCap = capital + yearlyNet;
+  let finalCap = capital;
 
-  let verdict = yearlyNet > 0
-    ? `<span class="green">Positive Expectancy</span>`
-    : `<span class="red">Negative Expectancy</span>`;
+  if(compound){
+    for(let i=0;i<periods;i++){
+      finalCap += (finalCap * expectancy * tradesPerPeriod) - chargePerPeriod;
+    }
+  } else {
+    finalCap += ((capital * expectancy * tradesPerPeriod) - chargePerPeriod) * periods;
+  }
 
-  let html = `
-    ${freq!=="monthly" ? `<p><strong>Monthly Net Profit:</strong> ${formatINR(net)}</p>` : ""}
-    <p><strong>Yearly Net Profit:</strong> ${formatINR(yearlyNet)}</p>
+  let yearlyProfit = finalCap - capital;
+  let monthlyProfit = yearlyProfit / 12;
+
+  let verdict = yearlyProfit > 0
+    ? "<span class='green'>Positive Expectancy</span>"
+    : "<span class='red'>Negative Expectancy</span>";
+
+  resultBox.innerHTML = `
+    ${freq!=="monthly" ? `<p><strong>Monthly Net Profit:</strong> ${formatINR(monthlyProfit)}</p>` : ""}
+    <p><strong>Yearly Net Profit:</strong> ${formatINR(yearlyProfit)}</p>
     <p><strong>Final Capital:</strong> ${formatINR(finalCap)}</p>
-    <p><strong>Total Charges Paid:</strong> ${formatINR(charges*(freq==="monthly"?1:(freq==="weekly"?4:12)))}</p>
+    <p><strong>Total Charges Paid:</strong> ${formatINR(chargePerPeriod * periods)}</p>
+    <p><strong>Mode:</strong> ${compound ? "Compounded" : "Non-Compounded"}</p>
     <p><strong>Verdict:</strong> ${verdict}</p>
   `;
 
-  resultBox.innerHTML = html;
   resultBox.style.display = "block";
 }
 </script>
