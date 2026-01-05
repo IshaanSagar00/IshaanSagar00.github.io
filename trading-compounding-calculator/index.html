@@ -21,7 +21,6 @@ button{width:100%;margin-top:18px;padding:12px;font-size:16px;border:none;border
 .green{color:#16a34a;font-weight:bold}
 .small{font-size:12px;color:#555;margin-top:10px}
 .disclaimer{margin-top:18px;padding:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:12px;color:#7c2d12}
-.hidden{display:none}
 </style>
 </head>
 
@@ -53,11 +52,19 @@ button{width:100%;margin-top:18px;padding:12px;font-size:16px;border:none;border
   </select>
 
   <button onclick="calculate()">Calculate Growth</button>
-  <button class="secondary" onclick="toggleReality()">Reality-Check Mode</button>
 
-  <!-- Normal Results -->
+  <!-- ✅ WORKING REALITY CHECK BUTTON -->
+  <a href="/trading-compounding-calculator/reality-check.html"
+     style="text-decoration:none; display:block;">
+    <button class="secondary" type="button">
+      Reality-Check Mode
+    </button>
+  </a>
+
+  <!-- Results -->
   <div class="result" id="result">
     <h3>Results</h3>
+
     <p><strong>After 1 Week</strong><br>
     Capital: <span class="green" id="weekFinal"></span><br>
     Profit: <span class="green" id="weekProfit"></span></p>
@@ -70,27 +77,6 @@ button{width:100%;margin-top:18px;padding:12px;font-size:16px;border:none;border
     Capital: <span class="green" id="yearFinal"></span><br>
     Profit: <span class="green" id="yearProfit"></span><br>
     Growth Multiple: <span id="multiple"></span></p>
-  </div>
-
-  <!-- Reality Mode -->
-  <div class="result hidden" id="reality">
-    <h3>Reality-Check Mode</h3>
-
-    <label>Win Rate (%)</label>
-    <input type="number" id="winRate" value="55">
-
-    <label>Avg Win (%)</label>
-    <input type="number" id="avgWin" value="2">
-
-    <label>Avg Loss (%)</label>
-    <input type="number" id="avgLoss" value="1">
-
-    <label>Trades per Month</label>
-    <input type="number" id="trades" value="20">
-
-    <button onclick="calculateReality()">Simulate Realistic Growth</button>
-
-    <p class="small" id="realityResult"></p>
   </div>
 
   <!-- Disclaimer -->
@@ -150,26 +136,6 @@ function calculate(){
   multiple.innerText=(y/capitalValue).toFixed(2)+"×";
 
   result.style.display="block";
-  reality.classList.add("hidden");
-}
-
-function toggleReality(){
-  result.style.display="none";
-  reality.classList.toggle("hidden");
-}
-
-function calculateReality(){
-  let win=winRate.value/100;
-  let aw=avgWin.value/100;
-  let al=avgLoss.value/100;
-  let t=trades.value;
-
-  let expectancy=(win*aw)-((1-win)*al);
-  let monthly=capitalValue*Math.pow(1+expectancy,t);
-
-  realityResult.innerText =
-    "Estimated Capital after 1 Month: " + formatINR(monthly) +
-    " (based on statistical expectancy)";
 }
 </script>
 
