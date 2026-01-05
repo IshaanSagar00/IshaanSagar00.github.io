@@ -4,26 +4,43 @@
 <meta charset="UTF-8">
 <title>Trading Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="See how daily trading profits compound monthly and yearly assuming real trading days.">
+<meta name="description" content="Trading calculator to estimate weekly, monthly and yearly profits based on daily, weekly or monthly trading returns.">
 
 <style>
 body{
   font-family:Arial, sans-serif;
   background:#f6f7fb;
-  padding:20px;
+  margin:0;
+  padding:0;
 }
+
+header{
+  background:#fff;
+  padding:14px 24px;
+  box-shadow:0 2px 4px rgba(0,0,0,0.05);
+}
+header a{
+  text-decoration:none;
+  color:#2563eb;
+  font-size:20px;
+  font-weight:bold;
+}
+
 .container{
   max-width:520px;
-  margin:auto;
+  margin:40px auto;
   background:#fff;
   padding:22px;
   border-radius:12px;
   box-shadow:0 10px 25px rgba(0,0,0,.08);
 }
+
 h1{font-size:22px;margin-bottom:6px}
 p.sub{font-size:14px;color:#555;margin-bottom:20px}
+
 label{font-size:14px;margin-top:14px;display:block}
-input{
+
+input,select{
   width:100%;
   padding:10px;
   font-size:16px;
@@ -31,6 +48,7 @@ input{
   border-radius:8px;
   border:1px solid #ccc;
 }
+
 button{
   width:100%;
   margin-top:18px;
@@ -42,12 +60,15 @@ button{
   color:#fff;
   cursor:pointer;
 }
+
 .result{
   margin-top:22px;
   background:#f1f5ff;
   padding:16px;
   border-radius:10px;
+  display:none;
 }
+
 .result h2{font-size:18px;margin-bottom:10px}
 .result div{margin:6px 0;font-size:15px}
 .green{color:#16a34a;font-weight:bold}
@@ -57,35 +78,52 @@ button{
 
 <body>
 
+<header>
+  <a href="/">CalcWorld</a>
+</header>
+
 <div class="container">
-  <h1>Trading Compounding Calculator</h1>
-  <p class="sub">Assuming daily profits compounded over real trading days.</p>
+  <h1>Trading Calculator</h1>
+  <p class="sub">Estimate trading profits based on daily, weekly or monthly returns.</p>
 
   <label>Starting Capital (₹)</label>
   <input type="number" id="capital" value="10000" min="1">
 
-  <label>Daily Profit Percentage (%)</label>
+  <label>Profit Percentage (%)</label>
   <input type="number" id="rate" value="3" step="0.01" min="0">
+
+  <label>Profit Frequency</label>
+  <select id="frequency">
+    <option value="daily">Daily</option>
+    <option value="weekly">Weekly</option>
+    <option value="monthly">Monthly</option>
+  </select>
 
   <button onclick="calculate()">Calculate Growth</button>
 
-  <div class="result" id="result" style="display:none">
+  <div class="result" id="result">
     <h2>Results</h2>
 
-    <div><strong>After 1 Month (21 trading days)</strong></div>
+    <div><strong>After 1 Week</strong></div>
+    <div>Capital: <span class="green" id="weekFinal"></span></div>
+    <div>Profit: <span class="green" id="weekProfit"></span></div>
+
+    <br>
+
+    <div><strong>After 1 Month</strong></div>
     <div>Capital: <span class="green" id="monthFinal"></span></div>
     <div>Profit: <span class="green" id="monthProfit"></span></div>
 
     <br>
 
-    <div><strong>After 1 Year (250 trading days)</strong></div>
+    <div><strong>After 1 Year</strong></div>
     <div>Capital: <span class="green" id="yearFinal"></span></div>
     <div>Profit: <span class="green" id="yearProfit"></span></div>
     <div>Growth Multiple: <span id="multiple"></span></div>
 
     <p class="small">
-      * Assumes profits are compounded daily.<br>
-      * Weekends and market holidays already excluded.
+      * Uses real trading days (5 / 21 / 250)<br>
+      * Weekends & market holidays excluded
     </p>
   </div>
 </div>
@@ -98,19 +136,32 @@ function formatINR(num){
 function calculate(){
   let capital = parseFloat(document.getElementById("capital").value);
   let rate = parseFloat(document.getElementById("rate").value) / 100;
+  let freq = document.getElementById("frequency").value;
 
-  let monthDays = 21;
-  let yearDays = 250;
+  let dailyRate = rate;
 
-  let monthFinal = capital * Math.pow(1 + rate, monthDays);
-  let yearFinal  = capital * Math.pow(1 + rate, yearDays);
+  if(freq === "weekly"){
+    dailyRate = Math.pow(1 + rate, 1/5) - 1;
+  }
+  if(freq === "monthly"){
+    dailyRate = Math.pow(1 + rate, 1/21) - 1;
+  }
+
+  let weekFinal  = capital * Math.pow(1 + dailyRate, 5);
+  let monthFinal = capital * Math.pow(1 + dailyRate, 21);
+  let yearFinal  = capital * Math.pow(1 + dailyRate, 250);
+
+  document.getElementById("weekFinal").innerText = formatINR(weekFinal);
+  document.getElementById("weekProfit").innerText = formatINR(weekFinal - capital);
 
   document.getElementById("monthFinal").innerText = formatINR(monthFinal);
   document.getElementById("monthProfit").innerText = formatINR(monthFinal - capital);
 
   document.getElementById("yearFinal").innerText = formatINR(yearFinal);
   document.getElementById("yearProfit").innerText = formatINR(yearFinal - capital);
-  document.getElementById("multiple").innerText = (yearFinal / capital).toFixed(2) + "×";
+
+  document.getElementById("multiple").innerText =
+    (yearFinal / capital).toFixed(2) + "×";
 
   document.getElementById("result").style.display = "block";
 }
