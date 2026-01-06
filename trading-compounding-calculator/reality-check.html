@@ -3,28 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <title>Reality-Check Trading Calculator | CalcWorld</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{font-family:Arial;background:#f6f7fb;margin:0}
-.container{max-width:520px;margin:40px auto;background:#fff;
-padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
+
+.container{max-width:560px;margin:40px auto;background:#fff;
+padding:22px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+
 label{display:block;margin-top:14px;font-size:14px}
 input,select{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #ccc}
+input[type=range]{padding:0}
+
 button{width:100%;margin-top:20px;padding:12px;font-size:16px;
 border:none;border-radius:10px;background:#2563eb;color:#fff}
-.result{margin-top:20px;background:#f1f5ff;padding:14px;border-radius:10px;display:none}
+
+.result{margin-top:20px;background:#f1f5ff;padding:16px;border-radius:10px;display:none}
 .green{color:#16a34a;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
+
+.disclaimer{margin-top:20px;padding:12px;background:#fff7ed;border:1px solid #fed7aa;
+border-radius:8px;font-size:12px;color:#7c2d12}
 </style>
 </head>
 
 <body>
+
+<header>
+  <a href="/">CalcWorld</a>
+</header>
+
 <div class="container">
 <h2>Reality-Check Trading Calculator</h2>
 
 <label>Starting Capital (₹)</label>
 <input type="number" id="capital" value="100000" min="1000" max="1000000">
+<input type="range" min="1000" max="1000000" step="1000" value="100000"
+oninput="capital.value=this.value">
 
 <label>Trading Segment</label>
 <select id="segment">
@@ -32,89 +49,122 @@ border:none;border-radius:10px;background:#2563eb;color:#fff}
   <option value="fno">F&O – Intraday</option>
 </select>
 
+<label>Trade Frequency</label>
+<select id="frequency">
+  <option value="daily">Daily</option>
+  <option value="weekly">Weekly</option>
+  <option value="monthly">Monthly</option>
+</select>
+
 <label>Average Profit per Trade (%)</label>
-<input type="number" id="profit" value="3" min="0" max="20">
+<input type="number" id="profit" min="0" max="20" step="0.1" value="3">
+<input type="range" min="0" max="20" step="0.1" value="3"
+oninput="profit.value=this.value">
 
 <label>Average Loss per Trade (%)</label>
-<input type="number" id="loss" value="1" min="0" max="20">
+<input type="number" id="loss" min="0" max="20" step="0.1" value="1">
+<input type="range" min="0" max="20" step="0.1" value="1"
+oninput="loss.value=this.value">
 
 <label>Win Rate (%)</label>
-<input type="number" id="win" value="55" min="0" max="100">
+<input type="number" id="win" min="0" max="100" value="55">
+<input type="range" min="0" max="100" value="55"
+oninput="win.value=this.value">
 
-<label><input type="checkbox" id="charges" checked> Include charges</label>
+<label><input type="checkbox" id="charges" checked> Include brokerage & statutory charges</label>
 <label><input type="checkbox" id="compound" checked> Apply compounding</label>
+<label><input type="checkbox" id="probMode"> Probability (simulation) mode</label>
 
 <button onclick="run()">Run Reality Check</button>
 
 <div class="result" id="out"></div>
+
+<div class="disclaimer">
+<strong>Disclaimer:</strong> This calculator is for educational purposes only.
+Results depend entirely on inputs provided by the user.
+Trading involves risk. Past performance does not guarantee future results.
+This tool is not SEBI endorsed.
+</div>
 </div>
 
 <script>
 function chargePerTrade(cap, seg){
-  let broker=0, stt=0, ex=0, sebi=0, gst=0;
-
+  let t = cap*2, ch = 0;
   if(seg==="intraday"){
-    broker=Math.min(0.0003*cap,40);
-    stt=0.00025*(cap/2);
-    ex=0.0000325*cap;
-    sebi=(10/10000000)*cap;
-    gst=0.18*(broker+ex+sebi);
+    ch += Math.min(0.0003*t,40);
+    ch += 0.00025*(t/2);
+    ch += 0.0000325*t;
+    ch += (10/10000000)*t;
+    ch += 0.18*(ch);
+    ch += 0.00003*(t/2);
   }
-
   if(seg==="fno"){
-    broker=40;
-    stt=0.0001*(cap/2);
-    ex=0.00002*cap;
-    sebi=(10/10000000)*cap;
-    gst=0.18*(broker+ex+sebi);
+    ch += 40;
+    ch += 0.0001*(t/2);
+    ch += 0.00002*t;
+    ch += (10/10000000)*t;
+    ch += 0.18*(ch);
+    ch += 0.00002*(t/2);
+  }
+  return ch;
+}
+
+function runSimulation(randomize){
+  let cap = +capital.value;
+  let base = cap;
+  let p = profit.value/100;
+  let l = loss.value/100;
+  let w = win.value/100;
+
+  let trades =
+    frequency.value==="daily" ? 250 :
+    frequency.value==="weekly" ? 50 : 12;
+
+  let ruinLevel = base * 0.2;
+  let ruined = false;
+  let totalCharges = 0;
+
+  for(let i=0;i<trades;i++){
+    let isWin = randomize ? Math.random()<w : true;
+    let pnlPct = randomize
+      ? (isWin ? p : -l)
+      : ((w*p)-((1-w)*l));
+
+    let gross = cap * pnlPct;
+    let ch = charges.checked ? chargePerTrade(cap, segment.value) : 0;
+    let net = gross - ch;
+
+    totalCharges += ch;
+    if(compound.checked) cap += net;
+
+    if(cap <= ruinLevel) ruined = true;
   }
 
-  return broker+stt+ex+sebi+gst;
+  return {cap, pnl:cap-base, ruined, charges:totalCharges};
 }
 
 function run(){
-  let capital=+document.getElementById("capital").value;
-  let baseCapital=capital;
-
-  let p=+profit.value/100;
-  let l=+loss.value/100;
-  let w=+win.value/100;
-
-  let E=(w*p)-((1-w)*l);
-  let days=250;
-  let totalCharges=0;
-  let totalPnL=0;
-
-  for(let i=0;i<days;i++){
-    let gross=capital*E;
-    let ch=charges.checked ? chargePerTrade(capital,segment.value) : 0;
-    let net=gross-ch;
-
-    totalCharges+=ch;
-
-    if(compound.checked){
-      capital+=net;
-    } else {
-      totalPnL+=net;
+  if(!probMode.checked){
+    let r = runSimulation(false);
+    out.innerHTML = `
+      <p><strong>Yearly Net Profit:</strong> ₹${r.pnl.toLocaleString("en-IN")}</p>
+      <p><strong>Final Capital:</strong> ₹${r.cap.toLocaleString("en-IN")}</p>
+      <p><strong>Total Charges Paid:</strong> ₹${r.charges.toLocaleString("en-IN")}</p>
+      <p><strong>Mode:</strong> Deterministic</p>
+    `;
+  } else {
+    let blow=0;
+    for(let i=0;i<100;i++){
+      if(runSimulation(true).ruined) blow++;
     }
+    out.innerHTML = `
+      <p><strong>Probability of Blowing Account:</strong>
+      <span class="${blow>50?'red':'green'}">${blow}%</span></p>
+    `;
   }
-
-  if(!compound.checked){
-    capital=baseCapital+totalPnL;
-  }
-
-  let profitYear=capital-baseCapital;
-
-  out.innerHTML=`
-    <p><strong>Yearly Net Profit:</strong> ₹${Math.round(profitYear).toLocaleString("en-IN")}</p>
-    <p><strong>Final Capital:</strong> ₹${Math.round(capital).toLocaleString("en-IN")}</p>
-    <p><strong>Total Charges Paid:</strong> ₹${Math.round(totalCharges).toLocaleString("en-IN")}</p>
-    <p><strong>Verdict:</strong>
-      ${profitYear>0?'<span class="green">Positive Expectancy</span>':'<span class="red">Negative Expectancy</span>'}
-    </p>
-  `;
   out.style.display="block";
 }
 </script>
+
 </body>
 </html>
