@@ -3,200 +3,118 @@
 <head>
 <meta charset="UTF-8">
 <title>Reality-Check Trading Calculator | CalcWorld</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{font-family:Arial,sans-serif;background:#f6f7fb;margin:0}
-header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
-
-.container{
-  max-width:560px;margin:40px auto;background:#fff;
-  padding:22px;border-radius:12px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08)
-}
-
-label{margin-top:14px;display:block;font-size:14px}
+body{font-family:Arial;background:#f6f7fb;margin:0}
+.container{max-width:520px;margin:40px auto;background:#fff;
+padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+label{display:block;margin-top:14px;font-size:14px}
 input,select{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #ccc}
-input[type=range]{padding:0}
-
-.segment{display:flex;gap:8px;margin-top:10px}
-.segment button{flex:1;padding:10px;border-radius:8px;border:1px solid #ddd;background:#fff}
-.segment button.active{background:#e0f2fe;border-color:#2563eb;color:#2563eb;font-weight:bold}
-
-button.main{
-  width:100%;margin-top:20px;padding:12px;font-size:16px;
-  border:none;border-radius:10px;background:#2563eb;color:#fff
-}
-
-.result{
-  margin-top:22px;background:#f1f5ff;padding:16px;
-  border-radius:10px;display:none
-}
+button{width:100%;margin-top:20px;padding:12px;font-size:16px;
+border:none;border-radius:10px;background:#2563eb;color:#fff}
+.result{margin-top:20px;background:#f1f5ff;padding:14px;border-radius:10px;display:none}
 .green{color:#16a34a;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
-
-.disclaimer{
-  margin-top:20px;padding:12px;background:#fff7ed;
-  border:1px solid #fed7aa;border-radius:8px;
-  font-size:12px;color:#7c2d12
-}
 </style>
 </head>
 
 <body>
-
-<header>
-  <a href="/trading-calculator/">← Trading Calculator</a>
-</header>
-
 <div class="container">
 <h2>Reality-Check Trading Calculator</h2>
 
 <label>Starting Capital (₹)</label>
-<input type="text" id="capitalDisplay" value="₹1,00,000">
-<input type="range" id="capitalRange" min="1000" max="1000000" step="1000" value="100000">
+<input type="number" id="capital" value="100000" min="1000" max="1000000">
 
 <label>Trading Segment</label>
-<div class="segment">
-  <button id="intradayBtn" class="active" onclick="setSegment('intraday')">Equity – Intraday</button>
-  <button id="fnoBtn" onclick="setSegment('fno')">F&O – Intraday</button>
-</div>
-
-<label>Profit / Loss Frequency</label>
-<select id="frequency">
-  <option value="daily">Daily</option>
-  <option value="weekly">Weekly</option>
-  <option value="monthly">Monthly</option>
+<select id="segment">
+  <option value="intraday">Equity – Intraday</option>
+  <option value="fno">F&O – Intraday</option>
 </select>
 
 <label>Average Profit per Trade (%)</label>
-<input type="number" id="avgProfit" min="0" max="20" step="0.1" value="3">
-<input type="range" id="avgProfitRange" min="0" max="20" step="0.1" value="3">
+<input type="number" id="profit" value="3" min="0" max="20">
 
 <label>Average Loss per Trade (%)</label>
-<input type="number" id="avgLoss" min="0" max="20" step="0.1" value="1">
-<input type="range" id="avgLossRange" min="0" max="20" step="0.1" value="1">
+<input type="number" id="loss" value="1" min="0" max="20">
 
 <label>Win Rate (%)</label>
-<input type="number" id="winRate" min="0" max="100" step="1" value="55">
-<input type="range" id="winRateRange" min="0" max="100" step="1" value="55">
+<input type="number" id="win" value="55" min="0" max="100">
 
-<label><input type="checkbox" id="includeCharges" checked> Include charges</label>
-<label><input type="checkbox" id="compoundToggle" checked> Apply Compounding</label>
+<label><input type="checkbox" id="charges" checked> Include charges</label>
+<label><input type="checkbox" id="compound" checked> Apply compounding</label>
 
-<button class="main" onclick="calculate()">Run Reality Check</button>
+<button onclick="run()">Run Reality Check</button>
 
-<div class="result" id="resultBox"></div>
-
-<div class="disclaimer">
-This calculator is for educational purposes only. Trading involves risk.
-Not SEBI endorsed.
-</div>
+<div class="result" id="out"></div>
 </div>
 
 <script>
-let capital=100000,segment="intraday";
+function chargePerTrade(cap, seg){
+  let broker=0, stt=0, ex=0, sebi=0, gst=0;
 
-function formatINR(n){
-  return "₹"+Math.round(n).toLocaleString("en-IN");
-}
-
-/* Capital sync */
-capitalRange.oninput=()=>{
-  capital=parseInt(capitalRange.value);
-  capitalDisplay.value=formatINR(capital);
-};
-capitalDisplay.onblur=()=>{
-  capital=parseInt(capitalDisplay.value.replace(/[^0-9]/g,""))||1000;
-  capitalRange.value=capital;
-  capitalDisplay.value=formatINR(capital);
-};
-
-/* Sliders sync */
-function sync(num,range,min,max){
-  num.oninput=()=>{num.value=Math.min(max,Math.max(min,num.value));range.value=num.value;}
-  range.oninput=()=>num.value=range.value;
-}
-sync(avgProfit,avgProfitRange,0,20);
-sync(avgLoss,avgLossRange,0,20);
-sync(winRate,winRateRange,0,100);
-
-/* Segment */
-function setSegment(s){
-  segment=s;
-  intradayBtn.classList.remove("active");
-  fnoBtn.classList.remove("active");
-  document.getElementById(s+"Btn").classList.add("active");
-}
-
-/* Charges per trade (notional based) */
-function chargesPerTrade(notional){
-  let broker=0,stt=0,ex=0,sebi=0,stamp=0,gst=0;
-
-  if(segment==="intraday"){
-    broker=Math.min(0.0003*notional,40);
-    stt=0.00025*(notional/2);
-    ex=0.0000325*notional;
-    sebi=(10/10000000)*notional;
-    stamp=0.00003*(notional/2);
+  if(seg==="intraday"){
+    broker=Math.min(0.0003*cap,40);
+    stt=0.00025*(cap/2);
+    ex=0.0000325*cap;
+    sebi=(10/10000000)*cap;
     gst=0.18*(broker+ex+sebi);
   }
 
-  if(segment==="fno"){
+  if(seg==="fno"){
     broker=40;
-    stt=0.0001*(notional/2);
-    ex=0.00002*notional;
-    sebi=(10/10000000)*notional;
-    stamp=0.00002*(notional/2);
+    stt=0.0001*(cap/2);
+    ex=0.00002*cap;
+    sebi=(10/10000000)*cap;
     gst=0.18*(broker+ex+sebi);
   }
 
-  return broker+stt+ex+sebi+stamp+gst;
+  return broker+stt+ex+sebi+gst;
 }
 
-function calculate(){
-  let p=avgProfit.value/100;
-  let l=avgLoss.value/100;
-  let w=winRate.value/100;
+function run(){
+  let capital=+document.getElementById("capital").value;
+  let baseCapital=capital;
 
-  let trades =
-    frequency.value==="daily"?20:
-    frequency.value==="weekly"?8:2;
+  let p=+profit.value/100;
+  let l=+loss.value/100;
+  let w=+win.value/100;
 
   let E=(w*p)-((1-w)*l);
-
-  let curCapital=capital;
+  let days=250;
   let totalCharges=0;
+  let totalPnL=0;
 
-  for(let m=1;m<=12;m++){
-    let notional=curCapital;
-    let gross=curCapital*E*trades;
-    let charges=includeCharges.checked?chargesPerTrade(notional)*trades:0;
-    let net=gross-charges;
+  for(let i=0;i<days;i++){
+    let gross=capital*E;
+    let ch=charges.checked ? chargePerTrade(capital,segment.value) : 0;
+    let net=gross-ch;
 
-    totalCharges+=charges;
-    if(compoundToggle.checked){
-      curCapital+=net;
+    totalCharges+=ch;
+
+    if(compound.checked){
+      capital+=net;
+    } else {
+      totalPnL+=net;
     }
   }
 
-  let yearlyNet=curCapital-capital;
+  if(!compound.checked){
+    capital=baseCapital+totalPnL;
+  }
 
-  resultBox.innerHTML=`
-    <p><strong>Yearly Net Profit:</strong> ${formatINR(yearlyNet)}</p>
-    <p><strong>Final Capital:</strong> ${formatINR(curCapital)}</p>
-    <p><strong>Total Charges Paid:</strong> ${formatINR(totalCharges)}</p>
-    <p><strong>Mode:</strong> ${compoundToggle.checked?"Compounded":"Non-Compounded"}</p>
+  let profitYear=capital-baseCapital;
+
+  out.innerHTML=`
+    <p><strong>Yearly Net Profit:</strong> ₹${Math.round(profitYear).toLocaleString("en-IN")}</p>
+    <p><strong>Final Capital:</strong> ₹${Math.round(capital).toLocaleString("en-IN")}</p>
+    <p><strong>Total Charges Paid:</strong> ₹${Math.round(totalCharges).toLocaleString("en-IN")}</p>
     <p><strong>Verdict:</strong>
-      ${yearlyNet>0
-        ?"<span class='green'>Positive Expectancy</span>"
-        :"<span class='red'>Negative Expectancy</span>"}
+      ${profitYear>0?'<span class="green">Positive Expectancy</span>':'<span class="red">Negative Expectancy</span>'}
     </p>
   `;
-  resultBox.style.display="block";
+  out.style.display="block";
 }
 </script>
-
 </body>
 </html>
