@@ -1,86 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Reality-Check Trading Calculator | CalcWorld</title>
+<meta charset="UTF-8">
+<title>Reality-Check Trading Calculator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body{font-family:Arial,sans-serif;background:#f6f7fb;margin:0}
-header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
-.container{max-width:600px;margin:30px auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
-h1{font-size:22px;margin-bottom:8px}
-label{display:block;margin-top:16px;font-size:14px}
-input,select{width:100%;padding:10px;font-size:15px;margin-top:6px;border:1px solid #ccc;border-radius:8px}
-input[type=range]{padding:0}
-button{width:100%;padding:12px;margin-top:22px;font-size:16px;border:none;border-radius:10px;background:#2563eb;color:#fff;cursor:pointer}
-.result{margin-top:22px;background:#f1f5ff;padding:16px;border-radius:10px;display:none}
-.green{color:#059669;font-weight:bold}
-.red{color:#dc2626;font-weight:bold}
-.small{font-size:12px;color:#555;margin-top:14px}
+body{font-family:sans-serif;background:#f6f8ff;margin:0;padding:20px;display:flex;justify-content:center}
+#app{max-width:520px;width:100%;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+h2{margin-top:0}
+label{display:block;margin-top:12px;font-weight:600}
+input,select{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-top:4px}
+.range-wrap{margin-top:4px}
+button{width:100%;padding:12px;background:#1e63ff;color:white;border:none;font-size:17px;border-radius:6px;margin-top:20px;cursor:pointer}
+button:hover{background:#003fe0}
+.output{background:#eef4ff;padding:18px;margin-top:20px;border-radius:8px;display:none}
+.red{color:#cf0000}
+.green{color:#008f00}
+.disclaimer{font-size:12px;margin-top:20px;color:#444}
 </style>
 </head>
 
 <body>
-
-<header><a href="/">CalcWorld</a></header>
-
-<div class="container">
-<h1>Reality-Check Trading Calculator</h1>
-<p style="font-size:13px;color:#555">
-Deterministic brokerage-aware compounding under SEBI peak-margin regime.
-</p>
+<div id="app">
+<h2>Reality-Check Trading Calculator</h2>
+<p style="margin-top:-8px;font-size:13px;">Deterministic brokerage-aware compounding under SEBI peak-margin rules.</p>
 
 <label>Starting Capital (₹)</label>
-<input id="capital" type="text" value="₹10,00,000">
-<input id="capRange" type="range" min="10000" max="10000000" step="10000" value="1000000">
+<input id="capital" value="₹1,00,000">
+<input id="capRange" type="range" min="10000" max="10000000" value="100000">
 
 <label>Trading Segment</label>
 <select id="segment">
-  <option value="FO">F&O – Intraday</option>
-  <option value="EQI">Equity – Intraday</option>
+<option value="EQ">Equity – Intraday</option>
+<option value="FO">F&O – Intraday</option>
 </select>
 
 <label>Trade Frequency</label>
 <select id="frequency">
-  <option value="250">Daily (250 trades)</option>
-  <option value="48">Weekly (48 trades)</option>
-  <option value="12">Monthly (12 trades)</option>
+<option value="250">Daily (250 trades)</option>
+<option value="50">Weekly (50 trades)</option>
+<option value="12">Monthly (12 trades)</option>
 </select>
 
 <label>Average Profit per Trade (%)</label>
-<input id="pPct" type="number" min="0" max="20" step="0.01" value="0.19">
-<input id="pRange" type="range" min="0" max="20" step="0.01" value="0.19">
+<input id="pPct" value="1">
+<input id="pRange" type="range" min="0" max="20" step="0.1" value="1" class="range-wrap">
 
 <label>Average Loss per Trade (%)</label>
-<input id="lPct" type="number" min="0" max="20" step="0.01" value="1">
-<input id="lRange" type="range" min="0" max="20" step="0.01" value="1">
+<input id="lPct" value="1">
+<input id="lRange" type="range" min="0" max="20" step="0.1" value="1" class="range-wrap">
 
 <label>Win Rate (%)</label>
-<input id="winRate" type="number" min="0" max="100" step="1" value="100">
-<input id="winRange" type="range" min="0" max="100" step="1" value="100">
+<input id="winRate" value="50">
+<input id="winRange" type="range" min="0" max="100" step="1" value="50" class="range-wrap">
 
-<label style="margin-top:12px"><input type="checkbox" id="includeCharges" checked>
-Include brokerage & statutory charges</label>
-
-<label><input type="checkbox" id="compound" checked>
-Apply compounding</label>
+<label><input id="includeCharges" type="checkbox" checked> Include brokerage & statutory charges</label>
+<label><input id="compound" type="checkbox" checked> Apply compounding</label>
 
 <button onclick="runCalc()">Run Reality Check</button>
 
-<div class="result" id="output">
-  <p><strong>Final Capital:</strong> <span id="final"></span></p>
-  <p><strong>Net Profit:</strong> <span id="profit"></span></p>
-  <p><strong>Total Charges Paid:</strong> <span id="fees"></span></p>
-  <p><strong>Verdict:</strong> <span id="verdict"></span></p>
+<div id="output" class="output">
+<p id="final"></p>
+<p id="profit"></p>
+<p id="fees"></p>
+<p id="verdict"></p>
 </div>
 
-<p class="small">
-<strong>Disclaimer:</strong> This calculator is for educational purposes only.
-Trading involves risk. Past performance does not guarantee future results.
-This tool is not SEBI certified or endorsed.
-</p>
+<div class="disclaimer">
+<b>Disclaimer:</b> Educational only. Trading is risky. Past performance doesn’t guarantee future results. 
+Brokerage & tax logic approximated using SEBI guidelines and may vary between brokers.
+</div>
 
 </div>
 
@@ -88,48 +77,36 @@ This tool is not SEBI certified or endorsed.
 function formatINR(n){return "₹"+Math.round(n).toLocaleString("en-IN");}
 function parseINR(s){return parseFloat(s.replace(/[^0-9.]/g,""))||0;}
 
-const cap=document.getElementById("capital");
-const capRange=document.getElementById("capRange");
-
-// Sync INR formatting
+const cap=document.getElementById("capital"),capRange=document.getElementById("capRange");
 capRange.oninput=()=>cap.value=formatINR(capRange.value);
 cap.onblur=()=>{let v=parseINR(cap.value);v=Math.min(10000000,Math.max(10000,v));cap.value=formatINR(v);capRange.value=v};
 
-// Sync sliders + boxes
-["pPct","pRange"].forEach(id=>{
- document.getElementById(id).oninput=()=>pPct.value=pRange.value=pPct.value;
-});
-["lPct","lRange"].forEach(id=>{
- document.getElementById(id).oninput=()=>lPct.value=lRange.value=lPct.value;
-});
-["winRate","winRange"].forEach(id=>{
- document.getElementById(id).oninput=()=>winRate.value=winRange.value=winRate.value;
-});
+["pPct","pRange"].forEach(id=>document.getElementById(id).oninput=()=>pPct.value=pRange.value=pPct.value);
+["lPct","lRange"].forEach(id=>document.getElementById(id).oninput=()=>lPct.value=lRange.value=lPct.value);
+["winRate","winRange"].forEach(id=>document.getElementById(id).oninput=()=>winRate.value=winRange.value=winRate.value);
 
-// Brokerage math
-function calcCharges(turnover,pnl,segment){
-  const BR=40;
-  let stt=0,exch=0,sebi=0,stamp=0,gst=0;
+// Brokerage model (simplified but real structure)
+function calcCharges(turnover,pnl,seg){
+  const BR=40;  // per order both legs
+  let stt=0,exch=0,sebi=0,gst=0,stamp=0;
 
-  if(segment==="FO"){
-    stt = pnl>0 ? pnl*0.001 : 0;
+  if(seg==="FO"){
+    stt = pnl>0 ? pnl*0.001 : 0;              // 0.1% on profit
     exch = turnover*0.0000173;
-  }else{
-    stt = pnl>0 ? pnl*0.00025 : 0;
+  } else {
+    stt = pnl>0 ? pnl*0.00025 : 0;            // 0.025%
     exch = turnover*0.0000297;
   }
-
   sebi = turnover*0.000001;
+  stamp = turnover*0.00003;
   let raw = BR + stt + exch + sebi;
   gst = raw*0.18;
-  stamp = turnover*0.00003;
-
-  return BR+stt+exch+sebi+gst+stamp;
+  return BR + stt + exch + sebi + gst + stamp;
 }
 
 function runCalc(){
-  let balance=parseINR(cap.value);
-  const start=balance;
+  const start=parseINR(cap.value);
+  let balance=start;
   const trades=parseInt(frequency.value);
   const p=parseFloat(pPct.value)/100;
   const l=parseFloat(lPct.value)/100;
@@ -137,43 +114,46 @@ function runCalc(){
   const include=includeCharges.checked;
   const compound=compound.checked;
   const seg=segment.value;
-  let fees=0;
 
-  const wins=Math.round(trades*w);
-  const losses=trades-wins;
-  const outcomes=[...Array(wins).fill(true), ...Array(losses).fill(false)];
+  let wins=Math.round(trades*w),losses=trades-wins;
+  let outcomes=[...Array(wins).fill(true), ...Array(losses).fill(false)];
 
-  let fixedPnL=0;   // used ONLY if compounding is OFF
-  let fixedFees=0;
+  let totalFees=0,fixedPnL=0,fixedFees=0;
 
   outcomes.forEach(win=>{
     const rate=win?p:-l;
-    const pnl = compound ? balance*rate : start*rate;
-    const turnover=Math.abs(pnl)*100;
-    const fee=include?calcCharges(turnover,pnl,seg):0;
+    const base = compound ? balance : start;
+    const pnl = base*rate;
+    const turnover = Math.abs(base*rate)*100;
+    const fee = include ? calcCharges(turnover,pnl,seg) : 0;
 
     if(compound){
-      fees += fee;
+      totalFees += fee;
       balance += pnl - fee;
-    }else{
+    } else {
       fixedPnL += pnl;
       fixedFees += fee;
     }
   });
 
-  let final = compound ? balance : start + fixedPnL - fixedFees;
-  let totalFees = compound ? fees : fixedFees;
-  let net = final - start;
+  const final = compound ? balance : start + fixedPnL - fixedFees;
+  const fees = compound ? totalFees : fixedFees;
+  const net = final - start;
 
-  document.getElementById("final").innerText=formatINR(final);
-  document.getElementById("profit").innerText=formatINR(net);
-  document.getElementById("fees").innerText=formatINR(totalFees);
-  document.getElementById("verdict").innerText=net>=0?"Positive Expectancy":"Negative Expectancy";
-
+  final.textContent="Final Capital: "+formatINR(final);
+  profit.textContent="Net Profit: "+formatINR(net);
+  feesEl.textContent="Total Charges Paid: "+formatINR(fees);
+  verdict.textContent=(net>=0?"Verdict: Positive Expectancy":"Verdict: Negative Expectancy");
+  verdict.className=(net>=0?"green":"red");
   output.style.display="block";
 }
-</script>
 
+const final=document.getElementById("final");
+const profit=document.getElementById("profit");
+const feesEl=document.getElementById("fees");
+const verdict=document.getElementById("verdict");
+const output=document.getElementById("output");
+</script>
 
 </body>
 </html>
