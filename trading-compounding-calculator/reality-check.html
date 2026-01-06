@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Reality-Check Trading Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{font-family:Arial,sans-serif;background:#f6f7fb;margin:0}
 header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
@@ -13,13 +14,14 @@ h1{font-size:22px;margin-bottom:8px}
 label{display:block;margin-top:16px;font-size:14px}
 input,select{width:100%;padding:10px;font-size:15px;margin-top:6px;border:1px solid #ccc;border-radius:8px}
 input[type=range]{padding:0}
-button{width:100%;padding:12px;font-size:16px;margin-top:22px;border:none;border-radius:10px;background:#2563eb;color:#fff;cursor:pointer}
+button{width:100%;padding:12px;margin-top:22px;font-size:16px;border:none;border-radius:10px;background:#2563eb;color:#fff;cursor:pointer}
 .result{margin-top:22px;background:#f1f5ff;padding:16px;border-radius:10px;display:none}
 .green{color:#059669;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
-.small{font-size:12px;color:#555;margin-top:12px}
+.small{font-size:12px;color:#555;margin-top:14px}
 </style>
 </head>
+
 <body>
 
 <header><a href="/">CalcWorld</a></header>
@@ -31,8 +33,8 @@ Deterministic brokerage-aware compounding under SEBI peak-margin regime.
 </p>
 
 <label>Starting Capital (₹)</label>
-<input type="text" id="capital" value="₹10,00,000">
-<input type="range" id="capRange" min="10000" max="10000000" step="10000" value="1000000">
+<input id="capital" type="text" value="₹10,00,000">
+<input id="capRange" type="range" min="10000" max="10000000" step="10000" value="1000000">
 
 <label>Trading Segment</label>
 <select id="segment">
@@ -48,28 +50,26 @@ Deterministic brokerage-aware compounding under SEBI peak-margin regime.
 </select>
 
 <label>Average Profit per Trade (%)</label>
-<input type="number" id="pPct" min="0" max="20" step="0.01" value="0.19">
-<input type="range" id="pRange" min="0" max="20" step="0.01" value="0.19">
+<input id="pPct" type="number" min="0" max="20" step="0.01" value="0.19">
+<input id="pRange" type="range" min="0" max="20" step="0.01" value="0.19">
 
 <label>Average Loss per Trade (%)</label>
-<input type="number" id="lPct" min="0" max="20" step="0.01" value="1">
-<input type="range" id="lRange" min="0" max="20" step="0.01" value="1">
+<input id="lPct" type="number" min="0" max="20" step="0.01" value="1">
+<input id="lRange" type="range" min="0" max="20" step="0.01" value="1">
 
 <label>Win Rate (%)</label>
-<input type="number" id="winRate" min="0" max="100" step="1" value="100">
-<input type="range" id="winRange" min="0" max="100" step="1" value="100">
+<input id="winRate" type="number" min="0" max="100" step="1" value="100">
+<input id="winRange" type="range" min="0" max="100" step="1" value="100">
 
-<label style="margin-top:12px">
-  <input type="checkbox" id="includeCharges" checked> Include brokerage & statutory charges
-</label>
+<label style="margin-top:12px"><input type="checkbox" id="includeCharges" checked>
+Include brokerage & statutory charges</label>
 
-<label>
-  <input type="checkbox" id="compound" checked> Apply compounding
-</label>
+<label><input type="checkbox" id="compound" checked>
+Apply compounding</label>
 
 <button onclick="runCalc()">Run Reality Check</button>
 
-<div class="result" id="outputBox">
+<div class="result" id="output">
   <p><strong>Final Capital:</strong> <span id="final"></span></p>
   <p><strong>Net Profit:</strong> <span id="profit"></span></p>
   <p><strong>Total Charges Paid:</strong> <span id="fees"></span></p>
@@ -77,8 +77,9 @@ Deterministic brokerage-aware compounding under SEBI peak-margin regime.
 </div>
 
 <p class="small">
-<strong>Disclaimer:</strong> This calculator is for educational purposes only. Trading involves risk.
-Past performance does not guarantee future results. This tool is not SEBI certified or endorsed.
+<strong>Disclaimer:</strong> This calculator is for educational purposes only.
+Trading involves risk. Past performance does not guarantee future results.
+This tool is not SEBI certified or endorsed.
 </p>
 
 </div>
@@ -87,72 +88,76 @@ Past performance does not guarantee future results. This tool is not SEBI certif
 function formatINR(n){return "₹"+Math.round(n).toLocaleString("en-IN");}
 function parseINR(s){return parseFloat(s.replace(/[^0-9.]/g,""))||0;}
 
-const cap = document.getElementById("capital");
+const cap=document.getElementById("capital");
 const capRange=document.getElementById("capRange");
 
+// Sync INR formatting
 capRange.oninput=()=>cap.value=formatINR(capRange.value);
 cap.onblur=()=>{let v=parseINR(cap.value);v=Math.min(10000000,Math.max(10000,v));cap.value=formatINR(v);capRange.value=v};
 
+// Slider sync
 ["pPct","pRange"].forEach(id=>{
-  document.getElementById(id).oninput=()=>{
-    pPct.value=pRange.value=pPct.value;
-  }});
+ document.getElementById(id).oninput=()=>pPct.value=pRange.value=pPct.value;
+});
 ["lPct","lRange"].forEach(id=>{
-  document.getElementById(id).oninput=()=>{
-    lPct.value=lRange.value=lPct.value;
-  }});
+ document.getElementById(id).oninput=()=>lPct.value=lRange.value=lPct.value;
+});
 ["winRate","winRange"].forEach(id=>{
-  document.getElementById(id).oninput=()=>{
-    winRate.value=winRange.value=winRate.value;
-  }});
+ document.getElementById(id).oninput=()=>winRate.value=winRange.value=winRate.value;
+});
 
-function calcCharges(turnover, pnl, segment){
-  let br=40; // flat brokerage
-  let stt=0, exch=0, sebi=0, gst=0, stamp=0;
+// Brokerage calc
+function calcCharges(turnover,pnl,segment){
+  const BR=40;
+  let stt=0,exch=0,sebi=0,gst=0,stamp=0;
 
   if(segment==="FO"){
     stt = pnl>0 ? pnl*0.001 : 0;
     exch = turnover*0.0000173;
   }else{
-    stt = pnl>0 ? pnl*0.0025 : 0;
+    stt = pnl>0 ? pnl*0.00025 : 0.0025;
     exch = turnover*0.0000297;
   }
   sebi = turnover*0.000001;
-  let raw = br + stt + exch + sebi;
+  let raw = BR + stt + exch + sebi;
   gst = raw*0.18;
   stamp = turnover*0.00003;
-
-  return br + stt + exch + sebi + gst + stamp;
+  return BR+stt+exch+sebi+gst+stamp;
 }
 
 function runCalc(){
   let capital=parseINR(cap.value);
-  let trades=parseInt(frequency.value);
-  let p=parseFloat(pPct.value)/100;
-  let l=parseFloat(lPct.value)/100;
-  let w=parseFloat(winRate.value)/100;
-  let seg=segment.value;
-  let include=includeCharges.checked;
-  let compound=compound.checked;
+  const trades=parseInt(frequency.value);
+  const p=parseFloat(pPct.value)/100;
+  const l=parseFloat(lPct.value)/100;
+  const w=parseFloat(winRate.value)/100;
+  const seg=segment.value;
+  const include=includeCharges.checked;
+  const compound=compound.checked;
+  const start=capital;
+  let fees=0,balance=capital;
 
-  let fees=0;
-  for(let i=0;i<trades;i++){
-    let gain = capital * (Math.random()<w ? p : -l);
-    let turnover = Math.abs(gain)*100; // approx F&O premium exposure factor
+  // Deterministic W/L order: W repeated first, then L if needed
+  const wins=Math.round(trades*w);
+  const losses=trades-wins;
+  const outcomes=[...Array(wins).fill(true),...Array(losses).fill(false)];
 
-    let ch = include ? calcCharges(turnover, gain, seg) : 0;
-    fees += ch;
-    capital += gain - ch;
-    if(!compound){capital=parseINR(cap.value);}
-  }
-  let start=parseINR(cap.value);
-  document.getElementById("final").innerText=formatINR(capital);
-  document.getElementById("profit").innerText=formatINR(capital-start);
+  outcomes.forEach(win=>{
+    const rate=win?p:-l;
+    const pnl=balance*rate;
+    const turnover=Math.abs(pnl)*100;
+    const fee=include?calcCharges(turnover,pnl,seg):0;
+    fees+=fee;
+    balance+=pnl-fee;
+    if(!compound) balance=start-(fees)+((wins-losses)*start*rate);
+  });
+
+  document.getElementById("final").innerText=formatINR(balance);
+  document.getElementById("profit").innerText=formatINR(balance-start);
   document.getElementById("fees").innerText=formatINR(fees);
-  document.getElementById("verdict").innerText =
-     (capital-start)>0 ? "Positive Expectancy" : "Negative Expectancy";
+  document.getElementById("verdict").innerText=(balance-start>=0?"Positive":"Negative")+" Expectancy";
 
-  outputBox.style.display="block";
+  output.style.display="block";
 }
 </script>
 
