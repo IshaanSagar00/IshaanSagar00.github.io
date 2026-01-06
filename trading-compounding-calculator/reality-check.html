@@ -60,9 +60,9 @@ button:hover{background:#003fe0}
 <button onclick="runCalc()">Run Reality Check</button>
 
 <div id="output" class="output">
-<p id="final"></p>
-<p id="profit"></p>
-<p id="fees"></p>
+<p id="finalCapital"></p>
+<p id="netProfit"></p>
+<p id="totalFees"></p>
 <p id="verdict"></p>
 </div>
 
@@ -70,7 +70,6 @@ button:hover{background:#003fe0}
 <b>Disclaimer:</b> Educational only. Trading is risky. Past performance doesn’t guarantee future results. 
 Brokerage & tax logic approximated using SEBI guidelines and may vary between brokers.
 </div>
-
 </div>
 
 <script>
@@ -85,74 +84,63 @@ cap.onblur=()=>{let v=parseINR(cap.value);v=Math.min(10000000,Math.max(10000,v))
 ["lPct","lRange"].forEach(id=>document.getElementById(id).oninput=()=>lPct.value=lRange.value=lPct.value);
 ["winRate","winRange"].forEach(id=>document.getElementById(id).oninput=()=>winRate.value=winRange.value=winRate.value);
 
-// Brokerage model (simplified but real structure)
-function calcCharges(turnover,pnl,seg){
-  const BR=40;  // per order both legs
-  let stt=0,exch=0,sebi=0,gst=0,stamp=0;
+function calcCharges(turn,pnl,seg){
+  const BR=40;
+  let stt=0,ex=0,sebi=0,gst=0,stamp=turn*0.00003;
 
   if(seg==="FO"){
-    stt = pnl>0 ? pnl*0.001 : 0;              // 0.1% on profit
-    exch = turnover*0.0000173;
+    stt=pnl>0?pnl*0.001:0;
+    ex=turn*0.0000173;
   } else {
-    stt = pnl>0 ? pnl*0.00025 : 0;            // 0.025%
-    exch = turnover*0.0000297;
+    stt=pnl>0?pnl*0.00025:0;
+    ex=turn*0.0000297;
   }
-  sebi = turnover*0.000001;
-  stamp = turnover*0.00003;
-  let raw = BR + stt + exch + sebi;
-  gst = raw*0.18;
-  return BR + stt + exch + sebi + gst + stamp;
+  sebi=turn*0.000001;
+  let raw=BR+stt+ex+sebi;
+  gst=raw*0.18;
+  return BR+stt+ex+sebi+gst+stamp;
 }
 
 function runCalc(){
   const start=parseINR(cap.value);
-  let balance=start;
+  let bal=start;
   const trades=parseInt(frequency.value);
-  const p=parseFloat(pPct.value)/100;
-  const l=parseFloat(lPct.value)/100;
-  const w=parseFloat(winRate.value)/100;
-  const include=includeCharges.checked;
-  const compound=compound.checked;
-  const seg=segment.value;
+  const p=parseFloat(pPct.value)/100,l=parseFloat(lPct.value)/100,w=parseFloat(winRate.value)/100;
+  const include=includeCharges.checked,compound=compound.checked,seg=segment.value;
 
   let wins=Math.round(trades*w),losses=trades-wins;
-  let outcomes=[...Array(wins).fill(true), ...Array(losses).fill(false)];
+  let seq=[...Array(wins).fill(true),...Array(losses).fill(false)];
 
-  let totalFees=0,fixedPnL=0,fixedFees=0;
+  let feeSum=0,fixedPL=0,fixedFee=0;
 
-  outcomes.forEach(win=>{
-    const rate=win?p:-l;
-    const base = compound ? balance : start;
-    const pnl = base*rate;
-    const turnover = Math.abs(base*rate)*100;
-    const fee = include ? calcCharges(turnover,pnl,seg) : 0;
+  seq.forEach(win=>{
+    const change=win?p:-l;
+    const base = compound?bal:start;
+    const pnl=base*change;
+    const turn=Math.abs(pnl)*100;
+    const fee=include?calcCharges(turn,pnl,seg):0;
 
     if(compound){
-      totalFees += fee;
-      balance += pnl - fee;
+      feeSum+=fee;
+      bal+=pnl-fee;
     } else {
-      fixedPnL += pnl;
-      fixedFees += fee;
+      fixedPL+=pnl;
+      fixedFee+=fee;
     }
   });
 
-  const final = compound ? balance : start + fixedPnL - fixedFees;
-  const fees = compound ? totalFees : fixedFees;
+  const final = compound ? bal : start + fixedPL - fixedFee;
   const net = final - start;
+  const fees = compound ? feeSum : fixedFee;
 
-  final.textContent="Final Capital: "+formatINR(final);
-  profit.textContent="Net Profit: "+formatINR(net);
-  feesEl.textContent="Total Charges Paid: "+formatINR(fees);
-  verdict.textContent=(net>=0?"Verdict: Positive Expectancy":"Verdict: Negative Expectancy");
-  verdict.className=(net>=0?"green":"red");
-  output.style.display="block";
+  document.getElementById("finalCapital").textContent="Final Capital: "+formatINR(final);
+  document.getElementById("netProfit").textContent="Net Profit: "+formatINR(net);
+  document.getElementById("totalFees").textContent="Total Charges Paid: "+formatINR(fees);
+  const verdictEl=document.getElementById("verdict");
+  verdictEl.textContent = net>=0?"Verdict: Positive Expectancy":"Verdict: Negative Expectancy";
+  verdictEl.className = net>=0?"green":"red";
+  document.getElementById("output").style.display="block";
 }
-
-const final=document.getElementById("final");
-const profit=document.getElementById("profit");
-const feesEl=document.getElementById("fees");
-const verdict=document.getElementById("verdict");
-const output=document.getElementById("output");
 </script>
 
 </body>
