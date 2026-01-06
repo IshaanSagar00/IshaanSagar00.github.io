@@ -95,7 +95,7 @@ const capRange=document.getElementById("capRange");
 capRange.oninput=()=>cap.value=formatINR(capRange.value);
 cap.onblur=()=>{let v=parseINR(cap.value);v=Math.min(10000000,Math.max(10000,v));cap.value=formatINR(v);capRange.value=v};
 
-// Slider sync
+// Sync sliders + boxes
 ["pPct","pRange"].forEach(id=>{
  document.getElementById(id).oninput=()=>pPct.value=pRange.value=pPct.value;
 });
@@ -106,60 +106,74 @@ cap.onblur=()=>{let v=parseINR(cap.value);v=Math.min(10000000,Math.max(10000,v))
  document.getElementById(id).oninput=()=>winRate.value=winRange.value=winRate.value;
 });
 
-// Brokerage calc
+// Brokerage math
 function calcCharges(turnover,pnl,segment){
   const BR=40;
-  let stt=0,exch=0,sebi=0,gst=0,stamp=0;
+  let stt=0,exch=0,sebi=0,stamp=0,gst=0;
 
   if(segment==="FO"){
     stt = pnl>0 ? pnl*0.001 : 0;
     exch = turnover*0.0000173;
   }else{
-    stt = pnl>0 ? pnl*0.00025 : 0.0025;
+    stt = pnl>0 ? pnl*0.00025 : 0;
     exch = turnover*0.0000297;
   }
+
   sebi = turnover*0.000001;
   let raw = BR + stt + exch + sebi;
   gst = raw*0.18;
   stamp = turnover*0.00003;
+
   return BR+stt+exch+sebi+gst+stamp;
 }
 
 function runCalc(){
-  let capital=parseINR(cap.value);
+  let balance=parseINR(cap.value);
+  const start=balance;
   const trades=parseInt(frequency.value);
   const p=parseFloat(pPct.value)/100;
   const l=parseFloat(lPct.value)/100;
   const w=parseFloat(winRate.value)/100;
-  const seg=segment.value;
   const include=includeCharges.checked;
   const compound=compound.checked;
-  const start=capital;
-  let fees=0,balance=capital;
+  const seg=segment.value;
+  let fees=0;
 
-  // Deterministic W/L order: W repeated first, then L if needed
   const wins=Math.round(trades*w);
   const losses=trades-wins;
-  const outcomes=[...Array(wins).fill(true),...Array(losses).fill(false)];
+  const outcomes=[...Array(wins).fill(true), ...Array(losses).fill(false)];
+
+  let fixedPnL=0;   // used ONLY if compounding is OFF
+  let fixedFees=0;
 
   outcomes.forEach(win=>{
     const rate=win?p:-l;
-    const pnl=balance*rate;
+    const pnl = compound ? balance*rate : start*rate;
     const turnover=Math.abs(pnl)*100;
     const fee=include?calcCharges(turnover,pnl,seg):0;
-    fees+=fee;
-    balance+=pnl-fee;
-    if(!compound) balance=start-(fees)+((wins-losses)*start*rate);
+
+    if(compound){
+      fees += fee;
+      balance += pnl - fee;
+    }else{
+      fixedPnL += pnl;
+      fixedFees += fee;
+    }
   });
 
-  document.getElementById("final").innerText=formatINR(balance);
-  document.getElementById("profit").innerText=formatINR(balance-start);
-  document.getElementById("fees").innerText=formatINR(fees);
-  document.getElementById("verdict").innerText=(balance-start>=0?"Positive":"Negative")+" Expectancy";
+  let final = compound ? balance : start + fixedPnL - fixedFees;
+  let totalFees = compound ? fees : fixedFees;
+  let net = final - start;
+
+  document.getElementById("final").innerText=formatINR(final);
+  document.getElementById("profit").innerText=formatINR(net);
+  document.getElementById("fees").innerText=formatINR(totalFees);
+  document.getElementById("verdict").innerText=net>=0?"Positive Expectancy":"Negative Expectancy";
 
   output.style.display="block";
 }
 </script>
+
 
 </body>
 </html>
