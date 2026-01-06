@@ -165,15 +165,33 @@ function trades(freq){
 }
 
 /* Brokerage model (internal, no breakup shown) */
-function charges(position, seg){
+function charges(position, segment) {
+
+  // Turnover = buy + sell
+  let turnover = position * 2;
+
   let brokerage = 40;
-  let stt = seg==="fo" ? position*0.0005 : position*0.00025;
-  let exch = position*(seg==="fo"?0.000035:0.00003);
-  let sebi = position*0.000001;
-  let gst = 0.18*(brokerage+exch);
-  let stamp = position*0.00003;
-  return brokerage+stt+exch+sebi+gst+stamp;
+
+  let stt = 0;
+  if(segment === "fo"){
+    stt = position * 0.0001; // 0.01% sell side
+  } else {
+    stt = position * 0.00025;
+  }
+
+  let exchange = segment === "fo"
+    ? turnover * 0.00053   // 0.053%
+    : turnover * 0.00003;
+
+  let sebi = turnover * 0.000001;
+
+  let stamp = position * 0.00003;
+
+  let gst = 0.18 * (brokerage + exchange);
+
+  return brokerage + stt + exchange + sebi + stamp + gst;
 }
+
 
 /* ---------- Main ---------- */
 function runCalc(){
