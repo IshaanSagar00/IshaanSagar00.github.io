@@ -3,21 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <title>Reality-Check Trading Calculator | CalcWorld</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{font-family:Arial,sans-serif;background:#f6f7fb;margin:0}
 header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
 header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
-.container{max-width:520px;margin:40px auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
-label{font-size:14px;margin-top:14px;display:block}
-input,select{width:100%;padding:10px;font-size:16px;margin-top:6px;border-radius:8px;border:1px solid #ccc}
+
+.container{
+  max-width:560px;
+  margin:40px auto;
+  background:#fff;
+  padding:24px;
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08)
+}
+
+h1{font-size:22px;margin-bottom:4px}
+.sub{font-size:14px;color:#555;margin-bottom:18px}
+
+label{display:block;font-size:14px;margin-top:14px}
+input,select{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  font-size:15px;
+  border-radius:8px;
+  border:1px solid #ccc
+}
 input[type=range]{padding:0}
-button{width:100%;margin-top:20px;padding:12px;font-size:16px;border:none;border-radius:10px;background:#2563eb;color:#fff;cursor:pointer}
-.result{margin-top:22px;background:#f1f5ff;padding:16px;border-radius:10px}
+
+.row{display:flex;gap:10px}
+.row label{flex:1}
+
+button{
+  width:100%;
+  margin-top:22px;
+  padding:13px;
+  font-size:16px;
+  border:none;
+  border-radius:10px;
+  background:#2563eb;
+  color:#fff;
+  cursor:pointer
+}
+
+.result{
+  margin-top:24px;
+  background:#f1f5ff;
+  padding:18px;
+  border-radius:12px
+}
+
 .green{color:#16a34a;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
-.small{font-size:12px;color:#555}
+
+.disclaimer{
+  margin-top:20px;
+  padding:12px;
+  background:#fff7ed;
+  border:1px solid #fed7aa;
+  border-radius:8px;
+  font-size:12px;
+  color:#7c2d12
+}
 </style>
 </head>
 
@@ -28,11 +77,12 @@ button{width:100%;margin-top:20px;padding:12px;font-size:16px;border:none;border
 </header>
 
 <div class="container">
-<h2>Reality-Check Trading Calculator</h2>
+<h1>Reality-Check Trading Calculator</h1>
+<p class="sub">Deterministic, post-SEBI, brokerage-aware trading math.</p>
 
 <label>Starting Capital (₹)</label>
-<input type="text" id="capitalDisplay" value="₹10,00,000">
-<input type="range" id="capitalRange" min="10000" max="1000000" step="10000" value="1000000">
+<input id="capitalDisplay" type="text" value="₹1,00,000">
+<input id="capitalRange" type="range" min="10000" max="1000000" step="10000" value="100000">
 
 <label>Trading Segment</label>
 <select id="segment">
@@ -48,98 +98,115 @@ button{width:100%;margin-top:20px;padding:12px;font-size:16px;border:none;border
 </select>
 
 <label>Average Profit per Trade (%)</label>
-<input type="number" id="avgProfit" min="0" max="20" step="0.01" value="3">
-<input type="range" min="0" max="20" step="0.01" value="3"
-oninput="avgProfit.value=this.value">
+<input id="profitPct" type="number" min="0" max="20" step="0.01" value="3">
+<input id="profitRange" type="range" min="0" max="20" step="0.01" value="3">
 
 <label>Average Loss per Trade (%)</label>
-<input type="number" id="avgLoss" min="0" max="20" step="0.01" value="1">
-<input type="range" min="0" max="20" step="0.01" value="1"
-oninput="avgLoss.value=this.value">
+<input id="lossPct" type="number" min="0" max="20" step="0.01" value="1">
+<input id="lossRange" type="range" min="0" max="20" step="0.01" value="1">
 
 <label>Win Rate (%)</label>
-<input type="number" id="winRate" min="0" max="100" value="60">
-<input type="range" min="0" max="100" value="60"
-oninput="winRate.value=this.value">
+<input id="winRate" type="number" min="0" max="100" step="1" value="60">
+<input id="winRange" type="range" min="0" max="100" step="1" value="60">
 
-<label>
-<input type="checkbox" id="includeCharges" checked>
- Include brokerage & statutory charges
+<label style="margin-top:14px">
+<input id="includeCharges" type="checkbox" checked> Include brokerage & statutory charges
 </label>
 
-<button onclick="run()">Run Reality Check</button>
+<button onclick="runCalc()">Run Reality Check</button>
 
-<div class="result" id="output"></div>
+<div id="output" class="result" style="display:none"></div>
 
-<p class="small">
-Disclaimer: This calculator is for educational purposes only. Results depend entirely
-on user-provided assumptions. Trading involves risk. This tool is not SEBI endorsed.
-</p>
+<div class="disclaimer">
+<strong>Disclaimer:</strong> This calculator is for educational purposes only.
+Trading involves risk. Results depend entirely on inputs provided by the user.
+This tool does not constitute investment advice and is not endorsed by SEBI.
+</div>
 </div>
 
 <script>
-let capital=1000000;
+/* ---------- Helpers ---------- */
+const fmt = n => "₹" + Math.round(n).toLocaleString("en-IN");
 
-function formatINR(n){
-  return "₹"+Math.round(n).toLocaleString("en-IN");
+/* ---------- Capital formatting ---------- */
+let capital = 100000;
+const capDisp = document.getElementById("capitalDisplay");
+const capRange = document.getElementById("capitalRange");
+
+capRange.oninput = () => {
+  capital = parseInt(capRange.value);
+  capDisp.value = fmt(capital);
+};
+capDisp.onblur = () => {
+  capital = Math.min(1000000, Math.max(10000,
+    parseInt(capDisp.value.replace(/[^0-9]/g,"")) || 10000));
+  capRange.value = capital;
+  capDisp.value = fmt(capital);
+};
+
+/* ---------- Slider sync ---------- */
+const bind = (a,b)=>{
+  a.oninput=()=>b.value=a.value;
+  b.oninput=()=>a.value=b.value;
+};
+bind(profitPct,profitRange);
+bind(lossPct,lossRange);
+bind(winRate,winRange);
+
+/* ---------- Core logic ---------- */
+function leverage(seg){
+  return seg==="intraday" ? 5 : 1; // Post-SEBI reality
 }
 
-capitalRange.oninput=()=>{
-  capital=parseInt(capitalRange.value);
-  capitalDisplay.value=formatINR(capital);
-};
-
-capitalDisplay.onblur=()=>{
-  capital=Math.min(1000000,Math.max(10000,
-    parseInt(capitalDisplay.value.replace(/[^0-9]/g,""))||10000));
-  capitalRange.value=capital;
-  capitalDisplay.value=formatINR(capital);
-};
-
-function tradesCount(freq){
-  if(freq==="daily")return 250;
-  if(freq==="weekly")return 52;
+function trades(freq){
+  if(freq==="daily") return 250;
+  if(freq==="weekly") return 52;
   return 12;
 }
 
-function charges(turnover,segment){
-  let brokerage=40;
-  let variableRate=segment==="fo"?0.00010:0.000035;
-  return brokerage+(turnover*variableRate);
+/* Brokerage model (internal, no breakup shown) */
+function charges(position, seg){
+  let brokerage = 40;
+  let stt = seg==="fo" ? position*0.0005 : position*0.00025;
+  let exch = position*(seg==="fo"?0.000035:0.00003);
+  let sebi = position*0.000001;
+  let gst = 0.18*(brokerage+exch);
+  let stamp = position*0.00003;
+  return brokerage+stt+exch+sebi+gst+stamp;
 }
 
-function run(){
-  let cap=capital;
-  let trades=tradesCount(frequency.value);
-  let totalCharges=0;
+/* ---------- Main ---------- */
+function runCalc(){
+  let cap = capital;
+  let seg = segment.value;
+  let freq = frequency.value;
+  let t = trades(freq);
 
-  let p=avgProfit.value/100;
-  let l=avgLoss.value/100;
-  let win=winRate.value/100;
+  let p = profitPct.value/100;
+  let l = lossPct.value/100;
+  let w = winRate.value/100;
 
-  for(let i=0;i<trades;i++){
-    let turnover=cap;
-    let pnl=(Math.random()<=win)?
-      turnover*p : -turnover*l;
+  let expectancy = (w*p)-((1-w)*l);
+  let totalCharges = 0;
 
-    let c=includeCharges.checked?
-      charges(turnover,segment.value):0;
-
-    cap+=pnl-c;
-    totalCharges+=c;
-
-    if(cap<=0){cap=0;break;}
+  for(let i=0;i<t;i++){
+    let pos = cap * leverage(seg);
+    let gross = pos * expectancy;
+    let ch = includeCharges.checked ? charges(pos,seg) : 0;
+    cap += (gross - ch);
+    totalCharges += ch;
+    if(cap<=0) break;
   }
 
-  let profit=cap-capital;
-  let verdict=profit>0?"Positive Expectancy":"Negative Expectancy";
+  let net = cap - capital;
+  let verdict = net>0 ? "Positive Expectancy" : "Negative Expectancy";
 
-  output.innerHTML=`
-  <b>Final Capital:</b> ${formatINR(cap)}<br><br>
-  <b>Net Profit:</b> <span class="${profit>=0?'green':'red'}">
-  ${formatINR(profit)}</span><br><br>
-  <b>Total Charges Paid:</b> ${formatINR(totalCharges)}<br><br>
-  <b>Verdict:</b> <span class="${profit>=0?'green':'red'}">${verdict}</span>
+  output.style.display="block";
+  output.innerHTML = `
+    <p><strong>Final Capital:</strong> ${fmt(cap)}</p>
+    <p><strong>Net Profit:</strong> ${net>=0?'<span class="green">'+fmt(net)+'</span>':'<span class="red">'+fmt(net)+'</span>'}</p>
+    <p><strong>Total Charges Paid:</strong> ${fmt(totalCharges)}</p>
+    <p><strong>Verdict:</strong> <span class="${net>=0?'green':'red'}">${verdict}</span></p>
   `;
 }
 </script>
