@@ -166,13 +166,26 @@ function trades(freq){
 
 /* Brokerage model (internal, no breakup shown) */
 function charges(position, seg){
-  let brokerage = 40;
-  let stt = seg==="fo" ? position*0.0005 : position*0.00025;
-  let exch = position*(seg==="fo"?0.000035:0.00003);
-  let sebi = position*0.000001;
-  let gst = 0.18*(brokerage+exch);
-  let stamp = position*0.00003;
-  return brokerage+stt+exch+sebi+gst+stamp;
+  const B = 40; // ₹20 buy + ₹20 sell
+
+  let stt = 0, exch = 0, sebi = 0, gst = 0, stamp = 0;
+
+  if(seg === "intraday"){   // Equity Intraday
+    stt   = position * 0.00025;       // 0.025% on SELL
+    exch  = position * 0.0000594;     // 0.00297% each side
+    sebi  = position * 0.000002;      // 0.0001% buy + sell
+    stamp = position * 0.00003;       // 0.003% BUY side
+  }
+  else {                     // F&O Intraday (Options)
+    stt   = position * 0.001;         // 0.1% SELL side
+    exch  = position * 0.00035;       // ~0.035% both sides
+    sebi  = position * 0.000002;      // 0.0001% buy + sell
+    stamp = position * 0.00003;       // stamp on BUY premium
+  }
+
+  gst = 0.18 * (B + exch + sebi);     // GST on brokerage + exch + sebi
+
+  return B + stt + exch + sebi + gst + stamp;
 }
 
 /* ---------- Main ---------- */
