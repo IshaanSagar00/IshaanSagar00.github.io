@@ -92,12 +92,9 @@ bind(profitPct,profitRange);bind(lossPct,lossRange);bind(winRate,winRange);
 
 function trades(freq){return freq==="daily"?250:freq==="weekly"?52:12;}
 
-function charges(cap, seg){
-  const buy = cap;
-  const sell = cap * (1 + profitPct.value/100);  // sell includes profit
+function charges(buy, sell, seg){
   const turnover = buy + sell;
-
-  const brokerage = 40; // Groww
+  const brokerage = 40; // Groww flat
 
   let stt = 0, exch = 0, stamp = 0;
 
@@ -112,10 +109,10 @@ function charges(cap, seg){
     stamp = buy * 0.00003;
   }
   else if(seg==="fo"){
-    // ***OPTIONS PREMIUM***
-    stt = sell * 0.001;           // 0.1% as decimal
-    exch = turnover * 0.0003503;  // 0.03503%
-    stamp = buy * 0.00003;        // 0.003%
+    // OPTIONS PREMIUM
+    stt = sell * 0.001;          // 0.1%
+    exch = turnover * 0.0003503; // 0.03503%
+    stamp = buy * 0.00003;       // 0.003%
   }
 
   const sebi = turnover * 0.000001;
@@ -123,6 +120,7 @@ function charges(cap, seg){
 
   return brokerage + stt + exch + sebi + stamp + gst;
 }
+
 
 
 function runCalc(){
