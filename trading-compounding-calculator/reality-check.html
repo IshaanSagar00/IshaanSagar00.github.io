@@ -79,92 +79,58 @@ Brokerage & tax logic approximated using SEBI guidelines and may vary between br
 </div>
 
 <script>
-/* Helpers */
 const fmt = n=>"₹"+Math.round(n).toLocaleString("en-IN");
 
-/* Capital formatting */
 let capital=100000;
 const capDisp=document.getElementById("capitalDisplay");
 const capRange=document.getElementById("capitalRange");
-
 capRange.oninput=()=>{capital=parseInt(capRange.value);capDisp.value=fmt(capital);};
-capDisp.onblur=()=>{
-  capital=Math.min(1000000,Math.max(10000,parseInt(capDisp.value.replace(/[^0-9]/g,""))||10000));
-  capRange.value=capital;capDisp.value=fmt(capital);
-};
+capDisp.onblur=()=>{capital=Math.min(1000000,Math.max(10000,parseInt(capDisp.value.replace(/[^0-9]/g,""))||10000));capRange.value=capital;capDisp.value=fmt(capital);};
 
-/* Slider sync */
 const bind=(a,b)=>{a.oninput=()=>b.value=a.value;b.oninput=()=>a.value=b.value};
 bind(profitPct,profitRange);bind(lossPct,lossRange);bind(winRate,winRange);
 
-/* Trades */
-function trades(freq){
-  return freq==="daily"?250:freq==="weekly"?52:12;
-}
+function trades(freq){return freq==="daily"?250:freq==="weekly"?52:12;}
 
-/* Charges (per position turnover) */
 function charges(pos,seg){
-  let brokerage=20*2;   // entry + exit
-  let exch = seg==="fo"?pos*0.0000173 : pos*0.0000297; 
-  let stt = seg==="delivery"?pos*0.001 : seg==="intraday"?pos*0.00025 : pos*0.0005;
-  let sebi = pos*0.000001;
-  let stamp = pos*0.00003;
-  let gst = 0.18*(brokerage+exch+sebi);
+  const brokerage=40;
+  const exch = seg==="fo"?pos*0.0000173:pos*0.0000297;
+  const stt = seg==="delivery"?pos*0.001:seg==="intraday"?pos*0.00025:pos*0.0005;
+  const sebi = pos*0.000001;
+  const stamp = pos*0.00003;
+  const gst = 0.18*(brokerage+exch+sebi);
   return brokerage+exch+stt+sebi+stamp+gst;
 }
 
-/* Main brain */
 function runCalc(){
   let cap = capital;
   let seg = segment.value;
-  let freq = frequency.value;
-  let t = trades(freq);
+  let t   = trades(frequency.value);
 
   let p = profitPct.value/100;
   let l = lossPct.value/100;
   let w = winRate.value/100;
 
   let inc = includeCharges.checked;
-  let comp = compounding.checked;
-
   let totalCharges = 0;
 
   let wins = Math.round(t * w);
   let losses = t - wins;
 
-  if(!inc){
-    cap = cap * Math.pow(1+p, wins) * Math.pow(1-l, losses);
-  } else {
-    for(let i = 0; i < t; i++){
-      let isWin = i < wins;     // deterministic, not random
-      let pos = cap;
-      let pnl = pos * (isWin ? p : -l);
-      let ch = charges(pos, seg);
+  // ALWAYS compounding, whether charges on or off
+  for(let i=0;i<t;i++){
+    const isWin = i < wins;
+    const pnl = cap * (isWin ? p : -l);
 
-      cap = cap + pnl - ch;
-      totalCharges += ch;
+    let ch = inc ? charges(cap,seg) : 0;
 
-      if(cap <= 0){
-        cap = 0;
-        break;
-      }
-    }
+    cap = cap + pnl - ch;
+    totalCharges += ch;
+
+    if(cap <= 0){ cap = 0; break; }
   }
 
   let net = cap - capital;
-  let verdict = net > 0 ? "Positive Expectancy" : "Negative Expectancy";
-
-  output.style.display="block";
-  output.innerHTML = `
-    <p><strong>Final Capital:</strong> ${fmt(cap)}</p>
-    <p><strong>Net Profit:</strong> ${net>=0?'<span class="green">'+fmt(net)+'</span>':'<span class="red">'+fmt(net)+'</span>'}</p>
-    <p><strong>Total Charges Paid:</strong> ${fmt(totalCharges)}</p>
-    <p><strong>Verdict:</strong> <span class="${net>=0?'green':'red'}">${verdict}</span></p>`;
-}
-
-  }
-
-  let net=cap-capital;
   let verdict = net>0?"Positive Expectancy":"Negative Expectancy";
 
   output.style.display="block";
@@ -172,9 +138,10 @@ function runCalc(){
     <p><strong>Final Capital:</strong> ${fmt(cap)}</p>
     <p><strong>Net Profit:</strong> ${net>=0?'<span class="green">'+fmt(net)+'</span>':'<span class="red">'+fmt(net)+'</span>'}</p>
     <p><strong>Total Charges Paid:</strong> ${fmt(totalCharges)}</p>
-    <p><strong>Verdict:</strong> <span class="${net>=0?'green':'red'}">${verdict}</span></p>`;
+    <p><strong>Verdict:</strong> <span class="${net>=0?'green':'red'}">${verdict}</span></p>`
 }
 </script>
 
 </body>
 </html>
+
