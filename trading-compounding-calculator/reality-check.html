@@ -115,38 +115,54 @@ function charges(pos,seg){
 
 /* Main brain */
 function runCalc(){
-  let cap=capital;
-  let seg=segment.value;
-  let freq=frequency.value;
-  let t=trades(freq);
+  let cap = capital;
+  let seg = segment.value;
+  let freq = frequency.value;
+  let t = trades(freq);
 
-  let p=profitPct.value/100;
-  let l=lossPct.value/100;
-  let w=winRate.value/100;
-  let comp=compounding.checked;
-  let inc=includeCharges.checked;
+  let p = profitPct.value/100;
+  let l = lossPct.value/100;
+  let w = winRate.value/100;
 
-  let totalCharges=0;
+  let inc = includeCharges.checked;
+  let comp = compounding.checked;
 
-  /* Pure math compounding if NO charges or charges unchecked */
+  let totalCharges = 0;
+
+  let wins = Math.round(t * w);
+  let losses = t - wins;
+
   if(!inc){
-    let wins=Math.round(t*w);
-    let losses=t-wins;
-    cap=cap*Math.pow(1+p,wins)*Math.pow(1-l,losses);
-  }
+    cap = cap * Math.pow(1+p, wins) * Math.pow(1-l, losses);
+  } else {
+    for(let i = 0; i < t; i++){
+      let isWin = i < wins;     // deterministic, not random
+      let pos = cap;
+      let pnl = pos * (isWin ? p : -l);
+      let ch = charges(pos, seg);
 
-  /* Full iterative trade-by-trade (best accuracy) */
-  if(inc){
-    for(let i=0;i<t;i++){
-      let win=Math.random()<w;
-      let pos=cap; // delivery/intraday/F&O all assume 1x capital trade (post-SEBI peak margin)
-      let pnl = pos * (win ? p : -l);
-      let ch = charges(pos,seg);
-      cap += pnl - ch;
+      cap = cap + pnl - ch;
       totalCharges += ch;
-      if(cap<=0) break;
+
+      if(cap <= 0){
+        cap = 0;
+        break;
+      }
     }
   }
+
+  let net = cap - capital;
+  let verdict = net > 0 ? "Positive Expectancy" : "Negative Expectancy";
+
+  output.style.display="block";
+  output.innerHTML = `
+    <p><strong>Final Capital:</strong> ${fmt(cap)}</p>
+    <p><strong>Net Profit:</strong> ${net>=0?'<span class="green">'+fmt(net)+'</span>':'<span class="red">'+fmt(net)+'</span>'}</p>
+    <p><strong>Total Charges Paid:</strong> ${fmt(totalCharges)}</p>
+    <p><strong>Verdict:</strong> <span class="${net>=0?'green':'red'}">${verdict}</span></p>`;
+}
+
+  
 
   let net=cap-capital;
   let verdict = net>0?"Positive Expectancy":"Negative Expectancy";
