@@ -108,11 +108,11 @@ function charges(buy, sell, seg){
     exch = turnover * 0.0000297;
     stamp = buy * 0.00003;
   }
-  else if(seg==="fo"){
-    // OPTIONS PREMIUM
-    stt = sell * 0.001;          // 0.1%
-    exch = turnover * 0.0003503; // 0.03503%
-    stamp = buy * 0.00003;       // 0.003%
+  else if(seg==="fo"){ 
+    // OPTIONS PREMIUM (same as Groww)
+    stt = sell * 0.001;           // 0.1%
+    exch = turnover * 0.0003503;  // 0.03503%
+    stamp = buy * 0.00003;        // 0.003%
   }
 
   const sebi = turnover * 0.000001;
@@ -126,41 +126,47 @@ function charges(buy, sell, seg){
 function runCalc(){
   let cap = capital;
   let seg = segment.value;
-  let t   = trades(frequency.value);
+  let t = trades(frequency.value);
 
   let p = profitPct.value/100;
   let l = lossPct.value/100;
   let w = winRate.value/100;
-
+  
   let inc = includeCharges.checked;
   let totalCharges = 0;
 
   let wins = Math.round(t * w);
   let losses = t - wins;
 
-  // ALWAYS compounding, whether charges on or off
-  for(let i=0;i<t;i++){
+  for(let i = 0; i < t; i++){
     const isWin = i < wins;
     const pnl = cap * (isWin ? p : -l);
 
-    let ch = inc ? charges(cap,seg) : 0;
+    let buy = cap;
+    let sell = cap + pnl; // only correct way to do turnover math
 
-    cap = cap + pnl - ch;
-    totalCharges += ch;
+    let fee = inc ? charges(buy, sell, seg) : 0;
 
-    if(cap <= 0){ cap = 0; break; }
+    cap = cap + pnl - fee;
+    totalCharges += fee;
+
+    if(cap <= 0 || isNaN(cap)){
+      cap = 0;
+      break;
+    }
   }
 
   let net = cap - capital;
-  let verdict = net>0?"Positive Expectancy":"Negative Expectancy";
+  let verdict = net > 0 ? "Positive Expectancy" : "Negative Expectancy";
 
   output.style.display="block";
   output.innerHTML = `
-    <p><strong>Final Capital:</strong> ${fmt(cap)}</p>
-    <p><strong>Net Profit:</strong> ${net>=0?'<span class="green">'+fmt(net)+'</span>':'<span class="red">'+fmt(net)+'</span>'}</p>
-    <p><strong>Total Charges Paid:</strong> ${fmt(totalCharges)}</p>
-    <p><strong>Verdict:</strong> <span class="${net>=0?'green':'red'}">${verdict}</span></p>`
+    <p><strong>Final Capital:</strong> ₹${Math.round(cap).toLocaleString("en-IN")}</p>
+    <p><strong>Net Profit:</strong> <span class="${net>=0?'green':'red'}">₹${Math.round(net).toLocaleString("en-IN")}</span></p>
+    <p><strong>Total Charges Paid:</strong> ₹${Math.round(totalCharges).toLocaleString("en-IN")}</p>
+    <p><strong>Verdict:</strong> <span class="${net>=0?'green':'red'}">${verdict}</span></p>`;
 }
+
 </script>
 
 </body>
