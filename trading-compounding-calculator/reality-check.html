@@ -172,8 +172,9 @@ function runCalc(){
     const pnl = tradeBase * (isWin ? p : -l);
 
 
-    let buy = cap;
-    let sell = cap + pnl; // only correct way to do turnover math
+    
+    let buy  = tradeBase;
+    let sell = tradeBase + pnl; // only correct way to do turnover math
 
     let fee = inc ? charges(buy, sell, seg) : 0;
 
