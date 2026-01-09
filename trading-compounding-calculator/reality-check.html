@@ -131,6 +131,19 @@ function runCalc(){
   let p = profitPct.value/100;
   let l = lossPct.value/100;
   let w = winRate.value/100;
+
+   // Safety limits
+  if (p > 0.20) p = 0.20;
+  if (l > 0.20) l = 0.20;
+  if (w > 1)    w = 1;
+  if (p < 0)    p = 0;
+  if (l < 0)    l = 0;
+  if (w < 0)    w = 0;
+
+  // Reflect fixed values in UI
+  profitPct.value = (p*100).toFixed(2);
+  lossPct.value   = (l*100).toFixed(2);
+  winRate.value   = Math.round(w*100);
   
   let inc = includeCharges.checked;
   let totalCharges = 0;
