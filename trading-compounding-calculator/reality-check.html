@@ -135,11 +135,25 @@ function runCalc(){
   let inc = includeCharges.checked;
   let totalCharges = 0;
 
+  // Decide wins & losses
   let wins = Math.round(t * w);
   let losses = t - wins;
 
-  for(let i = 0; i < t; i++){
-    const isWin = i < wins;
+// Build outcomes array
+  let outcomes = [];
+  for (let i=0; i<wins; i++) outcomes.push(true);
+  for (let i=0; i<losses; i++) outcomes.push(false);
+
+// Shuffle outcomes using Fisher–Yates
+  for (let i = outcomes.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [outcomes[i], outcomes[j]] = [outcomes[j], outcomes[i]];
+  }
+
+// Main loop
+  for (let i = 0; i < t; i++){
+    const isWin = outcomes[i];
+
     const pnl = cap * (isWin ? p : -l);
 
     let buy = cap;
