@@ -167,7 +167,10 @@ function runCalc(){
   for (let i = 0; i < t; i++){
     const isWin = outcomes[i];
 
-    const pnl = cap * (isWin ? p : -l);
+    // Profit/loss based on compounding toggle
+    const tradeBase = compounding.checked ? cap : capital;
+    const pnl = tradeBase * (isWin ? p : -l);
+
 
     let buy = cap;
     let sell = cap + pnl; // only correct way to do turnover math
