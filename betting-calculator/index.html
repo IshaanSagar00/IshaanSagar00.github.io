@@ -2,25 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Bet Hedge & Cutting Calculator | CalcWorld</title>
+<title>Bet Hedge Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{font-family:Arial;background:#f6f7fb;margin:0}
 header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
-.container{max-width:520px;margin:40px auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.09)}
+header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold;text-decoration:none}
+.container{max-width:520px;margin:40px auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.1)}
 h2{margin-top:0}
-label{display:block;margin-top:14px;font-size:14px}
-select,input{width:100%;padding:10px;margin-top:6px;font-size:16px;border:1px solid #ccc;border-radius:8px}
-button{margin-top:18px;width:100%;padding:12px;font-size:17px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}
+.bet-row{display:flex;gap:8px;margin-top:10px}
+.bet-row select,.bet-row input{flex:1;padding:8px;font-size:15px;border:1px solid #ccc;border-radius:6px}
+.remove{width:32px;text-align:center;font-size:18px;line-height:32px;cursor:pointer;color:#dc2626;font-weight:bold}
+button{margin-top:16px;width:100%;padding:12px;font-size:17px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}
+small{color:#666;font-size:13px}
 .result{margin-top:24px;background:#eef4ff;padding:18px;border-radius:10px}
 .green{color:#16a34a;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
-.bet-list{margin-top:20px;padding:12px;background:#fafafa;border-radius:8px;border:1px solid #ddd}
-.bet-item{display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px}
-.bet-item span{flex:1}
-.remove-btn{color:#dc2626;cursor:pointer;margin-left:8px}
 </style>
 </head>
 
@@ -28,134 +26,123 @@ button{margin-top:18px;width:100%;padding:12px;font-size:17px;background:#2563eb
 <header><a href="/">← CalcWorld Home</a></header>
 
 <div class="container">
-<h2>Bet Hedge / Cutting Calculator</h2>
+<h2>Bet Hedge & Cutting Calculator</h2>
 
 <label>How many outcomes?</label>
-<select id="mode" onchange="resetAll()">
+<select id="mode" onchange="resetAll()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
   <option value="2">2 — Team A & Team B</option>
   <option value="3">3 — Team A, Team B & Draw</option>
 </select>
 
-<label>Select Outcome</label>
-<select id="teamSelect"></select>
+<div id="betsArea"></div>
 
-<label>Stake (₹)</label>
-<input id="stakeInput" type="number" min="1" value="100">
-
-<label>Odds (decimal)</label>
-<input id="oddsInput" type="number" step="0.01" min="1.01" value="2.00">
-
-<button onclick="addBet()">Add Bet</button>
-
-<div id="betList" class="bet-list" style="display:none;"></div>
+<button onclick="addRow()">+ Add More Bet</button>
+<button onclick="calc()">Calculate Bets</button>
 
 <div id="output" class="result" style="display:none"></div>
+
 </div>
 
 <script>
-let bets = [];
+let outcomes = ['A','B'];
 
-function updateTeamDropdown(){
+function resetAll(){
   const mode = document.getElementById('mode').value;
-  const select = document.getElementById('teamSelect');
-  select.innerHTML = '';
-
-  select.add(new Option('Team A', 'A'));
-  select.add(new Option('Team B', 'B'));
-  if(mode === "3") select.add(new Option('Draw', 'D'));
+  outcomes = mode === '2' ? ['A','B'] : ['A','B','D'];
+  document.getElementById('betsArea').innerHTML = '';
+  addRow();
+  calc();
 }
 
-function addBet(){
-  const stake = +stakeInput.value;
-  const odds = +oddsInput.value;
-  const team = teamSelect.value;
+function addRow(){
+  const area = document.getElementById('betsArea');
+  const row = document.createElement('div');
+  row.className = 'bet-row';
 
-  if(stake <= 0 || odds < 1.01) return;
-
-  bets.push({team, stake, odds});
-  renderBets();
-  calcResults();
-}
-
-function removeBet(idx){
-  bets.splice(idx, 1);
-  renderBets();
-  calcResults();
-}
-
-function calcResults(){
-  if(bets.length === 0){
-    output.style.display="none";
-    return;
-  }
-
-  let winA = 0, winB = 0, winD = 0;
-  let totalStake = 0;
-
-  bets.forEach(b=>{
-    totalStake += b.stake;
-    if(b.team === 'A'){
-      winA += b.stake * (b.odds - 1);
-    }
-    if(b.team === 'B'){
-      winB += b.stake * (b.odds - 1);
-    }
-    if(b.team === 'D'){
-      winD += b.stake * (b.odds - 1);
-    }
+  // dropdown
+  const sel = document.createElement('select');
+  outcomes.forEach(o=>{
+    sel.add(new Option(o==='A'?'Team A':o==='B'?'Team B':'Draw',o));
   });
 
-  // subtract losing stakes
-  const stakeA = bets.filter(b=>b.team!=='A').reduce((s,b)=>s+b.stake,0);
-  const stakeB = bets.filter(b=>b.team!=='B').reduce((s,b)=>s+b.stake,0);
-  const stakeD = bets.filter(b=>b.team!=='D').reduce((s,b)=>s+b.stake,0);
+  // stake
+  const stake = document.createElement('input');
+  stake.type='number';
+  stake.min='1';
+  stake.value='100';
+
+  // odds
+  const odds = document.createElement('input');
+  odds.type='number';
+  odds.step='0.01';
+  odds.min='1.01';
+  odds.value='2.0';
+
+  // remove btn
+  const del = document.createElement('div');
+  del.className='remove';
+  del.textContent='✖';
+  del.onclick=()=>{row.remove();calc();};
+
+  // change triggers recalculation
+  sel.oninput=calc;
+  stake.oninput=calc;
+  odds.oninput=calc;
+
+  row.appendChild(sel);
+  row.appendChild(stake);
+  row.appendChild(odds);
+  row.appendChild(del);
+
+  area.appendChild(row);
+}
+
+function calc(){
+  const rows = Array.from(document.querySelectorAll('.bet-row'));
+  if(rows.length===0){output.style.display='none';return;}
+
+  let winA=0,winB=0,winD=0;
+  let stakeA=0,stakeB=0,stakeD=0;
+  let total=0;
+
+  rows.forEach(r=>{
+    const team = r.children[0].value;
+    const stake = +r.children[1].value;
+    const odds = +r.children[2].value;
+    if(!stake || !odds) return;
+
+    total += stake;
+
+    const profit = stake*(odds-1);
+
+    if(team==='A'){winA+=profit; stakeB+=stake; stakeD+=stake;}
+    if(team==='B'){winB+=profit; stakeA+=stake; stakeD+=stake;}
+    if(team==='D'){winD+=profit; stakeA+=stake; stakeB+=stake;}
+  });
 
   winA -= stakeA;
   winB -= stakeB;
   winD -= stakeD;
 
-  const mode = document.getElementById('mode').value;
+  const mode=document.getElementById('mode').value;
 
-  output.style.display="block";
-
-  let html = `<p><strong>Total Stake Risked:</strong> ₹${totalStake}</p>`;
-  html += `<p><strong>If Team A Wins:</strong> ${fmt(winA)}</p>`;
-  html += `<p><strong>If Team B Wins:</strong> ${fmt(winB)}</p>`;
-  if(mode === "3"){
-    html += `<p><strong>If Draw Happens:</strong> ${fmt(winD)}</p>`;
+  let html=`<p><strong>Total stake placed:</strong> ₹${total}</p>`;
+  html += `<p><strong>If Team A wins:</strong> ${fmt(winA)}</p>`;
+  html += `<p><strong>If Team B wins:</strong> ${fmt(winB)}</p>`;
+  if(mode==='3'){
+    html += `<p><strong>If Draw happens:</strong> ${fmt(winD)}</p>`;
   }
 
-  output.innerHTML = html;
-}
-
-function renderBets(){
-  const list = document.getElementById('betList');
-  if(bets.length === 0){
-    list.style.display="none";
-    return;
-  }
-  list.style.display="block";
-  list.innerHTML = bets.map((b,i)=>
-    `<div class="bet-item">
-      <span>${b.team} — ₹${b.stake} @ ${b.odds}</span>
-      <span class="remove-btn" onclick="removeBet(${i})">✖</span>
-    </div>`
-  ).join('');
-}
-
-function resetAll(){
-  bets = [];
-  renderBets();
-  calcResults();
-  updateTeamDropdown();
+  output.style.display='block';
+  output.innerHTML=html;
 }
 
 function fmt(n){
-  const c = Math.round(n);
-  return c>=0 ? `<span class="green">₹${c}</span>` : `<span class="red">₹${c}</span>`;
+  const r=Math.round(n);
+  return r>=0?`<span class="green">₹${r}</span>`:`<span class="red">₹${r}</span>`;
 }
 
-updateTeamDropdown();
+resetAll();
 </script>
 
 </body>
