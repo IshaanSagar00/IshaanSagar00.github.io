@@ -27,12 +27,8 @@ h2{margin-top:0}
   color:#dc2626;
   border:1px solid #f3b9b9;
 }
-.remove:hover{
-  background:#ffcccc;
-}
-
+.remove:hover{background:#ffcccc}
 button{margin-top:16px;width:100%;padding:12px;font-size:17px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}
-small{color:#666;font-size:13px}
 .result{margin-top:24px;background:#eef4ff;padding:18px;border-radius:10px}
 .green{color:#16a34a;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
@@ -82,29 +78,35 @@ function addRow(){
     sel.add(new Option(o==='A'?'Team A':o==='B'?'Team B':'Draw',o));
   });
 
-  // stake
+  // stake with LIMITS
   const stake = document.createElement('input');
   stake.type='number';
   stake.min='1';
+  stake.max='1000000';
   stake.value='100';
+  stake.oninput=function(){
+    if(+this.value>1000000) this.value=1000000;
+    calc();
+  }
 
-  // odds
+  // odds with LIMITS
   const odds = document.createElement('input');
   odds.type='number';
   odds.step='0.01';
   odds.min='1.01';
+  odds.max='16';
   odds.value='2.0';
+  odds.oninput=function(){
+    if(+this.value>16) this.value=16;
+    calc();
+  }
 
-  // remove btn
   const del = document.createElement('div');
   del.className='remove';
   del.textContent='✖';
   del.onclick=()=>{row.remove();calc();};
 
-  // change triggers recalculation
   sel.oninput=calc;
-  stake.oninput=calc;
-  odds.oninput=calc;
 
   row.appendChild(sel);
   row.appendChild(stake);
@@ -123,13 +125,13 @@ function calc(){
   let total=0;
 
   rows.forEach(r=>{
-    const team = r.children[0].value;
-    const stake = +r.children[1].value;
-    const odds = +r.children[2].value;
+    let team = r.children[0].value;
+    let stake = Math.min(+r.children[1].value,1000000);
+    let odds  = Math.min(+r.children[2].value,16);
+
     if(!stake || !odds) return;
 
     total += stake;
-
     const profit = stake*(odds-1);
 
     if(team==='A'){winA+=profit; stakeB+=stake; stakeD+=stake;}
