@@ -1,21 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Bet Cutting Calculator</title>
+<title>Bet Hedge & Cutting Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{font-family:Arial;background:#f6f7fb;margin:0}
 header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
 header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
-.container{max-width:460px;margin:40px auto;background:#fff;padding:24px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.09)}
+.container{max-width:520px;margin:40px auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.09)}
+h2{margin-top:0}
 label{display:block;margin-top:14px;font-size:14px}
-input{width:100%;padding:10px;margin-top:6px;font-size:16px;border:1px solid #ccc;border-radius:8px}
-button{margin-top:20px;width:100%;padding:12px;font-size:18px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}
+select,input{width:100%;padding:10px;margin-top:6px;font-size:16px;border:1px solid #ccc;border-radius:8px}
+button{margin-top:18px;width:100%;padding:12px;font-size:17px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}
 .result{margin-top:24px;background:#eef4ff;padding:18px;border-radius:10px}
 .green{color:#16a34a;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
+.bet-list{margin-top:20px;padding:12px;background:#fafafa;border-radius:8px;border:1px solid #ddd}
+.bet-item{display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px}
+.bet-item span{flex:1}
+.remove-btn{color:#dc2626;cursor:pointer;margin-left:8px}
 </style>
 </head>
 
@@ -23,43 +28,135 @@ button{margin-top:20px;width:100%;padding:12px;font-size:18px;background:#2563eb
 <header><a href="/">← CalcWorld Home</a></header>
 
 <div class="container">
-<h2>Match Hedge / Cut Bet Calculator</h2>
+<h2>Bet Hedge / Cutting Calculator</h2>
 
-<label>Bet on Team A – Stake (₹)</label>
-<input id="stakeA" type="number" value="1000">
+<label>How many outcomes?</label>
+<select id="mode" onchange="resetAll()">
+  <option value="2">2 — Team A & Team B</option>
+  <option value="3">3 — Team A, Team B & Draw</option>
+</select>
 
-<label>Bet on Team A – Odds (Decimal)</label>
-<input id="oddsA" type="number" step="0.01" value="2.50">
+<label>Select Outcome</label>
+<select id="teamSelect"></select>
 
-<label>Bet on Team B – Stake (₹)</label>
-<input id="stakeB" type="number" value="1000">
+<label>Stake (₹)</label>
+<input id="stakeInput" type="number" min="1" value="100">
 
-<label>Bet on Team B – Odds (Decimal)</label>
-<input id="oddsB" type="number" step="0.01" value="3.00">
+<label>Odds (decimal)</label>
+<input id="oddsInput" type="number" step="0.01" min="1.01" value="2.00">
 
-<button onclick="calc()">Calculate Outcome</button>
+<button onclick="addBet()">Add Bet</button>
+
+<div id="betList" class="bet-list" style="display:none;"></div>
 
 <div id="output" class="result" style="display:none"></div>
 </div>
 
 <script>
-function fmt(n){return "₹"+Math.round(n).toLocaleString("en-IN");}
+let bets = [];
 
-function calc(){
-  const stakeA = +stakeAInput.value;
-  const oddsA = +oddsAInput.value;
-  const stakeB = +stakeBInput.value;
-  const oddsB = +oddsBInput.value;
+function updateTeamDropdown(){
+  const mode = document.getElementById('mode').value;
+  const select = document.getElementById('teamSelect');
+  select.innerHTML = '';
 
-  const winA = stakeA * (oddsA - 1) - stakeB;
-  const winB = stakeB * (oddsB - 1) - stakeA;
+  select.add(new Option('Team A', 'A'));
+  select.add(new Option('Team B', 'B'));
+  if(mode === "3") select.add(new Option('Draw', 'D'));
+}
+
+function addBet(){
+  const stake = +stakeInput.value;
+  const odds = +oddsInput.value;
+  const team = teamSelect.value;
+
+  if(stake <= 0 || odds < 1.01) return;
+
+  bets.push({team, stake, odds});
+  renderBets();
+  calcResults();
+}
+
+function removeBet(idx){
+  bets.splice(idx, 1);
+  renderBets();
+  calcResults();
+}
+
+function calcResults(){
+  if(bets.length === 0){
+    output.style.display="none";
+    return;
+  }
+
+  let winA = 0, winB = 0, winD = 0;
+  let totalStake = 0;
+
+  bets.forEach(b=>{
+    totalStake += b.stake;
+    if(b.team === 'A'){
+      winA += b.stake * (b.odds - 1);
+    }
+    if(b.team === 'B'){
+      winB += b.stake * (b.odds - 1);
+    }
+    if(b.team === 'D'){
+      winD += b.stake * (b.odds - 1);
+    }
+  });
+
+  // subtract losing stakes
+  const stakeA = bets.filter(b=>b.team!=='A').reduce((s,b)=>s+b.stake,0);
+  const stakeB = bets.filter(b=>b.team!=='B').reduce((s,b)=>s+b.stake,0);
+  const stakeD = bets.filter(b=>b.team!=='D').reduce((s,b)=>s+b.stake,0);
+
+  winA -= stakeA;
+  winB -= stakeB;
+  winD -= stakeD;
+
+  const mode = document.getElementById('mode').value;
 
   output.style.display="block";
-  output.innerHTML = `
-    <p><strong>If Team A wins:</strong> ${
-      winA>=0?'<span class="green">'+fmt(winA)+'</span>':'<span class="red">'+fmt(winA)+'</span>'
-    }</p>
 
-    <p><strong>If Team B wins:</strong> ${
-      winB>=0?'<span class="green">'+fmt(winB)+'</span>':'<span class="red">'+fmt(winB)+'</span>'
-    }</p
+  let html = `<p><strong>Total Stake Risked:</strong> ₹${totalStake}</p>`;
+  html += `<p><strong>If Team A Wins:</strong> ${fmt(winA)}</p>`;
+  html += `<p><strong>If Team B Wins:</strong> ${fmt(winB)}</p>`;
+  if(mode === "3"){
+    html += `<p><strong>If Draw Happens:</strong> ${fmt(winD)}</p>`;
+  }
+
+  output.innerHTML = html;
+}
+
+function renderBets(){
+  const list = document.getElementById('betList');
+  if(bets.length === 0){
+    list.style.display="none";
+    return;
+  }
+  list.style.display="block";
+  list.innerHTML = bets.map((b,i)=>
+    `<div class="bet-item">
+      <span>${b.team} — ₹${b.stake} @ ${b.odds}</span>
+      <span class="remove-btn" onclick="removeBet(${i})">✖</span>
+    </div>`
+  ).join('');
+}
+
+function resetAll(){
+  bets = [];
+  renderBets();
+  calcResults();
+  updateTeamDropdown();
+}
+
+function fmt(n){
+  const c = Math.round(n);
+  return c>=0 ? `<span class="green">₹${c}</span>` : `<span class="red">₹${c}</span>`;
+}
+
+updateTeamDropdown();
+</script>
+
+</body>
+</html>
