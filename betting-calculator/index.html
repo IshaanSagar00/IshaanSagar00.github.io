@@ -8,27 +8,20 @@
 <style>
 body{font-family:Arial;background:#f6f7fb;margin:0}
 header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold;text-decoration:none}
-.container{max-width:520px;margin:40px auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.1)}
+header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
+.container{max-width:600px;margin:40px auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.1)}
 h2{margin-top:0}
-.bet-row{display:flex;gap:8px;margin-top:10px}
+.bet-row{display:flex;gap:8px;margin-top:12px;align-items:center}
 .bet-row select,.bet-row input{flex:1;padding:8px;font-size:15px;border:1px solid #ccc;border-radius:6px}
 .remove{
-  width:28px;
-  height:38px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  margin-left:-8px;
-  cursor:pointer;
-  background:#ffe5e5;
-  border-radius:6px;
-  font-size:18px;
-  color:#dc2626;
+  width:32px;height:38px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;background:#ffe5e5;border-radius:6px;font-size:18px;color:#dc2626;
   border:1px solid #f3b9b9;
 }
 .remove:hover{background:#ffcccc}
+label{font-size:14px;margin-top:10px;display:block}
 button{margin-top:16px;width:100%;padding:12px;font-size:17px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}
+small{display:block;color:#666;font-size:12px;margin-top:4px}
 .result{margin-top:24px;background:#eef4ff;padding:18px;border-radius:10px}
 .green{color:#16a34a;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
@@ -47,7 +40,26 @@ button{margin-top:16px;width:100%;padding:12px;font-size:17px;background:#2563eb
   <option value="3">3 — Team A, Team B & Draw</option>
 </select>
 
+<label>Team Names</label>
+<div style="display:flex; gap:8px; margin-top:6px;">
+  <input id="teamAName" value="Team A" placeholder="Team A" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;">
+  <input id="teamBName" value="Team B" placeholder="Team B" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;">
+  <input id="teamDName" value="Draw" placeholder="Draw" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;display:none;">
+</div>
+
+<label style="margin-top:14px;">Odds Format</label>
+<select id="oddsType" onchange="resetAll()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+  <option value="decimal">Decimal (1.01–16)</option>
+  <option value="american">American (-10000 to +10000)</option>
+  <option value="fractional">Fractional (1/100 to 50/1)</option>
+</select>
+
 <div id="betsArea"></div>
+
+<small>💰 Max stake per bet: ₹10,00,000</small>
+<small>🎯 Max decimal odds: 16</small>
+<small>🇺🇸 Max American odds: -10000 to +10000</small>
+<small>📐 Max fractional odds: 50/1</small>
 
 <button onclick="addRow()">+ Add More Bet</button>
 <button onclick="calc()">Calculate Bets</button>
@@ -57,12 +69,10 @@ button{margin-top:16px;width:100%;padding:12px;font-size:17px;background:#2563eb
 </div>
 
 <script>
-let outcomes = ['A','B'];
-
 function resetAll(){
   const mode = document.getElementById('mode').value;
-  outcomes = mode === '2' ? ['A','B'] : ['A','B','D'];
-  document.getElementById('betsArea').innerHTML = '';
+  document.getElementById('betsArea').innerHTML='';
+  document.getElementById('teamDName').style.display = mode==='3' ? 'block' : 'none';
   addRow();
   calc();
 }
@@ -72,93 +82,96 @@ function addRow(){
   const row = document.createElement('div');
   row.className = 'bet-row';
 
-  // dropdown
   const sel = document.createElement('select');
-  outcomes.forEach(o=>{
-    sel.add(new Option(o==='A'?'Team A':o==='B'?'Team B':'Draw',o));
-  });
+  const mode = document.getElementById('mode').value;
+  const A=document.getElementById('teamAName').value;
+  const B=document.getElementById('teamBName').value;
+  const D=document.getElementById('teamDName').value;
+  sel.add(new Option(A,'A'));
+  sel.add(new Option(B,'B'));
+  if(mode==='3') sel.add(new Option(D,'D'));
 
-  // stake with LIMITS
-  const stake = document.createElement('input');
-  stake.type='number';
-  stake.min='1';
-  stake.max='1000000';
-  stake.value='100';
-  stake.oninput=function(){
-    if(+this.value>1000000) this.value=1000000;
-    calc();
-  }
+  const stake=document.createElement('input');
+  stake.type='number'; stake.min='1'; stake.max='1000000';
+  stake.placeholder='Stake'; stake.value='100';
+  stake.oninput=()=>{ if(stake.value>1000000) stake.value=1000000; calc(); }
 
-  // odds with LIMITS
-  const odds = document.createElement('input');
-  odds.type='number';
-  odds.step='0.01';
-  odds.min='1.01';
-  odds.max='16';
-  odds.value='2.0';
-  odds.oninput=function(){
-    if(+this.value>16) this.value=16;
-    calc();
-  }
+  const odds=document.createElement('input');
+  odds.type='text';
+  const type=document.getElementById('oddsType').value;
+  odds.placeholder=(type==='decimal'?'Decimal':
+                   type==='american'?'American':'Fractional');
+  odds.oninput=calc;
 
-  const del = document.createElement('div');
-  del.className='remove';
-  del.textContent='✖';
+  const del=document.createElement('div');
+  del.className='remove'; del.textContent='✖';
   del.onclick=()=>{row.remove();calc();};
 
-  sel.oninput=calc;
+  row.append(sel, stake, odds, del);
+  area.append(row);
+}
 
-  row.appendChild(sel);
-  row.appendChild(stake);
-  row.appendChild(odds);
-  row.appendChild(del);
-
-  area.appendChild(row);
+function parseOdds(raw,type){
+  raw=raw.trim();
+  if(type==='decimal'){
+    let d=parseFloat(raw);
+    if(isNaN(d)) return NaN;
+    return Math.min(Math.max(d,1.01),16);
+  }
+  if(type==='american'){
+    let v=parseInt(raw);
+    if(isNaN(v)) return NaN;
+    v=Math.min(Math.max(v,-10000),10000);
+    return v>0 ? (v/100+1) : (100/Math.abs(v)+1);
+  }
+  let parts=raw.split('/');
+  let a=+parts[0], b=+parts[1];
+  if(!a||!b) return NaN;
+  if(a/b>50) a=50*b;
+  return a/b+1;
 }
 
 function calc(){
-  const rows = Array.from(document.querySelectorAll('.bet-row'));
-  if(rows.length===0){output.style.display='none';return;}
+  const rows=document.querySelectorAll('.bet-row');
+  if(!rows.length){output.style.display='none';return;}
 
   let winA=0,winB=0,winD=0;
-  let stakeA=0,stakeB=0,stakeD=0;
+  let loseA=0,loseB=0,loseD=0;
   let total=0;
+  const type=document.getElementById('oddsType').value;
 
   rows.forEach(r=>{
-    let team = r.children[0].value;
-    let stake = Math.min(+r.children[1].value,1000000);
-    let odds  = Math.min(+r.children[2].value,16);
+    const team=r.children[0].value;
+    let stake=+r.children[1].value;
+    let dec=parseOdds(r.children[2].value,type);
+    if(isNaN(stake)||isNaN(dec)) return;
+    stake=Math.min(stake,1000000);
+    const profit=stake*(dec-1);
+    total+=stake;
 
-    if(!stake || !odds) return;
-
-    total += stake;
-    const profit = stake*(odds-1);
-
-    if(team==='A'){winA+=profit; stakeB+=stake; stakeD+=stake;}
-    if(team==='B'){winB+=profit; stakeA+=stake; stakeD+=stake;}
-    if(team==='D'){winD+=profit; stakeA+=stake; stakeB+=stake;}
+    if(team==='A'){winA+=profit; loseB+=stake; loseD+=stake;}
+    if(team==='B'){winB+=profit; loseA+=stake; loseD+=stake;}
+    if(team==='D'){winD+=profit; loseA+=stake; loseB+=stake;}
   });
 
-  winA -= stakeA;
-  winB -= stakeB;
-  winD -= stakeD;
-
+  winA-=loseA; winB-=loseB; winD-=loseD;
+  const A=document.getElementById('teamAName').value;
+  const B=document.getElementById('teamBName').value;
+  const D=document.getElementById('teamDName').value;
   const mode=document.getElementById('mode').value;
 
   let html=`<p><strong>Total stake placed:</strong> ₹${total}</p>`;
-  html += `<p><strong>If Team A wins:</strong> ${fmt(winA)}</p>`;
-  html += `<p><strong>If Team B wins:</strong> ${fmt(winB)}</p>`;
-  if(mode==='3'){
-    html += `<p><strong>If Draw happens:</strong> ${fmt(winD)}</p>`;
-  }
+  html+=`<p><strong>If ${A} wins:</strong> ${fmt(winA)}</p>`;
+  html+=`<p><strong>If ${B} wins:</strong> ${fmt(winB)}</p>`;
+  if(mode==='3') html+=`<p><strong>If ${D} happens:</strong> ${fmt(winD)}</p>`;
 
   output.style.display='block';
   output.innerHTML=html;
 }
 
 function fmt(n){
-  const r=Math.round(n);
-  return r>=0?`<span class="green">₹${r}</span>`:`<span class="red">₹${r}</span>`;
+  n=Math.round(n);
+  return n>=0?`<span class="green">₹${n}</span>`:`<span class="red">₹${n}</span>`;
 }
 
 resetAll();
