@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Betting EV Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#f6f7fb;margin:0;padding:20px}
+.container{max-width:480px;margin:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+h2{margin:0 0 12px}
+label{display:block;margin-top:14px}
+input{width:100%;padding:10px;font-size:16px;border-radius:8px;border:1px solid #ccc;margin-top:6px}
+button{margin-top:20px;width:100%;padding:12px;font-size:18px;border:none;background:#2563eb;color:#fff;border-radius:10px;cursor:pointer}
+.result{margin-top:20px;background:#eef3ff;padding:14px;border-radius:10px}
+.green{color:#16a34a;font-weight:bold}
+.red{color:#dc2626;font-weight:bold}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h2>Betting EV Calculator</h2>
+
+<label>Stake (₹)</label>
+<input id="stake" type="number" value="1000" min="1">
+
+<label>Decimal Odds</label>
+<input id="odds" type="number" value="2.0" step="0.01" min="1.01">
+
+<label>Win Probability (%)</label>
+<input id="prob" type="number" value="50" min="0" max="100">
+
+<button onclick="run()">Calculate</button>
+
+<div id="output" class="result" style="display:none"></div>
+</div>
+
+<script>
+function fmt(n){return "₹"+Math.round(n).toLocaleString("en-IN");}
+
+function run(){
+  let stake = +stakeInput.value;
+  let odds = +oddsInput.value;
+  let p = +probInput.value/100;
+
+  let profitWin = stake * (odds - 1);
+  let lossLose = stake;
+  let ev = p * profitWin - (1 - p) * lossLose;
+
+  output.style.display="block";
+  output.innerHTML = `
+    <p><strong>Win Profit:</strong> ${fmt(profitWin)}</p>
+    <p><strong>Loss Amount:</strong> ${fmt(lossLose)}</p>
+    <p><strong>Expected Value:</strong> 
+      <span class="${ev>=0?'green':'red'}">${fmt(ev)}</span>
+      per bet</p>
+  `;
+}
+
+const stakeInput = document.getElementById("stake");
+const oddsInput  = document.getElementById("odds");
+const probInput  = document.getElementById("prob");
+const output     = document.getElementById("output");
+</script>
+</body>
+</html>
