@@ -2,150 +2,175 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Scientific Calculator | CalcWorld</title>
+<title>Bet Hedge Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{font-family:Arial;background:#111;margin:0;display:flex;flex-direction:column;align-items:center;padding:0}
-header{width:100%;background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.2);}
+body{font-family:Arial;background:#f6f7fb;margin:0}
+header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
 header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
-.wrap{padding:20px;display:flex;justify-content:center;width:100%}
-.calc{background:#1c1c1c;width:360px;padding:20px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-.display{background:#000;color:#fff;font-size:32px;text-align:right;padding:15px;border-radius:12px;height:60px;overflow-x:auto}
-.preview{color:#8af4a0;font-size:18px;text-align:right;margin-top:4px;height:20px}
-.keys{margin-top:16px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.btn{background:#2e2e2e;color:white;border:none;border-radius:12px;font-size:18px;padding:16px;cursor:pointer}
-.op{background:#ff9500}
-.eq{background:#34c759}
-.mem{background:#444}
-.btn:hover{opacity:.85}
-.history{margin-top:18px;background:#222;color:white;padding:10px;border-radius:10px;max-height:120px;overflow-y:auto;font-size:14px}
-.history p{margin:4px 0;cursor:pointer}
+.container{max-width:600px;margin:40px auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.1)}
+h2{margin-top:0}
+.bet-row{display:flex;gap:8px;margin-top:12px;align-items:center}
+.bet-row select,.bet-row input{flex:1;padding:8px;font-size:15px;border:1px solid #ccc;border-radius:6px}
+.remove{
+  width:32px;height:38px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;background:#ffe5e5;border-radius:6px;font-size:18px;color:#dc2626;
+  border:1px solid #f3b9b9;
+}
+.remove:hover{background:#ffcccc}
+label{font-size:14px;margin-top:12px;display:block;font-weight:bold}
+button{margin-top:16px;width:100%;padding:12px;font-size:17px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}
+small{display:block;color:#666;font-size:12px;margin-top:4px}
+.result{margin-top:24px;background:#eef4ff;padding:18px;border-radius:10px}
+.green{color:#16a34a;font-weight:bold}
+.red{color:#dc2626;font-weight:bold}
+.disclaimer{margin-top:18px;font-size:12px;color:#7c3a00;background:#fff7dd;border:1px solid #f6d67a;padding:10px;border-radius:8px}
 </style>
 </head>
 
 <body>
-
 <header><a href="/">CalcWorld</a></header>
 
-<div class="wrap">
-<div class="calc">
-  <div id="disp" class="display"></div>
-  <div id="preview" class="preview"></div>
+<div class="container">
+<h2>Bet Hedge & Cutting Calculator</h2>
 
-  <div class="keys">
-    <button class="btn mem" onclick="memClear()">MC</button>
-    <button class="btn mem" onclick="memRecall()">MR</button>
-    <button class="btn mem" onclick="memAdd()">M+</button>
-    <button class="btn mem" onclick="memSub()">M-</button>
-    <button class="btn" onclick="clearAll()">AC</button>
+<label>How many outcomes?</label>
+<select id="mode" onchange="resetAll()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+  <option value="2">2 — Team A & Team B</option>
+  <option value="3">3 — Team A, Team B & Draw</option>
+</select>
 
-    <button class="btn" onclick="inputFunc('(')">(</button>
-    <button class="btn" onclick="inputFunc(')')">)</button>
-    <button class="btn" onclick="scientific('^')">xʸ</button>
-    <button class="btn" onclick="scientific('sqrt')">√</button>
-    <button class="btn" onclick="backspace()">⌫</button>
+<label>Team Names</label>
+<div style="display:flex; gap:8px; margin-top:6px;">
+  <input id="teamAName" value="Team A" placeholder="Team A" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;" oninput="updateTeams()">
+  <input id="teamBName" value="Team B" placeholder="Team B" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;" oninput="updateTeams()">
+  <input id="teamDName" value="Draw" placeholder="Draw" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;display:none;" oninput="updateTeams()">
+</div>
 
-    <button class="btn" onclick="scientific('sin')">sin</button>
-    <button class="btn" onclick="scientific('cos')">cos</button>
-    <button class="btn" onclick="scientific('tan')">tan</button>
-    <button class="btn" onclick="scientific('log')">log</button>
-    <button class="btn" onclick="scientific('ln')">ln</button>
+<label>Place Your Bets</label>
+<div id="betsArea"></div>
 
-    <button class="btn" onclick="inputFunc('7')">7</button>
-    <button class="btn" onclick="inputFunc('8')">8</button>
-    <button class="btn" onclick="inputFunc('9')">9</button>
-    <button class="btn op" onclick="inputFunc('/')">÷</button>
-    <button class="btn op" onclick="inputFunc('*')">×</button>
+<small>💰 Max stake per bet: ₹10,00,000</small>
+<small>🎯 Decimal odds allowed: 1.01 to 16</small>
 
-    <button class="btn" onclick="inputFunc('4')">4</button>
-    <button class="btn" onclick="inputFunc('5')">5</button>
-    <button class="btn" onclick="inputFunc('6')">6</button>
-    <button class="btn op" onclick="inputFunc('-')">−</button>
-    <button class="btn op" onclick="inputFunc('+')">+</button>
+<button onclick="addRow()">+ Add More Bet</button>
+<button onclick="calc()">Calculate Bets</button>
 
-    <button class="btn" onclick="inputFunc('1')">1</button>
-    <button class="btn" onclick="inputFunc('2')">2</button>
-    <button class="btn" onclick="inputFunc('3')">3</button>
-    <button class="btn" onclick="inputFunc('.')">.</button>
-    <button class="btn eq" onclick="calculate()">=</button>
+<div id="output" class="result" style="display:none"></div>
 
-    <button class="btn" onclick="inputFunc('0')" style="grid-column:span 5">0</button>
-  </div>
-
-  <div id="history" class="history"></div>
+<div class="disclaimer">
+⚠️ <strong>Disclaimer:</strong> This tool is for educational purposes only.  
+Betting involves financial risk and can be addictive.  
+CalcWorld does not encourage or support gambling activity.
 </div>
 </div>
 
 <script>
-let disp = document.getElementById('disp');
-let preview = document.getElementById('preview');
-let historyBox = document.getElementById('history');
-let memory = 0;
-let history=[];
+function updateTeams(){
+  document.querySelectorAll('.bet-row select').forEach(sel=>{
+    const team=sel.value;
+    sel.options.length=0;
+    const A=document.getElementById('teamAName').value;
+    const B=document.getElementById('teamBName').value;
+    const D=document.getElementById('teamDName').value;
+    const mode=document.getElementById('mode').value;
 
-function inputFunc(v){ disp.textContent += v; liveEval();}
-function backspace(){ disp.textContent=disp.textContent.slice(0,-1); liveEval();}
-function clearAll(){ disp.textContent=''; preview.textContent=''; }
-
-function memClear(){ memory=0; }
-function memRecall(){ disp.textContent+=memory; liveEval(); }
-function memAdd(){ memory+=Number(evalSafe(disp.textContent)||0); }
-function memSub(){ memory-=Number(evalSafe(disp.textContent)||0); }
-
-function scientific(type){
-  if(!disp.textContent) return;
-  if(type==='^'){ disp.textContent+='^'; return; }
-  let x = evalSafe(disp.textContent);
-  if(x===null) return;
-  switch(type){
-    case 'sin': x=Math.sin(x); break;
-    case 'cos': x=Math.cos(x); break;
-    case 'tan': x=Math.tan(x); break;
-    case 'log': x=Math.log10(x); break;
-    case 'ln': x=Math.log(x); break;
-    case 'sqrt': x=Math.sqrt(x); break;
-  }
-  disp.textContent = x;
-  liveEval();
-}
-
-function evalSafe(expr){
-  try{
-    expr = expr.replace(/\^/g,'**');
-    return Function(`"use strict";return (${expr})`)();
-  } catch{ return null; }
-}
-
-function liveEval(){
-  let val = evalSafe(disp.textContent);
-  preview.textContent = val===null ? '' : val;
-}
-
-function calculate(){
-  let val = evalSafe(disp.textContent);
-  if(val===null){ preview.textContent=''; return; }
-  preview.textContent='';
-  disp.textContent=val;
-  history.unshift(val);
-  renderHistory();
-}
-
-function renderHistory(){
-  historyBox.innerHTML='';
-  history.slice(0,10).forEach(h=>{
-    let p=document.createElement('p');
-    p.textContent=h;
-    p.onclick=()=>{disp.textContent=h; liveEval();}
-    historyBox.append(p);
+    sel.add(new Option(A,'A'));
+    sel.add(new Option(B,'B'));
+    if(mode==='3') sel.add(new Option(D,'D'));
+    sel.value=team; 
   });
+  calc();
 }
 
-document.addEventListener('keydown',e=>{
-  if(/[0-9+\-*/().]/.test(e.key)) inputFunc(e.key);
-  if(e.key==='Enter') calculate();
-  if(e.key==='Backspace') backspace();
-});
+function resetAll(){
+  document.getElementById('teamDName').style.display = document.getElementById('mode').value==='3' ? 'block':'none';
+  document.getElementById('betsArea').innerHTML='';
+  addRow();
+  calc();
+}
+
+function addRow(){
+  const row=document.createElement('div');
+  row.className='bet-row';
+
+  const sel=document.createElement('select');
+  updateTeams();
+  ['A','B','D'].forEach(v=>{
+    if(v==='D' && document.getElementById('mode').value==='2') return;
+    const name=document.getElementById('team'+v+'Name').value;
+    sel.add(new Option(name,v));
+  });
+  sel.oninput=calc;
+
+  const stake=document.createElement('input');
+  stake.type='number';
+  stake.min='1'; stake.max='1000000';
+  stake.placeholder='Stake';
+  stake.value='100';
+  stake.oninput=()=>{ if(stake.value>1000000) stake.value=1000000; calc(); }
+
+  const odds=document.createElement('input');
+  odds.type='number';
+  odds.step='0.01'; odds.min='1.01'; odds.max='16';
+  odds.placeholder='Odds';
+  odds.value='2.0';
+  odds.oninput=()=>{ if(odds.value>16) odds.value=16; calc(); }
+
+  const del=document.createElement('div');
+  del.className='remove';
+  del.textContent='✖';
+  del.onclick=()=>{row.remove();calc();};
+
+  row.append(sel,stake,odds,del);
+  document.getElementById('betsArea').append(row);
+}
+
+function calc(){
+  const rows=document.querySelectorAll('.bet-row');
+  if(!rows.length){output.style.display='none';return;}
+
+  let winA=0,winB=0,winD=0;
+  let loseA=0,loseB=0,loseD=0;
+  let total=0;
+  const mode=document.getElementById('mode').value;
+
+  rows.forEach(r=>{
+    const t=r.children[0].value;
+    let st=+r.children[1].value;
+    let od=+r.children[2].value;
+    if(isNaN(st)||isNaN(od)) return;
+    st=Math.min(st,1000000);
+    od=Math.max(1.01,Math.min(od,16));
+    const profit=st*(od-1);
+    total+=st;
+
+    if(t==='A'){winA+=profit; loseB+=st; loseD+=st;}
+    if(t==='B'){winB+=profit; loseA+=st; loseD+=st;}
+    if(t==='D'){winD+=profit; loseA+=st; loseB+=st;}
+  });
+
+  winA-=loseA; winB-=loseB; winD-=loseD;
+  const A=document.getElementById('teamAName').value;
+  const B=document.getElementById('teamBName').value;
+  const D=document.getElementById('teamDName').value;
+
+  let html=`<p><strong>Total stake placed:</strong> ₹${total}</p>`;
+  html+=`<p><strong>If ${A} wins:</strong> ${fmt(winA)}</p>`;
+  html+=`<p><strong>If ${B} wins:</strong> ${fmt(winB)}</p>`;
+  if(mode==='3') html+=`<p><strong>If ${D} happens:</strong> ${fmt(winD)}</p>`;
+
+  output.style.display='block';
+  output.innerHTML=html;
+}
+
+function fmt(n){
+  n=Math.round(n);
+  return n>=0?`<span class="green">₹${n}</span>`:`<span class="red">₹${n}</span>`;
+}
+
+resetAll();
 </script>
 
 </body>
