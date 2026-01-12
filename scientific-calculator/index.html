@@ -6,9 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{font-family:Arial;background:#111;margin:0;display:flex;justify-content:center;padding:20px}
-header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+body{font-family:Arial;background:#111;margin:0;display:flex;flex-direction:column;align-items:center;padding:0}
+header{width:100%;background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.2);}
 header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
+.wrap{padding:20px;display:flex;justify-content:center;width:100%}
 .calc{background:#1c1c1c;width:360px;padding:20px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
 .display{background:#000;color:#fff;font-size:32px;text-align:right;padding:15px;border-radius:12px;height:60px;overflow-x:auto}
 .preview{color:#8af4a0;font-size:18px;text-align:right;margin-top:4px;height:20px}
@@ -24,7 +25,10 @@ header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
 </head>
 
 <body>
-  <header><a href="/">CalcWorld</a></header>
+
+<header><a href="/">CalcWorld</a></header>
+
+<div class="wrap">
 <div class="calc">
   <div id="disp" class="display"></div>
   <div id="preview" class="preview"></div>
@@ -71,57 +75,41 @@ header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
 
   <div id="history" class="history"></div>
 </div>
+</div>
 
 <script>
-// ======== DISPLAY ==========
 let disp = document.getElementById('disp');
 let preview = document.getElementById('preview');
 let historyBox = document.getElementById('history');
 let memory = 0;
 let history=[];
 
-function inputFunc(v){
-  disp.textContent += v;
-  liveEval();
-}
+function inputFunc(v){ disp.textContent += v; liveEval();}
+function backspace(){ disp.textContent=disp.textContent.slice(0,-1); liveEval();}
+function clearAll(){ disp.textContent=''; preview.textContent=''; }
 
-function backspace(){
-  disp.textContent = disp.textContent.slice(0,-1);
-  liveEval();
-}
-
-function clearAll(){
-  disp.textContent='';
-  preview.textContent='';
-}
-
-// ======== MEMORY ==========
 function memClear(){ memory=0; }
-function memRecall(){ disp.textContent += memory; liveEval(); }
-function memAdd(){ memory += Number(evalSafe(disp.textContent)||0); }
-function memSub(){ memory -= Number(evalSafe(disp.textContent)||0); }
+function memRecall(){ disp.textContent+=memory; liveEval(); }
+function memAdd(){ memory+=Number(evalSafe(disp.textContent)||0); }
+function memSub(){ memory-=Number(evalSafe(disp.textContent)||0); }
 
-// ======== SCIENTIFIC ==========
 function scientific(type){
   if(!disp.textContent) return;
   if(type==='^'){ disp.textContent+='^'; return; }
-
   let x = evalSafe(disp.textContent);
   if(x===null) return;
-
   switch(type){
-    case 'sin': x=Math.sin(x);break;
-    case 'cos': x=Math.cos(x);break;
-    case 'tan': x=Math.tan(x);break;
-    case 'log': x=Math.log10(x);break;
-    case 'ln': x=Math.log(x);break;
-    case 'sqrt': x=Math.sqrt(x);break;
+    case 'sin': x=Math.sin(x); break;
+    case 'cos': x=Math.cos(x); break;
+    case 'tan': x=Math.tan(x); break;
+    case 'log': x=Math.log10(x); break;
+    case 'ln': x=Math.log(x); break;
+    case 'sqrt': x=Math.sqrt(x); break;
   }
   disp.textContent = x;
   liveEval();
 }
 
-// ======== SAFE EVAL with ^ support =========
 function evalSafe(expr){
   try{
     expr = expr.replace(/\^/g,'**');
@@ -138,13 +126,11 @@ function calculate(){
   let val = evalSafe(disp.textContent);
   if(val===null){ preview.textContent=''; return; }
   preview.textContent='';
-  disp.textContent = val;
-
+  disp.textContent=val;
   history.unshift(val);
   renderHistory();
 }
 
-// ======== HISTORY =========
 function renderHistory(){
   historyBox.innerHTML='';
   history.slice(0,10).forEach(h=>{
@@ -155,7 +141,6 @@ function renderHistory(){
   });
 }
 
-// Keyboard
 document.addEventListener('keydown',e=>{
   if(/[0-9+\-*/().]/.test(e.key)) inputFunc(e.key);
   if(e.key==='Enter') calculate();
