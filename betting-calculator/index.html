@@ -2,52 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Bet Hedge & Cutting Calculator | CalcWorld</title>
+<title>Bet Hedge Calculator | CalcWorld</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{font-family:Arial,sans-serif;background:#f6f7fb;margin:0}
-header{background:#fff;padding:16px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-header a{text-decoration:none;color:#2563eb;font-size:22px;font-weight:bold}
-
-.container{
-  max-width:650px;margin:40px auto;background:#fff;padding:24px;
-  border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.08)
-}
+body{font-family:Arial;background:#f6f7fb;margin:0}
+header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
+.container{max-width:600px;margin:40px auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.1)}
 h2{margin-top:0}
-
-input,select{
-  width:100%;padding:8px;font-size:15px;border-radius:6px;border:1px solid #ccc;margin-top:4px;
-}
-
-.bet-row{display:flex;gap:10px;margin-top:12px;align-items:center}
-.bet-team{flex:1}
-.bet-stake{flex:1}
-.bet-odds{flex:1}
-
+.bet-row{display:flex;gap:8px;margin-top:12px;align-items:center}
+.bet-row select,.bet-row input{flex:1;padding:8px;font-size:15px;border:1px solid #ccc;border-radius:6px}
 .remove{
   width:32px;height:38px;display:flex;align-items:center;justify-content:center;
-  background:#ffe5e5;border:1px solid #f3b9b9;border-radius:6px;cursor:pointer;
-  color:#dc2626;font-size:18px;font-weight:bold;
+  cursor:pointer;background:#ffe5e5;border-radius:6px;font-size:18px;color:#dc2626;
+  border:1px solid #f3b9b9;
 }
 .remove:hover{background:#ffcccc}
-
-button{
-  margin-top:16px;width:100%;padding:12px;font-size:17px;
-  background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer
-}
-button:hover{opacity:.9}
-
-small{display:block;margin-top:4px;color:#666;font-size:13px}
-
+label{font-size:14px;margin-top:12px;display:block;font-weight:bold}
+button{margin-top:16px;width:100%;padding:12px;font-size:17px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}
+small{display:block;color:#666;font-size:12px;margin-top:4px}
 .result{margin-top:24px;background:#eef4ff;padding:18px;border-radius:10px}
 .green{color:#16a34a;font-weight:bold}
 .red{color:#dc2626;font-weight:bold}
-
-.disclaimer{
-  margin-top:22px;background:#fffbee;border-left:4px solid #fbbf24;
-  padding:12px 14px;border-radius:8px;font-size:14px;color:#7a6100
-}
+.disclaimer{margin-top:18px;font-size:12px;color:#7c3a00;background:#fff7dd;border:1px solid #f6d67a;padding:10px;border-radius:8px}
 </style>
 </head>
 
@@ -58,25 +36,23 @@ small{display:block;margin-top:4px;color:#666;font-size:13px}
 <h2>Bet Hedge & Cutting Calculator</h2>
 
 <label>How many outcomes?</label>
-<select id="mode" onchange="resetAll()">
+<select id="mode" onchange="resetAll()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
   <option value="2">2 — Team A & Team B</option>
   <option value="3">3 — Team A, Team B & Draw</option>
 </select>
 
-<label style="margin-top:14px">Team Names</label>
-<div style="display:flex;gap:10px">
-  <input id="teamA" value="Team A">
-  <input id="teamB" value="Team B">
-</div>
-<div id="drawBox" style="display:none;margin-top:10px">
-  <input id="teamD" value="Draw">
+<label>Team Names</label>
+<div style="display:flex; gap:8px; margin-top:6px;">
+  <input id="teamAName" value="Team A" placeholder="Team A" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;" oninput="updateTeams()">
+  <input id="teamBName" value="Team B" placeholder="Team B" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;" oninput="updateTeams()">
+  <input id="teamDName" value="Draw" placeholder="Draw" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;display:none;" oninput="updateTeams()">
 </div>
 
-<label style="margin-top:16px">Place Your Bets</label>
+<label>Place Your Bets</label>
 <div id="betsArea"></div>
 
 <small>💰 Max stake per bet: ₹10,00,000</small>
-<small>🍒 Decimal odds allowed: 1.01 to 16</small>
+<small>🎯 Decimal odds allowed: 1.01 to 16</small>
 
 <button onclick="addRow()">+ Add More Bet</button>
 <button onclick="calc()">Calculate Bets</button>
@@ -84,20 +60,32 @@ small{display:block;margin-top:4px;color:#666;font-size:13px}
 <div id="output" class="result" style="display:none"></div>
 
 <div class="disclaimer">
-⚠️ <strong>Disclaimer:</strong> This tool is for educational purposes only. Betting involves financial risk and can be addictive. CalcWorld does not encourage or support gambling.
+⚠️ <strong>Disclaimer:</strong> This tool is for educational purposes only.  
+Betting involves financial risk and can be addictive.  
+CalcWorld does not encourage or support gambling activity.
 </div>
-
 </div>
 
 <script>
-let outcomes=['A','B'];
+function updateTeams(){
+  document.querySelectorAll('.bet-row select').forEach(sel=>{
+    const team=sel.value;
+    sel.options.length=0;
+    const A=document.getElementById('teamAName').value;
+    const B=document.getElementById('teamBName').value;
+    const D=document.getElementById('teamDName').value;
+    const mode=document.getElementById('mode').value;
+
+    sel.add(new Option(A,'A'));
+    sel.add(new Option(B,'B'));
+    if(mode==='3') sel.add(new Option(D,'D'));
+    sel.value=team; 
+  });
+  calc();
+}
 
 function resetAll(){
-  const mode = document.getElementById('mode').value;
-  outcomes = mode==='2' ? ['A','B'] : ['A','B','D'];
-
-  document.getElementById('drawBox').style.display = mode==='3' ? 'block' : 'none';
-
+  document.getElementById('teamDName').style.display = document.getElementById('mode').value==='3' ? 'block':'none';
   document.getElementById('betsArea').innerHTML='';
   addRow();
   calc();
@@ -108,73 +96,78 @@ function addRow(){
   row.className='bet-row';
 
   const sel=document.createElement('select');
-  sel.className='bet-team';
-  outcomes.forEach(o=>sel.add(new Option(getName(o),o)));
+  updateTeams();
+  ['A','B','D'].forEach(v=>{
+    if(v==='D' && document.getElementById('mode').value==='2') return;
+    const name=document.getElementById('team'+v+'Name').value;
+    sel.add(new Option(name,v));
+  });
+  sel.oninput=calc;
 
   const stake=document.createElement('input');
-  stake.className='bet-stake';
-  stake.type='number'; stake.min='1'; stake.max='1000000'; stake.value='100';
+  stake.type='number';
+  stake.min='1'; stake.max='1000000';
+  stake.placeholder='Stake';
+  stake.value='100';
+  stake.oninput=()=>{ if(stake.value>1000000) stake.value=1000000; calc(); }
 
   const odds=document.createElement('input');
-  odds.className='bet-odds';
-  odds.type='number'; odds.min='1.01'; odds.max='16'; odds.step='0.01'; odds.value='2.00';
+  odds.type='number';
+  odds.step='0.01'; odds.min='1.01'; odds.max='16';
+  odds.placeholder='Odds';
+  odds.value='2.0';
+  odds.oninput=()=>{ if(odds.value>16) odds.value=16; calc(); }
 
   const del=document.createElement('div');
-  del.className='remove'; del.textContent='✖';
+  del.className='remove';
+  del.textContent='✖';
   del.onclick=()=>{row.remove();calc();};
-
-  sel.oninput=calc; stake.oninput=limitStake; odds.oninput=limitOdds; odds.onchange=calc;
 
   row.append(sel,stake,odds,del);
   document.getElementById('betsArea').append(row);
 }
 
-function getName(t){
-  if(t==='A') return document.getElementById('teamA').value || 'Team A';
-  if(t==='B') return document.getElementById('teamB').value || 'Team B';
-  return document.getElementById('teamD').value || 'Draw';
-}
-
-function limitStake(){ if(this.value>1000000) this.value=1000000; calc(); }
-function limitOdds(){ if(this.value>16) this.value=16; calc(); }
-
 function calc(){
   const rows=document.querySelectorAll('.bet-row');
-  if(rows.length===0){output.style.display='none';return;}
+  if(!rows.length){output.style.display='none';return;}
 
   let winA=0,winB=0,winD=0;
-  let stakeA=0,stakeB=0,stakeD=0;
+  let loseA=0,loseB=0,loseD=0;
   let total=0;
-
-  rows.forEach(r=>{
-    const team=r.children[0].value;
-    const stake=+r.children[1].value;
-    const odds=+r.children[2].value;
-    if(!stake||!odds) return;
-    total+=stake;
-    const profit = stake*(odds-1);
-
-    if(team==='A'){winA+=profit; stakeB+=stake; stakeD+=stake;}
-    if(team==='B'){winB+=profit; stakeA+=stake; stakeD+=stake;}
-    if(team==='D'){winD+=profit; stakeA+=stake; stakeB+=stake;}
-  });
-
-  winA-=stakeA; winB-=stakeB; winD-=stakeD;
-
   const mode=document.getElementById('mode').value;
 
-  let html=`<p><strong>Total stake placed:</strong> ₹${total}</p>`;
-  html+=`<p><strong>If ${getName('A')} wins:</strong> ${fmt(winA)}</p>`;
-  html+=`<p><strong>If ${getName('B')} wins:</strong> ${fmt(winB)}</p>`;
-  if(mode==='3') html+=`<p><strong>If ${getName('D')} happens:</strong> ${fmt(winD)}</p>`;
+  rows.forEach(r=>{
+    const t=r.children[0].value;
+    let st=+r.children[1].value;
+    let od=+r.children[2].value;
+    if(isNaN(st)||isNaN(od)) return;
+    st=Math.min(st,1000000);
+    od=Math.max(1.01,Math.min(od,16));
+    const profit=st*(od-1);
+    total+=st;
 
-  output.innerHTML=html;
+    if(t==='A'){winA+=profit; loseB+=st; loseD+=st;}
+    if(t==='B'){winB+=profit; loseA+=st; loseD+=st;}
+    if(t==='D'){winD+=profit; loseA+=st; loseB+=st;}
+  });
+
+  winA-=loseA; winB-=loseB; winD-=loseD;
+  const A=document.getElementById('teamAName').value;
+  const B=document.getElementById('teamBName').value;
+  const D=document.getElementById('teamDName').value;
+
+  let html=`<p><strong>Total stake placed:</strong> ₹${total}</p>`;
+  html+=`<p><strong>If ${A} wins:</strong> ${fmt(winA)}</p>`;
+  html+=`<p><strong>If ${B} wins:</strong> ${fmt(winB)}</p>`;
+  if(mode==='3') html+=`<p><strong>If ${D} happens:</strong> ${fmt(winD)}</p>`;
+
   output.style.display='block';
+  output.innerHTML=html;
 }
 
 function fmt(n){
-  const r=Math.round(n);
-  return r>=0?`<span class="green">₹${r}</span>`:`<span class="red">₹${r}</span>`;
+  n=Math.round(n);
+  return n>=0?`<span class="green">₹${n}</span>`:`<span class="red">₹${n}</span>`;
 }
 
 resetAll();
