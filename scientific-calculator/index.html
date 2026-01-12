@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scientific Calculator | CalcWorld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{font-family:Arial;margin:0;background:#f6f7fb;padding:20px;display:flex;justify-content:center}
+.container{background:#fff;padding:20px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.1);width:340px}
+h2{margin:0 0 12px;text-align:center}
+#display{width:100%;height:60px;font-size:26px;border-radius:8px;border:1px solid #ccc;margin-bottom:14px;padding:10px;text-align:right}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+button{padding:14px;font-size:18px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer}
+button.op{background:#34a853}
+button.func{background:#6a6a6a}
+button.clear{background:#dc2626}
+button:hover{opacity:.85}
+.footer{margin-top:18px;font-size:13px;color:#666;text-align:center}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h2>Scientific Calculator</h2>
+  <input id="display" disabled>
+
+  <div class="keys">
+    <button class="clear" onclick="clearDisplay()">AC</button>
+    <button class="clear" onclick="backspace()">⌫</button>
+    <button class="func" onclick="inputFunc('%')">%</button>
+    <button class="op" onclick="inputFunc('/')">÷</button>
+
+    <button onclick="inputFunc('7')">7</button>
+    <button onclick="inputFunc('8')">8</button>
+    <button onclick="inputFunc('9')">9</button>
+    <button class="op" onclick="inputFunc('*')">×</button>
+
+    <button onclick="inputFunc('4')">4</button>
+    <button onclick="inputFunc('5')">5</button>
+    <button onclick="inputFunc('6')">6</button>
+    <button class="op" onclick="inputFunc('-')">−</button>
+
+    <button onclick="inputFunc('1')">1</button>
+    <button onclick="inputFunc('2')">2</button>
+    <button onclick="inputFunc('3')">3</button>
+    <button class="op" onclick="inputFunc('+')">+</button>
+
+    <button onclick="inputFunc('0')">0</button>
+    <button onclick="inputFunc('.')">.</button>
+    <button class="op" onclick="calculate()">=</button>
+    <button class="func" onclick="inputFunc('(')">(</button>
+
+    <button class="func" onclick="inputFunc(')')">)</button>
+    <button class="func" onclick="scientific('sin')">sin</button>
+    <button class="func" onclick="scientific('cos')">cos</button>
+    <button class="func" onclick="scientific('tan')">tan</button>
+
+    <button class="func" onclick="scientific('sqrt')">√</button>
+    <button class="func" onclick="scientific('log')">log</button>
+    <button class="func" onclick="scientific('ln')">ln</button>
+    <button class="func" onclick="scientific('pow2')">x²</button>
+
+    <button class="func" onclick="scientific('pow3')">x³</button>
+    <button class="func" onclick="scientific('exp')">exp</button>
+    <button class="func" onclick="inputFunc(Math.PI)">π</button>
+    <button class="func" onclick="inputFunc(Math.E)">e</button>
+  </div>
+
+  <div class="footer">For quick math — decimals auto-calc safely</div>
+</div>
+
+<script>
+const disp = document.getElementById("display");
+
+function inputFunc(v){ disp.value += v; }
+
+function clearDisplay(){ disp.value = ''; }
+
+function backspace(){ disp.value = disp.value.slice(0,-1); }
+
+function calculate(){
+  try{ disp.value = eval(disp.value.replace(/÷/g,'/').replace(/×/g,'*')); }
+  catch{ disp.value = 'Error'; }
+}
+
+function scientific(type){
+  let val = disp.value;
+  if(!val) return;
+  let x = eval(val);
+
+  switch(type){
+    case 'sin': disp.value = Math.sin(x).toFixed(10); break;
+    case 'cos': disp.value = Math.cos(x).toFixed(10); break;
+    case 'tan': disp.value = Math.tan(x).toFixed(10); break;
+    case 'sqrt': disp.value = Math.sqrt(x); break;
+    case 'log': disp.value = Math.log10(x); break;
+    case 'ln': disp.value = Math.log(x); break;
+    case 'pow2': disp.value = x**2; break;
+    case 'pow3': disp.value = x**3; break;
+    case 'exp': disp.value = Math.exp(x); break;
+  }
+}
+
+// Keyboard support
+document.addEventListener('keydown', e=>{
+  if(/[0-9+\-*/().]/.test(e.key)) inputFunc(e.key);
+  if(e.key==='Enter') calculate();
+  if(e.key==='Backspace') backspace();
+});
+</script>
+
+</body>
+</html>
