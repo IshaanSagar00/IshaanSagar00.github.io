@@ -6,104 +6,154 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{font-family:Arial;margin:0;background:#f6f7fb;padding:20px;display:flex;justify-content:center}
-.container{background:#fff;padding:20px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.1);width:340px}
-h2{margin:0 0 12px;text-align:center}
-#display{width:100%;height:60px;font-size:26px;border-radius:8px;border:1px solid #ccc;margin-bottom:14px;padding:10px;text-align:right}
-.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-button{padding:14px;font-size:18px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer}
-button.op{background:#34a853}
-button.func{background:#6a6a6a}
-button.clear{background:#dc2626}
-button:hover{opacity:.85}
-.footer{margin-top:18px;font-size:13px;color:#666;text-align:center}
+body{font-family:Arial;background:#111;margin:0;display:flex;justify-content:center;padding:20px}
+.calc{background:#1c1c1c;width:360px;padding:20px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.display{background:#000;color:#fff;font-size:32px;text-align:right;padding:15px;border-radius:12px;height:60px;overflow-x:auto}
+.preview{color:#8af4a0;font-size:18px;text-align:right;margin-top:4px;height:20px}
+.keys{margin-top:16px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.btn{background:#2e2e2e;color:white;border:none;border-radius:12px;font-size:18px;padding:16px;cursor:pointer}
+.op{background:#ff9500}
+.eq{background:#34c759}
+.mem{background:#444}
+.btn:hover{opacity:.85}
+.history{margin-top:18px;background:#222;color:white;padding:10px;border-radius:10px;max-height:120px;overflow-y:auto;font-size:14px}
+.history p{margin:4px 0;cursor:pointer}
 </style>
 </head>
 
 <body>
-<div class="container">
-  <h2>Scientific Calculator</h2>
-  <input id="display" disabled>
+<div class="calc">
+  <div id="disp" class="display"></div>
+  <div id="preview" class="preview"></div>
 
   <div class="keys">
-    <button class="clear" onclick="clearDisplay()">AC</button>
-    <button class="clear" onclick="backspace()">⌫</button>
-    <button class="func" onclick="inputFunc('%')">%</button>
-    <button class="op" onclick="inputFunc('/')">÷</button>
+    <button class="btn mem" onclick="memClear()">MC</button>
+    <button class="btn mem" onclick="memRecall()">MR</button>
+    <button class="btn mem" onclick="memAdd()">M+</button>
+    <button class="btn mem" onclick="memSub()">M-</button>
+    <button class="btn" onclick="clearAll()">AC</button>
 
-    <button onclick="inputFunc('7')">7</button>
-    <button onclick="inputFunc('8')">8</button>
-    <button onclick="inputFunc('9')">9</button>
-    <button class="op" onclick="inputFunc('*')">×</button>
+    <button class="btn" onclick="inputFunc('(')">(</button>
+    <button class="btn" onclick="inputFunc(')')">)</button>
+    <button class="btn" onclick="scientific('^')">xʸ</button>
+    <button class="btn" onclick="scientific('sqrt')">√</button>
+    <button class="btn" onclick="backspace()">⌫</button>
 
-    <button onclick="inputFunc('4')">4</button>
-    <button onclick="inputFunc('5')">5</button>
-    <button onclick="inputFunc('6')">6</button>
-    <button class="op" onclick="inputFunc('-')">−</button>
+    <button class="btn" onclick="scientific('sin')">sin</button>
+    <button class="btn" onclick="scientific('cos')">cos</button>
+    <button class="btn" onclick="scientific('tan')">tan</button>
+    <button class="btn" onclick="scientific('log')">log</button>
+    <button class="btn" onclick="scientific('ln')">ln</button>
 
-    <button onclick="inputFunc('1')">1</button>
-    <button onclick="inputFunc('2')">2</button>
-    <button onclick="inputFunc('3')">3</button>
-    <button class="op" onclick="inputFunc('+')">+</button>
+    <button class="btn" onclick="inputFunc('7')">7</button>
+    <button class="btn" onclick="inputFunc('8')">8</button>
+    <button class="btn" onclick="inputFunc('9')">9</button>
+    <button class="btn op" onclick="inputFunc('/')">÷</button>
+    <button class="btn op" onclick="inputFunc('*')">×</button>
 
-    <button onclick="inputFunc('0')">0</button>
-    <button onclick="inputFunc('.')">.</button>
-    <button class="op" onclick="calculate()">=</button>
-    <button class="func" onclick="inputFunc('(')">(</button>
+    <button class="btn" onclick="inputFunc('4')">4</button>
+    <button class="btn" onclick="inputFunc('5')">5</button>
+    <button class="btn" onclick="inputFunc('6')">6</button>
+    <button class="btn op" onclick="inputFunc('-')">−</button>
+    <button class="btn op" onclick="inputFunc('+')">+</button>
 
-    <button class="func" onclick="inputFunc(')')">)</button>
-    <button class="func" onclick="scientific('sin')">sin</button>
-    <button class="func" onclick="scientific('cos')">cos</button>
-    <button class="func" onclick="scientific('tan')">tan</button>
+    <button class="btn" onclick="inputFunc('1')">1</button>
+    <button class="btn" onclick="inputFunc('2')">2</button>
+    <button class="btn" onclick="inputFunc('3')">3</button>
+    <button class="btn" onclick="inputFunc('.')">.</button>
+    <button class="btn eq" onclick="calculate()">=</button>
 
-    <button class="func" onclick="scientific('sqrt')">√</button>
-    <button class="func" onclick="scientific('log')">log</button>
-    <button class="func" onclick="scientific('ln')">ln</button>
-    <button class="func" onclick="scientific('pow2')">x²</button>
-
-    <button class="func" onclick="scientific('pow3')">x³</button>
-    <button class="func" onclick="scientific('exp')">exp</button>
-    <button class="func" onclick="inputFunc(Math.PI)">π</button>
-    <button class="func" onclick="inputFunc(Math.E)">e</button>
+    <button class="btn" onclick="inputFunc('0')" style="grid-column:span 5">0</button>
   </div>
 
-  <div class="footer">For quick math — decimals auto-calc safely</div>
+  <div id="history" class="history"></div>
 </div>
 
 <script>
-const disp = document.getElementById("display");
+// ======== DISPLAY ==========
+let disp = document.getElementById('disp');
+let preview = document.getElementById('preview');
+let historyBox = document.getElementById('history');
+let memory = 0;
+let history=[];
 
-function inputFunc(v){ disp.value += v; }
-
-function clearDisplay(){ disp.value = ''; }
-
-function backspace(){ disp.value = disp.value.slice(0,-1); }
-
-function calculate(){
-  try{ disp.value = eval(disp.value.replace(/÷/g,'/').replace(/×/g,'*')); }
-  catch{ disp.value = 'Error'; }
+function inputFunc(v){
+  disp.textContent += v;
+  liveEval();
 }
 
+function backspace(){
+  disp.textContent = disp.textContent.slice(0,-1);
+  liveEval();
+}
+
+function clearAll(){
+  disp.textContent='';
+  preview.textContent='';
+}
+
+// ======== MEMORY ==========
+function memClear(){ memory=0; }
+function memRecall(){ disp.textContent += memory; liveEval(); }
+function memAdd(){ memory += Number(evalSafe(disp.textContent)||0); }
+function memSub(){ memory -= Number(evalSafe(disp.textContent)||0); }
+
+// ======== SCIENTIFIC ==========
 function scientific(type){
-  let val = disp.value;
-  if(!val) return;
-  let x = eval(val);
+  if(!disp.textContent) return;
+  if(type==='^'){ disp.textContent+='^'; return; }
+
+  let x = evalSafe(disp.textContent);
+  if(x===null) return;
 
   switch(type){
-    case 'sin': disp.value = Math.sin(x).toFixed(10); break;
-    case 'cos': disp.value = Math.cos(x).toFixed(10); break;
-    case 'tan': disp.value = Math.tan(x).toFixed(10); break;
-    case 'sqrt': disp.value = Math.sqrt(x); break;
-    case 'log': disp.value = Math.log10(x); break;
-    case 'ln': disp.value = Math.log(x); break;
-    case 'pow2': disp.value = x**2; break;
-    case 'pow3': disp.value = x**3; break;
-    case 'exp': disp.value = Math.exp(x); break;
+    case 'sin': x=Math.sin(x);break;
+    case 'cos': x=Math.cos(x);break;
+    case 'tan': x=Math.tan(x);break;
+    case 'log': x=Math.log10(x);break;
+    case 'ln': x=Math.log(x);break;
+    case 'sqrt': x=Math.sqrt(x);break;
   }
+  disp.textContent = x;
+  liveEval();
 }
 
-// Keyboard support
-document.addEventListener('keydown', e=>{
+// ======== SAFE EVAL with ^ support =========
+function evalSafe(expr){
+  try{
+    expr = expr.replace(/\^/g,'**');
+    return Function(`"use strict";return (${expr})`)();
+  } catch{ return null; }
+}
+
+function liveEval(){
+  let val = evalSafe(disp.textContent);
+  preview.textContent = val===null ? '' : val;
+}
+
+function calculate(){
+  let val = evalSafe(disp.textContent);
+  if(val===null){ preview.textContent=''; return; }
+  preview.textContent='';
+  disp.textContent = val;
+
+  history.unshift(val);
+  renderHistory();
+}
+
+// ======== HISTORY =========
+function renderHistory(){
+  historyBox.innerHTML='';
+  history.slice(0,10).forEach(h=>{
+    let p=document.createElement('p');
+    p.textContent=h;
+    p.onclick=()=>{disp.textContent=h; liveEval();}
+    historyBox.append(p);
+  });
+}
+
+// Keyboard
+document.addEventListener('keydown',e=>{
   if(/[0-9+\-*/().]/.test(e.key)) inputFunc(e.key);
   if(e.key==='Enter') calculate();
   if(e.key==='Backspace') backspace();
