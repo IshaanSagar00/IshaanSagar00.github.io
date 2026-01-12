@@ -7,6 +7,8 @@
 
 <style>
 body{font-family:Arial;background:#111;margin:0;display:flex;justify-content:center;padding:20px}
+header{background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
 .calc{background:#1c1c1c;width:360px;padding:20px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
 .display{background:#000;color:#fff;font-size:32px;text-align:right;padding:15px;border-radius:12px;height:60px;overflow-x:auto}
 .preview{color:#8af4a0;font-size:18px;text-align:right;margin-top:4px;height:20px}
@@ -15,8 +17,6 @@ body{font-family:Arial;background:#111;margin:0;display:flex;justify-content:cen
 .op{background:#ff9500}
 .eq{background:#34c759}
 .mem{background:#444}
-.mode{background:#007aff}
-.btn.inv-active{background:#0a84ff}
 .btn:hover{opacity:.85}
 .history{margin-top:18px;background:#222;color:white;padding:10px;border-radius:10px;max-height:120px;overflow-y:auto;font-size:14px}
 .history p{margin:4px 0;cursor:pointer}
@@ -24,14 +24,10 @@ body{font-family:Arial;background:#111;margin:0;display:flex;justify-content:cen
 </head>
 
 <body>
+  <header><a href="/">CalcWorld</a></header>
 <div class="calc">
   <div id="disp" class="display"></div>
   <div id="preview" class="preview"></div>
-
-  <div id="modeRow" style="display:flex;gap:6px;margin:8px 0;">
-    <button class="btn mode" id="degRad" onclick="toggleDegRad()">DEG</button>
-    <button class="btn mode" id="invBtn" onclick="toggleInv()">INV</button>
-  </div>
 
   <div class="keys">
     <button class="btn mem" onclick="memClear()">MC</button>
@@ -42,21 +38,15 @@ body{font-family:Arial;background:#111;margin:0;display:flex;justify-content:cen
 
     <button class="btn" onclick="inputFunc('(')">(</button>
     <button class="btn" onclick="inputFunc(')')">)</button>
-    <button class="btn" onclick="scientific('pow')">xʸ</button>
-    <button class="btn op" onclick="inputFunc('%')">%</button>
+    <button class="btn" onclick="scientific('^')">xʸ</button>
+    <button class="btn" onclick="scientific('sqrt')">√</button>
     <button class="btn" onclick="backspace()">⌫</button>
 
-    <button class="btn func" onclick="doTrig('sin')">sin</button>
-    <button class="btn func" onclick="doTrig('cos')">cos</button>
-    <button class="btn func" onclick="doTrig('tan')">tan</button>
-    <button class="btn func" onclick="scientific('log')">log</button>
-    <button class="btn func" onclick="scientific('ln')">ln</button>
-
-    <button class="btn" onclick="scientific('sqrt')">√</button>
-    <button class="btn" onclick="scientific('pow2')">x²</button>
-    <button class="btn" onclick="scientific('pow3')">x³</button>
-    <button class="btn" onclick="scientific('inv')">1/x</button>
-    <button class="btn" onclick="scientific('exp10')">10ˣ</button>
+    <button class="btn" onclick="scientific('sin')">sin</button>
+    <button class="btn" onclick="scientific('cos')">cos</button>
+    <button class="btn" onclick="scientific('tan')">tan</button>
+    <button class="btn" onclick="scientific('log')">log</button>
+    <button class="btn" onclick="scientific('ln')">ln</button>
 
     <button class="btn" onclick="inputFunc('7')">7</button>
     <button class="btn" onclick="inputFunc('8')">8</button>
@@ -76,122 +66,100 @@ body{font-family:Arial;background:#111;margin:0;display:flex;justify-content:cen
     <button class="btn" onclick="inputFunc('.')">.</button>
     <button class="btn eq" onclick="calculate()">=</button>
 
-    <button class="btn" onclick="inputFunc('0')" style="grid-column:span 3">0</button>
-    <button class="btn func" onclick="inputFunc(Math.PI)">π</button>
-    <button class="btn func" onclick="inputFunc(Math.E)">e</button>
+    <button class="btn" onclick="inputFunc('0')" style="grid-column:span 5">0</button>
   </div>
 
   <div id="history" class="history"></div>
 </div>
 
 <script>
-let disp=document.getElementById('disp');
-let preview=document.getElementById('preview');
-let historyBox=document.getElementById('history');
+// ======== DISPLAY ==========
+let disp = document.getElementById('disp');
+let preview = document.getElementById('preview');
+let historyBox = document.getElementById('history');
+let memory = 0;
 let history=[];
-let memory=0;
-let degMode=true;
-let invMode=false;
 
-// Input helpers
-function inputFunc(v){ disp.textContent+=v; liveEval(); }
-function backspace(){ disp.textContent=disp.textContent.slice(0,-1); liveEval();}
-function clearAll(){ disp.textContent=''; preview.textContent=''; }
-
-// Memory
-function memClear(){memory=0;}
-function memRecall(){disp.textContent+=memory;liveEval();}
-function memAdd(){memory+=Number(evalSafe(disp.textContent)||0);}
-function memSub(){memory-=Number(evalSafe(disp.textContent)||0);}
-
-// DEG/RAD + INV toggles
-function toggleDegRad(){
-  degMode=!degMode;
-  document.getElementById('degRad').textContent=degMode?'DEG':'RAD';
-}
-function toggleInv(){
-  invMode=!invMode;
-  document.getElementById('invBtn').classList.toggle('inv-active');
+function inputFunc(v){
+  disp.textContent += v;
+  liveEval();
 }
 
-// Safe math parser with ^
+function backspace(){
+  disp.textContent = disp.textContent.slice(0,-1);
+  liveEval();
+}
+
+function clearAll(){
+  disp.textContent='';
+  preview.textContent='';
+}
+
+// ======== MEMORY ==========
+function memClear(){ memory=0; }
+function memRecall(){ disp.textContent += memory; liveEval(); }
+function memAdd(){ memory += Number(evalSafe(disp.textContent)||0); }
+function memSub(){ memory -= Number(evalSafe(disp.textContent)||0); }
+
+// ======== SCIENTIFIC ==========
+function scientific(type){
+  if(!disp.textContent) return;
+  if(type==='^'){ disp.textContent+='^'; return; }
+
+  let x = evalSafe(disp.textContent);
+  if(x===null) return;
+
+  switch(type){
+    case 'sin': x=Math.sin(x);break;
+    case 'cos': x=Math.cos(x);break;
+    case 'tan': x=Math.tan(x);break;
+    case 'log': x=Math.log10(x);break;
+    case 'ln': x=Math.log(x);break;
+    case 'sqrt': x=Math.sqrt(x);break;
+  }
+  disp.textContent = x;
+  liveEval();
+}
+
+// ======== SAFE EVAL with ^ support =========
 function evalSafe(expr){
   try{
     expr = expr.replace(/\^/g,'**');
     return Function(`"use strict";return (${expr})`)();
-  }catch{return null;}
+  } catch{ return null; }
 }
 
-// Scientific
-function scientific(type){
-  let x=evalSafe(disp.textContent);
-  if(x===null)return;
-
-  switch(type){
-    case 'sqrt': x=Math.sqrt(x);break;
-    case 'pow2': x=x**2;break;
-    case 'pow3': x=x**3;break;
-    case 'inv': x=1/x;break;
-    case 'log': x=Math.log10(x);break;
-    case 'ln': x=Math.log(x);break;
-    case 'exp10': x=Math.pow(10,x);break;
-    case 'pow': disp.textContent+='^'; return;
-  }
-  disp.textContent=x;
-  liveEval();
-}
-
-// Trig + INV + deg/rad
-function doTrig(fn){
-  let x=evalSafe(disp.textContent);
-  if(x===null)return;
-  if(degMode) x=(x*Math.PI)/180;
-
-  if(!invMode){
-    if(fn==='sin') x=Math.sin(x);
-    if(fn==='cos') x=Math.cos(x);
-    if(fn==='tan') x=Math.tan(x);
-  }else{
-    if(fn==='sin') x=Math.asin(x);
-    if(fn==='cos') x=Math.acos(x);
-    if(fn==='tan') x=Math.atan(x);
-    if(degMode) x=x*180/Math.PI;
-  }
-  disp.textContent=x;
-  liveEval();
-}
-
-// Preview & eval
 function liveEval(){
-  let v=evalSafe(disp.textContent);
-  preview.textContent=(v===null?'':v);
+  let val = evalSafe(disp.textContent);
+  preview.textContent = val===null ? '' : val;
 }
 
 function calculate(){
-  let v=evalSafe(disp.textContent);
-  if(v===null)return;
+  let val = evalSafe(disp.textContent);
+  if(val===null){ preview.textContent=''; return; }
   preview.textContent='';
-  disp.textContent=v;
-  history.unshift(v);
+  disp.textContent = val;
+
+  history.unshift(val);
   renderHistory();
 }
 
-// History
+// ======== HISTORY =========
 function renderHistory(){
   historyBox.innerHTML='';
   history.slice(0,10).forEach(h=>{
     let p=document.createElement('p');
     p.textContent=h;
-    p.onclick=()=>{disp.textContent=h;liveEval();}
+    p.onclick=()=>{disp.textContent=h; liveEval();}
     historyBox.append(p);
   });
 }
 
 // Keyboard
 document.addEventListener('keydown',e=>{
-  if(/[0-9+\-*/().]/.test(e.key))inputFunc(e.key);
-  if(e.key==='Enter')calculate();
-  if(e.key==='Backspace')backspace();
+  if(/[0-9+\-*/().]/.test(e.key)) inputFunc(e.key);
+  if(e.key==='Enter') calculate();
+  if(e.key==='Backspace') backspace();
 });
 </script>
 
