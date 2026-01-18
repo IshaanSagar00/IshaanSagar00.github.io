@@ -6,21 +6,84 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{font-family:Arial;background:#111;margin:0;display:flex;flex-direction:column;align-items:center;padding:0}
-header{width:100%;background:#fff;padding:14px 24px;box-shadow:0 2px 4px rgba(0,0,0,.2);}
-header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
-.wrap{padding:20px;display:flex;justify-content:center;width:100%}
-.calc{background:#1c1c1c;width:360px;padding:20px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-.display{background:#000;color:#fff;font-size:32px;text-align:right;padding:15px;border-radius:12px;height:60px;overflow-x:auto}
-.preview{color:#8af4a0;font-size:18px;text-align:right;margin-top:4px;height:20px}
-.keys{margin-top:16px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.btn{background:#2e2e2e;color:white;border:none;border-radius:12px;font-size:18px;padding:16px;cursor:pointer}
+body{
+  font-family:Arial;
+  background:#111;
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+header{
+  width:100%;
+  background:#fff;
+  padding:14px 24px;
+  box-shadow:0 2px 4px rgba(0,0,0,.2);
+}
+header a{
+  text-decoration:none;
+  color:#2563eb;
+  font-size:20px;
+  font-weight:bold;
+}
+.wrap{padding:20px;width:100%;display:flex;justify-content:center}
+.calc{
+  background:#1c1c1c;
+  width:360px;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.display{
+  background:#000;
+  color:#fff;
+  font-size:30px;
+  text-align:right;
+  padding:14px;
+  border-radius:12px;
+  min-height:56px;
+  overflow-x:auto;
+}
+.preview{
+  color:#7CFC9A;
+  font-size:16px;
+  text-align:right;
+  margin-top:6px;
+  min-height:20px;
+}
+.keys{
+  margin-top:16px;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+}
+.btn{
+  background:#2e2e2e;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-size:18px;
+  padding:15px;
+  cursor:pointer;
+}
 .op{background:#ff9500}
 .eq{background:#34c759}
 .mem{background:#444}
 .btn:hover{opacity:.85}
-.history{margin-top:18px;background:#222;color:white;padding:10px;border-radius:10px;max-height:120px;overflow-y:auto;font-size:14px}
-.history p{margin:4px 0;cursor:pointer}
+.history{
+  margin-top:16px;
+  background:#222;
+  color:#fff;
+  padding:10px;
+  border-radius:10px;
+  max-height:120px;
+  overflow-y:auto;
+  font-size:14px;
+}
+.history p{
+  margin:4px 0;
+  cursor:pointer;
+}
 </style>
 </head>
 
@@ -30,119 +93,143 @@ header a{text-decoration:none;color:#2563eb;font-size:20px;font-weight:bold}
 
 <div class="wrap">
 <div class="calc">
-  <div id="disp" class="display"></div>
-  <div id="preview" class="preview"></div>
 
-  <div class="keys">
-    <button class="btn mem" onclick="memClear()">MC</button>
-    <button class="btn mem" onclick="memRecall()">MR</button>
-    <button class="btn mem" onclick="memAdd()">M+</button>
-    <button class="btn mem" onclick="memSub()">M-</button>
-    <button class="btn" onclick="clearAll()">AC</button>
+<div id="disp" class="display"></div>
+<div id="preview" class="preview"></div>
 
-    <button class="btn" onclick="inputFunc('(')">(</button>
-    <button class="btn" onclick="inputFunc(')')">)</button>
-    <button class="btn" onclick="scientific('^')">xʸ</button>
-    <button class="btn" onclick="scientific('sqrt')">√</button>
-    <button class="btn" onclick="backspace()">⌫</button>
+<div class="keys">
+  <button class="btn mem" onclick="memClear()">MC</button>
+  <button class="btn mem" onclick="memRecall()">MR</button>
+  <button class="btn mem" onclick="memAdd()">M+</button>
+  <button class="btn mem" onclick="memSub()">M-</button>
+  <button class="btn" onclick="clearAll()">AC</button>
 
-    <button class="btn" onclick="scientific('sin')">sin</button>
-    <button class="btn" onclick="scientific('cos')">cos</button>
-    <button class="btn" onclick="scientific('tan')">tan</button>
-    <button class="btn" onclick="scientific('log')">log</button>
-    <button class="btn" onclick="scientific('ln')">ln</button>
+  <button class="btn" onclick="input('(')">(</button>
+  <button class="btn" onclick="input(')')">)</button>
+  <button class="btn" onclick="input('^')">xʸ</button>
+  <button class="btn" onclick="func('sqrt')">√</button>
+  <button class="btn" onclick="backspace()">⌫</button>
 
-    <button class="btn" onclick="inputFunc('7')">7</button>
-    <button class="btn" onclick="inputFunc('8')">8</button>
-    <button class="btn" onclick="inputFunc('9')">9</button>
-    <button class="btn op" onclick="inputFunc('/')">÷</button>
-    <button class="btn op" onclick="inputFunc('*')">×</button>
+  <button class="btn" onclick="func('sin')">sin</button>
+  <button class="btn" onclick="func('cos')">cos</button>
+  <button class="btn" onclick="func('tan')">tan</button>
+  <button class="btn" onclick="func('log')">log</button>
+  <button class="btn" onclick="func('ln')">ln</button>
 
-    <button class="btn" onclick="inputFunc('4')">4</button>
-    <button class="btn" onclick="inputFunc('5')">5</button>
-    <button class="btn" onclick="inputFunc('6')">6</button>
-    <button class="btn op" onclick="inputFunc('-')">−</button>
-    <button class="btn op" onclick="inputFunc('+')">+</button>
+  <button class="btn" onclick="input('7')">7</button>
+  <button class="btn" onclick="input('8')">8</button>
+  <button class="btn" onclick="input('9')">9</button>
+  <button class="btn op" onclick="input('/')">÷</button>
+  <button class="btn op" onclick="input('*')">×</button>
 
-    <button class="btn" onclick="inputFunc('1')">1</button>
-    <button class="btn" onclick="inputFunc('2')">2</button>
-    <button class="btn" onclick="inputFunc('3')">3</button>
-    <button class="btn" onclick="inputFunc('.')">.</button>
-    <button class="btn eq" onclick="calculate()">=</button>
+  <button class="btn" onclick="input('4')">4</button>
+  <button class="btn" onclick="input('5')">5</button>
+  <button class="btn" onclick="input('6')">6</button>
+  <button class="btn op" onclick="input('-')">−</button>
+  <button class="btn op" onclick="input('+')">+</button>
 
-    <button class="btn" onclick="inputFunc('0')" style="grid-column:span 5">0</button>
-  </div>
+  <button class="btn" onclick="input('1')">1</button>
+  <button class="btn" onclick="input('2')">2</button>
+  <button class="btn" onclick="input('3')">3</button>
+  <button class="btn" onclick="input('.')">.</button>
+  <button class="btn eq" onclick="calculate()">=</button>
 
-  <div id="history" class="history"></div>
+  <button class="btn" onclick="input('0')" style="grid-column:span 5">0</button>
+</div>
+
+<div id="history" class="history"></div>
+
 </div>
 </div>
 
 <script>
-let disp = document.getElementById('disp');
-let preview = document.getElementById('preview');
-let historyBox = document.getElementById('history');
+const disp = document.getElementById('disp');
+const preview = document.getElementById('preview');
+const historyBox = document.getElementById('history');
+
 let memory = 0;
-let history=[];
+let history = [];
 
-function inputFunc(v){ disp.textContent += v; liveEval();}
-function backspace(){ disp.textContent=disp.textContent.slice(0,-1); liveEval();}
-function clearAll(){ disp.textContent=''; preview.textContent=''; }
-
-function memClear(){ memory=0; }
-function memRecall(){ disp.textContent+=memory; liveEval(); }
-function memAdd(){ memory+=Number(evalSafe(disp.textContent)||0); }
-function memSub(){ memory-=Number(evalSafe(disp.textContent)||0); }
-
-function scientific(type){
-  if(!disp.textContent) return;
-  if(type==='^'){ disp.textContent+='^'; return; }
-  let x = evalSafe(disp.textContent);
-  if(x===null) return;
-  switch(type){
-    case 'sin': x=Math.sin(x); break;
-    case 'cos': x=Math.cos(x); break;
-    case 'tan': x=Math.tan(x); break;
-    case 'log': x=Math.log10(x); break;
-    case 'ln': x=Math.log(x); break;
-    case 'sqrt': x=Math.sqrt(x); break;
-  }
-  disp.textContent = x;
+/* -------- INPUT -------- */
+function input(v){
+  disp.textContent += v;
   liveEval();
 }
 
+function backspace(){
+  disp.textContent = disp.textContent.slice(0,-1);
+  liveEval();
+}
+
+function clearAll(){
+  disp.textContent = '';
+  preview.textContent = '';
+}
+
+/* -------- MEMORY -------- */
+function memClear(){ memory = 0; }
+function memRecall(){ disp.textContent += memory; liveEval(); }
+function memAdd(){ memory += Number(evalSafe(disp.textContent) || 0); }
+function memSub(){ memory -= Number(evalSafe(disp.textContent) || 0); }
+
+/* -------- FUNCTIONS -------- */
+function func(name){
+  disp.textContent += name + '(';
+  liveEval();
+}
+
+/* -------- SAFE EVAL -------- */
 function evalSafe(expr){
   try{
-    expr = expr.replace(/\^/g,'**');
-    return Function(`"use strict";return (${expr})`)();
-  } catch{ return null; }
+    if(!expr) return null;
+
+    let e = expr
+      .replace(/\^/g,'**')
+      .replace(/sin\(/g,'Math.sin(')
+      .replace(/cos\(/g,'Math.cos(')
+      .replace(/tan\(/g,'Math.tan(')
+      .replace(/log\(/g,'Math.log10(')
+      .replace(/ln\(/g,'Math.log(')
+      .replace(/sqrt\(/g,'Math.sqrt(');
+
+    return Function('"use strict";return (' + e + ')')();
+  }catch{
+    return null;
+  }
 }
 
 function liveEval(){
-  let val = evalSafe(disp.textContent);
-  preview.textContent = val===null ? '' : val;
+  const v = evalSafe(disp.textContent);
+  preview.textContent = v === null ? '' : v;
 }
 
 function calculate(){
-  let val = evalSafe(disp.textContent);
-  if(val===null){ preview.textContent=''; return; }
-  preview.textContent='';
-  disp.textContent=val;
-  history.unshift(val);
+  const v = evalSafe(disp.textContent);
+  if(v === null) return;
+
+  history.unshift(disp.textContent + ' = ' + v);
+  disp.textContent = v;
+  preview.textContent = '';
   renderHistory();
 }
 
+/* -------- HISTORY -------- */
 function renderHistory(){
-  historyBox.innerHTML='';
+  historyBox.innerHTML = '';
   history.slice(0,10).forEach(h=>{
-    let p=document.createElement('p');
-    p.textContent=h;
-    p.onclick=()=>{disp.textContent=h; liveEval();}
-    historyBox.append(p);
+    const p = document.createElement('p');
+    p.textContent = h;
+    p.onclick = () => {
+      disp.textContent = h.split('=')[0].trim();
+      liveEval();
+    };
+    historyBox.appendChild(p);
   });
 }
 
+/* -------- KEYBOARD -------- */
 document.addEventListener('keydown',e=>{
-  if(/[0-9+\-*/().]/.test(e.key)) inputFunc(e.key);
+  if(/[0-9+\-*/().]/.test(e.key)) input(e.key);
   if(e.key==='Enter') calculate();
   if(e.key==='Backspace') backspace();
 });
